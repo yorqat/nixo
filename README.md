@@ -7,8 +7,9 @@ contains my system configuration and dotfiles proudly in NixOs
 # Try it out!
 ```sh
 # Generate hardware configuration first
-chmod +x do
-./do --gen-hardware
-./do --install
+$ chmod +x do
+$ ./do --gen-hardware
+$ ./do --install
+```
 
 ```
