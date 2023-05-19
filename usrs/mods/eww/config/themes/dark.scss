@@ -1,0 +1,175 @@
+* {
+    all: unset; // Unsets everything so you can style everything from scratch
+}
+  
+scale trough {
+    all: unset;
+    background-color: #4e4e4e;
+    border-radius: 50px;
+    min-height: 3px;
+    min-width: 50px;
+    margin-left: 0px;
+    margin-right: 40px;
+}
+
+scale trough highlight {
+    all: unset;
+    background-color: rgb(202, 55, 131);
+    color: #000000;
+}
+
+.iconmail {
+    color: rgb(246, 66, 66);
+}
+
+.mail {
+	background-color: #FFFFFF;
+	border-radius: 16px;
+}
+
+.mailbox {
+	background-color: #E5E5E5;
+	border-radius: 10px;
+	margin: 48px 0px 48px 0px;
+}
+
+.label_mails {
+	color: #404040;
+	font-size : 32px;
+	font-weight : bold;
+	margin: 0px 12px 0px 12px;
+}
+
+.iconweb, .iconmail {
+    font-size: 5em;
+    padding-right: 0.15em;
+}
+
+.reddit {
+    background-color: rgb(247, 107, 56);
+}
+
+.mastodon {
+ background-color: rgb(123, 91, 178); 
+}
+
+.github {
+  background-color: #323030;
+}
+
+.youtube {
+  background-color: rgb(233, 67, 67);
+}
+
+.youtube, .github, .mastodon, .reddit, .mail {
+  border-radius: 16px;
+//   border: rgb(202, 55, 131) solid 4px;
+  
+//   &:hover {
+    //   border: rgb(158, 55, 202) solid 4px; 
+//   }
+}
+
+.apps {
+    // background-color: rgba(80, 44, 95, 0.7);
+    background-color: rgba(34, 33, 56, 0.7);
+    border-radius: 10px;
+}
+
+.app_fox {
+  background-repeat: no-repeat;
+	background-size: 64px;
+	min-height: 64px;
+	min-width: 64px;
+	margin: 8px 8px 0px 8px;
+  background-image: url('images/icons/firefox.svg');
+}
+
+.biggie {
+    font-size: x-large;
+}
+
+//Global Styles
+.bar {
+    color: #f8efef;
+}
+
+.system {
+    color: rgb(202, 55, 131);
+
+    background-color: rgba(158, 55, 202, 0.5);
+    border-radius: 4px;
+    padding: 8px;
+
+    color: #f8efef;
+
+    button:hover {
+    	color: rgb(202, 55, 131);
+    }
+}
+
+.time {
+    padding: 2em 0;
+    border-radius: 0px 100px 100px 0;
+}
+
+.bubbly {
+    background-color: rgba(34, 33, 56, 0.7);
+
+    box-shadow: 0px 0px 0px 4px rgb(202, 55, 131);
+    margin-right: 0.3em;
+    margin-left: 0.3em;
+}
+
+.roundy {
+    border-radius: 50px;
+}
+
+.workspaces {
+    margin-top: 2em;
+    padding: 0.22em;
+
+    button {
+        font-size: x-large;
+        padding: 0.3em 0.65em;
+        border-radius: 40px;
+    }
+}
+
+button.inactive-workspace:hover, .active-workspace {
+    box-shadow: 9px 5px 4px -5px rgb(158, 55, 202) inset,
+    -9px 0 4px -5px rgb(158, 55, 202) inset;
+
+    background-color: rgba(34, 33, 56, 0.7);
+}
+
+.inactive-workspace {
+    box-shadow: -9px 5px 7px -5px rgba(34, 33, 56, 1) inset,
+    9px 0 4px -5px rgba(34, 33, 56, 1) inset;
+}
+  
+
+tooltip {
+    background-color: rgba(34, 33, 56, 0.7);
+}
+
+.music {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+    background-color: rgb(34, 33, 56);
+    border-radius: 10px;
+}
+
+.music-button {
+    padding: 0;
+}
+
+.music-player-label {
+    font-family: "Jetbrains Mono";
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.music-slider {
+    color: yellow;
+}

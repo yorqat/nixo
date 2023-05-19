@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+WIDGETS=("github" "reddit" "mastodon" "youtube" "mail" "apps")
+
+IFS=" " combined="${WIDGETS[*]}"
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --open) eww open-many $combined;;
+        --close) eww close $combined;;
+        *) eww open-many $combined;;
+    esac
+    shift
+done

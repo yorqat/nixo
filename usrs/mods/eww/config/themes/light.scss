@@ -1,0 +1,109 @@
+* {
+  all: unset; // Unsets everything so you can style everything from scratch
+}
+
+scale trough {
+  all: unset;
+  background-color: #4e4e4e;
+  border-radius: 50px;
+  min-height: 3px;
+  min-width: 50px;
+  margin-left: 0px;
+  margin-right: 40px;
+}
+
+scale trough highlight {
+  all: unset;
+  background-color: rgb(202, 55, 131);
+  color: #000000;
+  border-radius: 10px;
+}
+
+.biggie {
+  font-size: x-large;
+}
+
+//Global Styles
+.bar {
+  color: #e06262;
+}
+
+.system {
+  color: #FF6000;
+
+  box-shadow: 9px 5px 4px -5px #FF6000 inset,
+  -9px 0 4px -5px #FFA559 inset;
+  //background: #f79e55;
+
+  border-radius: 4px;
+  padding: 8px;
+
+  button:hover {
+	color: #4e4e4e;
+  }
+}
+
+.time {
+  padding: 2em 0;
+  border-radius: 0px 100px 100px 0;
+}
+
+.bubbly {
+  background-color: #FFE6C7;
+  color: #454545;
+
+  box-shadow: 0px 0px 0px 4px #FFA559 inset;
+}
+
+.roundy {	
+  border-radius: 50px;
+}
+
+.workspaces {
+  margin-top: 2em;
+  padding: 0.5em;
+
+  button {
+    font-size: x-large;
+    padding: 0.3em 0.65em;
+    border-radius: 40px;
+  }
+}
+
+button.inactive-workspace:hover, .active-workspace {
+  box-shadow: 9px 5px 4px -5px #FF6000 inset,
+  -9px 0 4px -5px #FFA559 inset;
+  color: #FF6000;
+}
+
+.inactive-workspace {
+  box-shadow: 9px 5px 7px -5px #FF6000;
+}
+
+tooltip {
+  background-color: #FFA559;
+}
+
+.music {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+  // background-color: rgb(34, 33, 56);
+  border-radius: 10px;
+  padding: 1em;
+}
+
+.music-button {
+  padding: 0.5em;
+  border-radius: 4px;
+  
+}
+
+.music-player-label {
+  font-family: "Jetbrains Mono";
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.music-slider {
+  color: yellow;
+}

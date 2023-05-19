@@ -1,0 +1,90 @@
+#!/usr/bin/env lua
+
+-- MIT License
+
+-- Copyright (c) 2023 YorQat
+
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+
+-- The above copyright notice and this permission notice shall be included in all
+-- copies or substantial portions of the Software.
+
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-- SOFTWARE.
+
+-- Contact: YorQat <qarkdev+gh@gmail.com>
+
+-- Run every in seconds
+local delay = 0.01
+
+local workspaces = {
+   { tooltip = "Chat", icon = "󰻞" },
+   { tooltip = "Browse", icon = "󰇧" },
+   { tooltip = "Editor", icon = "" },
+   { tooltip = "Music", icon = "󰂰" },
+   { tooltip = "Video", icon = "󰯜" },
+   { tooltip = "Home", icon = "󱄅" },
+}
+
+
+function match_output()
+    -- Get active window on hyprland
+    local cmd = "hyprctl monitors"
+    -- Pattern for matching the result of cmd
+    local pattern = "active workspace:%s*(%d+)"
+    
+    return tonumber(io.popen(cmd):read("*all"):match(pattern))
+end
+
+-- Active workspace
+local workspace = match_output()
+
+-- Generate widgets in eww-yuck
+function gen_eww_widget()
+    local mapped_workspace_buttons = ""
+    local active_workspace = match_output()
+
+    for index, workspace in ipairs(workspaces) do
+        mapped_workspace_buttons = mapped_workspace_buttons
+        .. "(button :class \"" 
+            .. ( index == active_workspace and "active-workspace" or "inactive-workspace"  ) .. "\""
+            .. [[ :tooltip "]] .. workspace.tooltip  .. "\"" 
+            .. ":onclick \""
+            -- close dashboard at every workspace except home workspace
+            .. "./scripts/dashboard " .. ( index ~= #workspaces and "--close;" or "--open;" )
+            -- dispatch to intended workspace
+            .. " hyprctl dispatch workspace " .. index .. "\" " .. "\"" .. workspace.icon .. "\"" 
+        .. ")"
+    end
+
+    return [[(box :class "bubbly roundy workspaces" :orientation "v" :valign "start" :spacing 16 ]]
+    .. mapped_workspace_buttons .. ")\n"
+end
+
+function output_result()
+    io.write(gen_eww_widget())
+    io.flush()
+end
+
+output_result()
+
+while true do
+    local new_workspace = match_output()
+
+    if workspace ~= new_workspace  then
+        workspace = new_workspace
+        output_result()
+    end
+
+    os.execute("sleep " .. delay)
+end

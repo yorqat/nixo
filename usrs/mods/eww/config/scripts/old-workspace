@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import re
+import os
+import time
+
+workspaces = [
+     # (Tooltip, Icon)
+    ("Messaging", "󰻞"),
+    ("Browsing", "󰇧"),
+    ("Editor", ""),
+    ("Music", "󰂰"),
+    ("Video", "󰯜"),
+    ("Home", ""),
+]
+
+max_workspace = len(workspaces)
+
+def map_join(wks, contextualize):
+    encoded = map(contextualize, enumerate(wks))
+    result = ' '.join(encoded)
+    result = f'(box :class "bubbly workspaces" :orientation "v" :valign "start" :spacing 16 {result})'
+    print(result, flush=True)
+
+# matches log of a workspace change in hyprctl
+def match_workspace(line):
+    if re.match(r'\[LOG\] Changed to workspace (\d+)', line):
+        return True
+    return False
+
+def watch_file(filename):
+    # store the last known position in the file
+    last_position = 0
+    # store the last active workspace
+    wk = 1
+
+    while True:
+        # open the file in read-only mode
+        with open(filename, 'r') as file:
+            # seek to the last known position
+            file.seek(last_position)
+
+            # read the new lines specifically logs about workspace changes
+            new_lines = list(filter(lambda line: match_workspace(line), file.readlines()))
+
+            if new_lines:
+                # index of the active workspace 
+                workspace_number = int(re.search(r'workspace (\d+)', new_lines[-1]).group(1))
+                wk = workspace_number
+                # render the workspaces with class for active workspace
+                map_join(workspaces, 
+                    lambda wk:
+                    f'(button :class "{"active-workspace" if workspace_number == wk[0] + 1 else "inactive-workspace"}"  :tooltip "{wk[1][0]}" :onclick "hyprctl dispatch workspace {wk[0] + 1}" "{wk[1][1]}")')
+
+            last_position = file.tell()
+
+        # no need to run every cpu cycle lol
+        time.sleep(0.1)
+
+
+watch_file(f'/tmp/hypr/{os.getenv("HYPRLAND_INSTANCE_SIGNATURE")}/hyprland.log') 
+
