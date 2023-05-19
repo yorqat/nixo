@@ -12,4 +12,7 @@ $ ./do --gen-hardware
 $ ./do --install
 ```
 
+## Launch window manager
+```sh
+$ Hyprland
 ```
