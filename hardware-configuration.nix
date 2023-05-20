@@ -23,11 +23,6 @@
       fsType = "vfat";
     };
 
-  fileSystems."/mnt" =
-    { device = "/dev/disk/by-uuid/a2d85689-64de-452b-a6cd-58ad4d3a34e9";
-      fsType = "btrfs";
-    };
-
   fileSystems."/dat" =
     { device = "/dev/disk/by-uuid/9497d692-3ec1-4035-bf55-87769d5c9c71";
       fsType = "btrfs";
