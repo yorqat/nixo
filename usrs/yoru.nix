@@ -9,6 +9,7 @@
 
     ./mods/apps/vscode
     ./mods/apps/neovim
+    ./mods/apps/kitty
 
     inputs.hyprland.homeManagerModules.default
   ];

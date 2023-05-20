@@ -53,7 +53,6 @@
 
       # Clipboard
       wl-clipboard
-      kitty
     ];
   };
 
