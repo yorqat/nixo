@@ -4,16 +4,14 @@
     # nixpkgs.url = "github:nixos/nixpkgs/nixos";
 
     hyprland = { 
-      # url = "github:hyprwm/Hyprland/";
-      url = "github:hyprwm/Hyprland/896a78aaa0bb2e4d4f197ed1286c4f030dbaef5f";
+      url = "github:hyprwm/Hyprland/";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     hyprland-contrib.url = "github:hyprwm/contrib";
 
     xdg-desktop-portal-hyprland = {
-      # url = "github:hyprwm/xdg-desktop-portal-hyprland";
-      url = "github:hyprwm/xdg-desktop-portal-hyprland/bf035bf3d5b56fd3da9d11966ad0b3c57f852d78";
+      url = "github:hyprwm/xdg-desktop-portal-hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
