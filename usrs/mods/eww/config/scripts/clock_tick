@@ -27,12 +27,12 @@
 # whatever you named your defvar in eww.yuck
 VAR="clock_tick_show"
 
-CURRENT_TICK_SHOW=$(eww get $VAR)
+CURRENT_TICK_SHOW=$(eww -c . get $VAR)
 
 # flip the boolean
 SHOW_TICK=$( 
     [[ $CURRENT_TICK_SHOW == 'true' ]] && echo false || echo true
 );
 
-eww update $VAR=$SHOW_TICK
-eww get $VAR
+eww -c . update $VAR=$SHOW_TICK
+eww -c . get $VAR

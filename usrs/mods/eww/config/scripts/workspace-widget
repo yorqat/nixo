@@ -61,9 +61,9 @@ function gen_eww_widget()
             .. [[ :tooltip "]] .. workspace.tooltip  .. "\"" 
             .. ":onclick \""
             -- close dashboard at every workspace except home workspace
-            .. "./scripts/dashboard " .. ( index ~= #workspaces and "--close;" or "--open;" )
+            -- .. "scripts/dashboard " .. ( index ~= #workspaces and "--close; " or "--open; " )
             -- dispatch to intended workspace
-            .. " hyprctl dispatch workspace " .. index .. "\" " .. "\"" .. workspace.icon .. "\"" 
+            .. "hyprctl dispatch workspace " .. index .. "\" " .. "\"" .. workspace.icon .. "\"" 
         .. ")"
     end
 

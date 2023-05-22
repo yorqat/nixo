@@ -24,24 +24,26 @@
 
 # Contact: YorQat <qarkdev+gh@gmail.com>
 
+# Get current theme from the existing eww instance
+export THEME=$(eww -c . get theme)
+
+pkill eww
 pkill swaybg
-rm -f eww.scss
-rm -f HOME_WALL
 
-THEME=$(cat THEME)
-
-if [[ $THEME == "dark" ]]
-then 
-  ln -s themes/light.scss eww.scss
-  ln -s images/wallpapers/home.jpg HOME_WALL
-  echo "light" > THEME
-elif [[ $THEME == "light" ]]
-then
-  ln -s themes/dark.scss eww.scss
-  ln -s images/wallpapers/retro-street.jpg HOME_WALL
-  echo "dark" > THEME
+# For startup
+if [ -z "$THEME" ]; then
+  export THEME=$(./scripts/start_theme)
 fi
 
-./scripts/startup-wallpaper 
+#  swap them light and darks
+if [[ $THEME == "themes/dark" ]]; then
+  NEW_THEME="light"
+elif [[ $THEME == "themes/light" ]]; then
+  NEW_THEME="dark"
+fi  
 
-eww reload
+# launch bar and store the new state
+# add in the wallpaper to spicet things up
+eww -c ../$NEW_THEME open bar
+eww -c ../$NEW_THEME update theme="themes/$NEW_THEME"
+swaybg -i ../$NEW_THEME/HOME_WALL -m fill &

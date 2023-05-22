@@ -1,0 +1,25 @@
+#!/usr/bin/env lua
+
+-- Gets appropriate theme based on time of day
+local currentHour = tonumber(os.date("%H"))
+local result = ""
+
+if currentHour >= 18 or currentHour < 6 then
+    result = "dark"
+else
+    result = "light"
+end
+
+if #arg == 0 then
+    io.write("themes/" .. result)
+
+else
+    for i = 1, #arg do
+        if arg[i] == "--absolute-path" then
+            -- Function to get the current working directory
+            io.write(os.getenv("HOME") .. "/.config/eww/themes" .. "/" .. result)
+        else
+            -- Handle other arguments
+        end
+    end
+end

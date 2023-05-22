@@ -2,15 +2,16 @@
 
 
 ;; listens to active workspace
-(deflisten workspace "./scripts/workspace-widget")
+(deflisten workspace "scripts/workspace-widget")
 
 (defpoll time_hour :interval "1s" "date +\%H")
 (defpoll time_min :interval "1s" "date +\%M")
 (defpoll date :interval "30m" "date +\%D")
+(defpoll clock_tick :interval "500ms" "scripts/clock_tick")
 
 (defvar clock_tick_show true)
 (defvar mails 232)
-(defpoll clock_tick :interval "500ms" "./scripts/clock_tick")
+(defvar theme "")
 
 ; mail
 (defwindow mail :stacking "bg" :focusable "false" :screen 1  :monitor 0
@@ -130,7 +131,7 @@
         :orientation "v"
         :valign "end"
         :spacing 12
-          (button :tooltip "swap theme" :class "biggie" :onclick "./scripts/theme" '')
+          (button :tooltip "swap theme" :class "biggie" :onclick "scripts/theme" '')
           (button :tooltip "reboot" :class "biggie" :onclick "systemctl reboot" '')
           (button :tooltip "shut down" :class "biggie" :onclick "systemctl poweroff" ''))))
 

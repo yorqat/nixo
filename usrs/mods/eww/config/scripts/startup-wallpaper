@@ -24,6 +24,4 @@
 
 # Contact: YorQat <qarkdev+gh@gmail.com>
 
-
-EWW_DIR="$HOME/.config/eww"
-swaybg -i $EWW_DIR/HOME_WALL -m fill &
+swaybg -i HOME_WALL -m fill &

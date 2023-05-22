@@ -8,7 +8,9 @@
       yzhang.markdown-all-in-one
       # Nix
       bbenoist.nix
-      # WakaTime.vscode-wakatime
+      # Python
+      ms-python.python
+      WakaTime.vscode-wakatime
       mkhl.direnv
       dbaeumer.vscode-eslint
       eamodio.gitlens
