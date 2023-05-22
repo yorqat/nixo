@@ -9,6 +9,11 @@ case "$1" in
         echo "Generating hardware information..."
         sudo nixos-generate-config --show-hardware-config > hardware-configuration.nix
         ;;
+    "--meta-install")
+        echo "Installing on /mnt"
+        sudo nixos-generate-config --root /mnt
+        sudo nixos-install --root /mnt --flake .#qaten
+        ;;
     *)
         ./do --install
         ;;
