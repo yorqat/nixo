@@ -1,6 +1,3 @@
-(defvar dispatch_workspace "hyprctl dispatch workspace")
-
-
 ;; listens to active workspace
 (deflisten workspace "scripts/workspace-widget")
 
