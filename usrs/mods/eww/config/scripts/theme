@@ -27,8 +27,7 @@
 # Get current theme from the existing eww instance
 export THEME=$(eww -c . get theme)
 
-pkill eww
-pkill swaybg
+OLD_BG_PROCESS=$(pgrep swaybg)
 
 # For startup
 if [ -z "$THEME" ]; then
@@ -44,6 +43,9 @@ fi
 
 # launch bar and store the new state
 # add in the wallpaper to spicet things up
+pkill eww
 eww -c ../$NEW_THEME open bar
 eww -c ../$NEW_THEME update theme="themes/$NEW_THEME"
 swaybg -i ../$NEW_THEME/HOME_WALL -m fill &
+
+kill $OLD_BG_PROCESS
