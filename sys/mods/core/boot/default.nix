@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   boot = {
     loader = {
       systemd-boot.enable = true;
@@ -11,8 +13,8 @@
     };
 
     initrd = {
-      supportedFilesystems = [ "nfs" ];
-      kernelModules = [ "nfs" ];
+      supportedFilesystems = ["nfs"];
+      kernelModules = ["nfs"];
     };
 
     # Enable TTYs

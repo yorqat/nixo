@@ -1,5 +1,5 @@
-{ pkgs, ... }: {
-  home.packages = with pkgs; [ wakatime ];
+{pkgs, ...}: {
+  home.packages = with pkgs; [wakatime];
 
   programs.vscode = {
     enable = true;

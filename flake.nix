@@ -26,21 +26,20 @@
     };
   };
 
-  outputs = { self, ... }@inputs:
-    let
-      system = "x86_64-linux";
-      # pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-      pkgs = import inputs.nixpkgs { inherit system; };
-    in {
-      nixosConfigurations = import ./sys inputs;
+  outputs = {self, ...} @ inputs: let
+    system = "x86_64-linux";
+    # pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+    pkgs = import inputs.nixpkgs {inherit system;};
+  in {
+    nixosConfigurations = import ./sys inputs;
 
-      devShells.x86_64-linux.default = pkgs.mkShell {
-        packages = with pkgs; [
-          rnix-lsp # nix LSP
-          yaml-language-server # yaml LSP
-          alejandra # uncomprimising nix formatter
-          fnlfmt # fennel formatter
-        ];
-      };
+    devShells.x86_64-linux.default = pkgs.mkShell {
+      packages = with pkgs; [
+        rnix-lsp # nix LSP
+        yaml-language-server # yaml LSP
+        alejandra # uncomprimising nix formatter
+        fnlfmt # fennel formatter
+      ];
     };
+  };
 }

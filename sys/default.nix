@@ -1,5 +1,8 @@
-{ nixpkgs, self, ... }:
-let
+{
+  nixpkgs,
+  self,
+  ...
+}: let
   inputs = self.inputs;
   bootloader = ./mods/core/boot;
   core = ./mods/core;

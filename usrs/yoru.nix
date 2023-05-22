@@ -1,4 +1,9 @@
-{ lib, inputs, pkgs, ... }: {
+{
+  lib,
+  inputs,
+  pkgs,
+  ...
+}: {
   imports = [
     ./mods/hyprland
     ./mods/eww
@@ -19,7 +24,7 @@
 
     stateVersion = "22.05";
 
-    packages = with pkgs; [ chromium discord-canary flameshot swaybg ];
+    packages = with pkgs; [chromium discord-canary flameshot swaybg];
   };
 
   programs.home-manager.enable = true;

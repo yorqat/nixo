@@ -1,10 +1,15 @@
-{ pkgs, lib, config, inputs, ... }:
-with lib;
-let
+{
+  pkgs,
+  lib,
+  config,
+  inputs,
+  ...
+}:
+with lib; let
   mkService = lib.recursiveUpdate {
-    Unit.PartOf = [ "graphical-session.target" ];
-    Unit.After = [ "graphical-session.target" ];
-    Install.WantedBy = [ "graphical-session.target" ];
+    Unit.PartOf = ["graphical-session.target"];
+    Unit.After = ["graphical-session.target"];
+    Install.WantedBy = ["graphical-session.target"];
   };
 
   ocr = pkgs.writeShellScriptBin "ocr" ''

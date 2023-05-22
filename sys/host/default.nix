@@ -1,5 +1,4 @@
-{ pkgs, ... }: {
-
+{pkgs, ...}: {
   time.timeZone = "Asia/Manila";
 
   # Select internationalisation properties.
@@ -23,8 +22,7 @@
   users.users.yoru = {
     isNormalUser = true;
     description = "Yoru";
-    extraGroups =
-      [ "networkmanager" "wheel" "video" "input" "kvm" "libvirt" "docker" ];
+    extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirt" "docker"];
     packages = with pkgs; [
       # Editor
       firefox-wayland
@@ -69,7 +67,7 @@
       gnome-keyring.enable = true;
     };
 
-    udev.packages = with pkgs; [ gnome.gnome-settings-daemon ];
+    udev.packages = with pkgs; [gnome.gnome-settings-daemon];
 
     usbmuxd.enable = true;
     avahi.enable = true;
