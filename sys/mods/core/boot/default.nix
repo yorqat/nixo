@@ -3,16 +3,16 @@
 {
   boot = {
     loader = {
-        systemd-boot.enable = true;
-        efi = { 
-          canTouchEfiVariables = true;
-          efiSysMountPoint = "/boot/efi";
-        };
+      systemd-boot.enable = true;
+      efi = {
+        canTouchEfiVariables = true;
+        efiSysMountPoint = "/boot/efi";
+      };
     };
 
     initrd = {
       supportedFilesystems = [ "nfs" ];
-      kernelModules = ["nfs"];
+      kernelModules = [ "nfs" ];
     };
 
     # Enable TTYs
@@ -22,7 +22,7 @@
       "console=tty3"
       "console=tty4"
       "console=tty5"
-      "console=tty6" 
+      "console=tty6"
     ];
   };
 }

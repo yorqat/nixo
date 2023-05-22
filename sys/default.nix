@@ -1,7 +1,4 @@
-{ nixpkgs
-, self
-, ...
-}:
+{ nixpkgs, self, ... }:
 let
   inputs = self.inputs;
   bootloader = ./mods/core/boot;
@@ -13,9 +10,8 @@ let
   #teamviewer = ./mods/teamviewer;
   hmModule = inputs.home-manager.nixosModules.home-manager;
 
-  yoru =  ../usrs/yoru.nix;
-in
-{
+  yoru = ../usrs/yoru.nix;
+in {
   qaten = nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
     specialArgs = {

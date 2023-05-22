@@ -1,8 +1,8 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   fonts = {
     enableDefaultFonts = true;
     fonts = with pkgs; [
-      (nerdfonts.override {fonts = ["JetBrainsMono"];})
+      (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
       #(nerdfonts.override {fonts = ["FiraCode"];})
       # font-awesome
       # emacs-all-the-icons-fonts
@@ -11,8 +11,8 @@
 
     fontconfig = {
       defaultFonts = {
-        sansSerif = ["Inter"];
-        monospace = ["JetBrainsMono Nerd Font"];
+        sansSerif = [ "Inter" ];
+        monospace = [ "JetBrainsMono Nerd Font" ];
       };
     };
   };

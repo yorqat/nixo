@@ -1,8 +1,5 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: let
+{ pkgs, inputs, ... }:
+let
   hyprland-nvidia = inputs.hyprland.packages.${pkgs.system}.default.override {
     wlroots = inputs.hyprland.packages.${pkgs.system}.wlroots-hyprland;
 
@@ -11,7 +8,7 @@
 
   hyprland = inputs.hyprland.packages.${pkgs.system}.default;
 in {
-  environment.defaultPackages = [];
+  environment.defaultPackages = [ ];
 
   nixpkgs.config = {
     allowUnfree = true;
@@ -22,7 +19,7 @@ in {
     inputs.xdg-desktop-portal-hyprland.overlays.default
     (final: super: {
       makeModulesClosure = x:
-        super.makeModulesClosure (x // {allowMissing = true;});
+        super.makeModulesClosure (x // { allowMissing = true; });
 
       inherit hyprland-nvidia hyprland;
     })
@@ -31,7 +28,7 @@ in {
   nix = {
     package = pkgs.nixStable;
     settings = {
-      trusted-users = ["root" "yoru"];
+      trusted-users = [ "root" "yoru" ];
       auto-optimise-store = true;
       trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
@@ -59,7 +56,6 @@ in {
       options = "--delete-older-than 4d";
     };
   };
-
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

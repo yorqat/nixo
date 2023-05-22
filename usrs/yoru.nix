@@ -1,5 +1,4 @@
-{ lib, inputs, pkgs, ... }:
-{
+{ lib, inputs, pkgs, ... }: {
   imports = [
     ./mods/hyprland
     ./mods/eww

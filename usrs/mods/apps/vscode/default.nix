@@ -1,7 +1,5 @@
 { pkgs, ... }: {
-  home.packages = with pkgs; [
-    # wakatime
-  ];
+  home.packages = with pkgs; [ wakatime ];
 
   programs.vscode = {
     enable = true;
@@ -17,7 +15,6 @@
       svelte.svelte-vscode
       denoland.vscode-deno
       lokalise.i18n-ally
-
 
       # Cosmetics
       catppuccin.catppuccin-vsc

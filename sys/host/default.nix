@@ -1,7 +1,7 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
 
   time.timeZone = "Asia/Manila";
-  
+
   # Select internationalisation properties.
   i18n.defaultLocale = "en_PH.UTF-8";
 
@@ -23,15 +23,8 @@
   users.users.yoru = {
     isNormalUser = true;
     description = "Yoru";
-    extraGroups = [ 
-      "networkmanager"
-      "wheel"
-      "video"
-      "input"
-      "kvm"
-      "libvirt" 
-      "docker"
-    ];
+    extraGroups =
+      [ "networkmanager" "wheel" "video" "input" "kvm" "libvirt" "docker" ];
     packages = with pkgs; [
       # Editor
       firefox-wayland
@@ -67,8 +60,8 @@
     };
 
     #plex = {
-      #enable = true;
-      #openFirewall = true;
+    #enable = true;
+    #openFirewall = true;
     #};
 
     gnome = {
@@ -76,9 +69,7 @@
       gnome-keyring.enable = true;
     };
 
-    udev.packages = with pkgs; [
-      gnome.gnome-settings-daemon
-    ];
+    udev.packages = with pkgs; [ gnome.gnome-settings-daemon ];
 
     usbmuxd.enable = true;
     avahi.enable = true;
@@ -86,7 +77,7 @@
     flatpak.enable = true;
     openssh.enable = true;
   };
-  
+
   environment.systemPackages = with pkgs; [
     lua
     libimobiledevice

@@ -1,9 +1,5 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: {
-  nixpkgs.overlays = [inputs.nixpkgs-wayland.overlay];
+{ pkgs, inputs, ... }: {
+  nixpkgs.overlays = [ inputs.nixpkgs-wayland.overlay ];
 
   environment = {
     variables = {
@@ -38,6 +34,6 @@
 
   xdg.portal = {
     enable = true;
-    extraPortals = [pkgs.xdg-desktop-portal-hyprland];
+    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
   };
 }
