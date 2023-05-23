@@ -22,7 +22,7 @@
   users.users.yoru = {
     isNormalUser = true;
     description = "Yoru";
-    extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirt" "docker"];
+    extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [
       # Editor
       firefox-wayland
@@ -48,6 +48,8 @@
   };
 
   programs.xwayland.enable = true;
+  # for virt-manager
+  virtualisation.libvirtd.enable = true;
   programs.dconf.enable = true;
   hardware.opengl.enable = true;
 
