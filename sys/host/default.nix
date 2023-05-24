@@ -16,12 +16,12 @@
     LC_TIME = "fil_PH";
   };
 
-  networking.hostName = "qaten";
-  services.getty.autologinUser = "yoru";
+  networking.hostName = "qat";
+  services.getty.autologinUser = "yor";
 
-  users.users.yoru = {
+  users.users.yor = {
     isNormalUser = true;
-    description = "Yoru";
+    description = "yor";
     extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [
       wofi

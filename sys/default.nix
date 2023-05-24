@@ -13,13 +13,13 @@
   #teamviewer = ./mods/teamviewer;
   hmModule = inputs.home-manager.nixosModules.home-manager;
 
-  yoru = ../usrs/yoru.nix;
+  yor = ../usrs/yor.nix;
 in {
-  qaten = nixpkgs.lib.nixosSystem {
+  qat = nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
     specialArgs = {
       inherit inputs;
-      hostname = "qaten";
+      hostname = "qat";
     };
     modules = [
       ../hardware-configuration.nix
@@ -40,7 +40,7 @@ in {
             inherit self;
             packages = self.packages."x86_64-linux";
           };
-          users.yoru = yoru;
+          users.yor = yor;
         };
       }
     ];

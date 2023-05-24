@@ -20,8 +20,8 @@
   ];
 
   home = {
-    username = "yoru";
-    homeDirectory = "/home/yoru";
+    username = "yor";
+    homeDirectory = "/home/yor";
 
     stateVersion = "22.05";
 
@@ -31,5 +31,5 @@
   programs.home-manager.enable = true;
 
   # Enable automatic login for the user.
-  # services.getty.autologinUser = "yoru";
+  # services.getty.autologinUser = "yor";
 }

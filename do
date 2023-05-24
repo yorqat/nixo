@@ -3,7 +3,7 @@
 case "$1" in
     "--install")
         echo "Performing installation..."
-        sudo nixos-rebuild switch --flake .#qaten
+        sudo nixos-rebuild switch --flake .#qat
         ;;
     "--gen-hardware")
         echo "Generating hardware information..."
@@ -12,7 +12,7 @@ case "$1" in
     "--meta-install")
         echo "Installing on /mnt"
         sudo nixos-generate-config --root /mnt --show-hardware-config > hardware-configuration.nix
-        sudo nixos-install --root /mnt --flake .#qaten
+        sudo nixos-install --root /mnt --flake .#qat
         ;;
     *)
         ./do --install

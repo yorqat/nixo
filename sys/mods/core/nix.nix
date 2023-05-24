@@ -31,7 +31,7 @@ in {
   nix = {
     package = pkgs.nixStable;
     settings = {
-      trusted-users = ["root" "yoru"];
+      trusted-users = ["root" "yor"];
       auto-optimise-store = true;
       trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
