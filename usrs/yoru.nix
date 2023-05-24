@@ -14,6 +14,7 @@
     ./mods/apps/vscode
     ./mods/apps/neovim
     ./mods/apps/kitty
+    ./mods/apps/firefox
 
     inputs.hyprland.homeManagerModules.default
   ];

@@ -24,10 +24,6 @@
     description = "Yoru";
     extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [
-      # Editor
-      firefox-wayland
-      # eww-wayland
-
       wofi
 
       # Audio
