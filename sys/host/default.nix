@@ -46,6 +46,7 @@
   programs.xwayland.enable = true;
   # for virt-manager
   virtualisation.libvirtd.enable = true;
+  virtualisation.docker.enable = true;
   programs.dconf.enable = true;
   hardware.opengl.enable = true;
 
@@ -85,7 +86,6 @@
 
     ifuse
     virt-manager
-    docker-client
 
     # nfs support
     nfs-utils
