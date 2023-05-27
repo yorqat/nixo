@@ -48,4 +48,7 @@ eww -c ../$NEW_THEME open bar
 eww -c ../$NEW_THEME update theme="themes/$NEW_THEME"
 swaybg -i ../$NEW_THEME/HOME_WALL -m fill &
 
+# window styling
+./scripts/hypr_theme ../$NEW_THEME/hyprland.conf
+
 kill $OLD_BG_PROCESS
