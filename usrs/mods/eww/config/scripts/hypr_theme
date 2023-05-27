@@ -1,0 +1,54 @@
+#!/usr/bin/env lua
+
+local filename = arg[1]  -- Get filename from command line argument
+
+if not filename then
+  print("Usage: lua script.lua <filename>")
+  return
+end
+
+local file = io.open(filename, "r")  -- Open the file in read mode
+
+if not file then
+  print("Failed to open the file:", filename)
+  return
+end
+
+local output = file:read("*all")  -- Read the entire file content
+file:close()  -- Close the file
+
+local lines = {}  -- Table to store parsed lines
+local currentParent = ""  -- Track current parent for nested properties
+
+-- Iterate through each line of the file
+for line in output:gmatch("[^\r\n]+") do
+    local trimmedLine = line:match("^%s*(.-)%s*$")
+    
+    if trimmedLine ~= "" then
+        if trimmedLine:match("%{") then  -- Opening brace indicates a new parent
+            currentParent = trimmedLine:match("(%a+)%s*%{")
+        elseif trimmedLine:match("%}") then  -- Closing brace indicates end of parent
+            currentParent = ""
+        else
+            local property, value = trimmedLine:match("(%S+)%s*=%s*(.+)")  -- Extract property and value
+            if property and value then
+                local outputLine = "keyword " .. currentParent .. ":" .. property .. " " .. value
+                table.insert(lines, outputLine)  -- Store the parsed line
+            else
+                print("Failed to parse line:", trimmedLine)
+                return
+            end
+        end
+    end
+end
+
+if #lines == 0 then
+    print("No valid lines found in the file.")
+    return
+end
+
+local script = 'hyprctl --batch "' .. table.concat(lines, '; ') .. '"'  -- Generate the final script string
+-- print(script)
+
+-- Execute the script
+os.execute(script)
