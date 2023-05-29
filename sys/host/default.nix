@@ -25,10 +25,7 @@
     extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [
       wofi
-
-      # Audio
-      pavucontrol
-      helvum
+      swaybg
 
       # Screenshot
       slurp

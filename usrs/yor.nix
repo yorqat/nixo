@@ -25,7 +25,14 @@
 
     stateVersion = "22.05";
 
-    packages = with pkgs; [chromium discord-canary flameshot swaybg];
+    packages = with pkgs; [
+      chromium # dev browser
+      discord-canary # messenger
+      gnome.nautilus
+      prismlauncher # minecraft
+      pavucontrol # audio device volume
+      helvum # media routing
+    ];
   };
 
   programs.home-manager.enable = true;
