@@ -141,7 +141,7 @@
     :x "0%"
     :y "0%"
     :height "5px"
-    :width "800px"
+    :width "400px"
     :anchor "top center")
   (eventbox :class "bubbly" :onhover "eww open mp; eww close mp-mini"))
   
@@ -154,7 +154,7 @@
     :x "0%"
     :y "0%"
     :height "30px"
-    :width "800px"
+    :width "400px"
     :anchor "top center")
 (music))
   
