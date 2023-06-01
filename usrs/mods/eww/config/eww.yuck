@@ -188,9 +188,9 @@
             ))
         )
         (box :class "h" :orientation "h"
-          (button :class "music-button" "玲")
-          (button :class "music-button" "契")
-          (button :class "music-button" "怜")
+          (button :class "music-button" "󰒮")
+          (button :class "music-button" "󰐊")
+          (button :class "music-button" "󰼧")
         )
   )))
   
