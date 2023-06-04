@@ -28,19 +28,19 @@
 local delay = 0.01
 
 local workspaces = {
-   { tooltip = "Chat", icon = "󰻞" },
-   { tooltip = "Browse", icon = "󰇧" },
-   { tooltip = "Editor", icon = "" },
-   { tooltip = "Music", icon = "󰂰" },
-   { tooltip = "Video", icon = "󰯜" },
-   { tooltip = "Home", icon = "󱄅" },
+	{ tooltip = "Chat", icon = "󰻞" },
+	{ tooltip = "Browse", icon = "󰇧" },
+	{ tooltip = "Editor", icon = "" },
+	{ tooltip = "Music", icon = "󰂰" },
+	{ tooltip = "Video", icon = "󰯜" },
+	{ tooltip = "Home", icon = "󱄅" },
 }
 
 function match_output()
-    -- Gets active workspace number
-    local cmd = "~/.config/eww/scripts/active_workspace"
+	-- Gets active workspace number
+	local cmd = "~/.config/eww/scripts/active_workspace"
 
-    return tonumber(io.popen(cmd):read("*all"))
+	return tonumber(io.popen(cmd):read("*all"))
 end
 
 -- Active workspace
@@ -48,41 +48,51 @@ local workspace = match_output()
 
 -- Generate widgets in eww-yuck
 function gen_eww_widget()
-    local mapped_workspace_buttons = ""
-    local active_workspace = match_output()
+	local mapped_workspace_buttons = ""
+	local active_workspace = match_output()
 
-    for index, workspace in ipairs(workspaces) do
-        mapped_workspace_buttons = mapped_workspace_buttons
-        .. "(button :class \"" 
-            .. ( index == active_workspace and "active-workspace" or "inactive-workspace"  ) .. "\""
-            .. [[ :tooltip "]] .. workspace.tooltip  .. "\"" 
-            .. ":onclick \""
-            -- close dashboard at every workspace except home workspace
-            -- .. "scripts/dashboard " .. ( index ~= #workspaces and "--close; " or "--open; " )
-            -- dispatch to intended workspace
-            .. "hyprctl dispatch workspace " .. index .. "\" " .. "\"" .. workspace.icon .. "\"" 
-        .. ")"
-    end
+	for index, workspace in ipairs(workspaces) do
+		mapped_workspace_buttons = mapped_workspace_buttons
+			.. '(button :class "'
+			.. (index == active_workspace and "active-workspace" or "inactive-workspace")
+			.. '"'
+			.. [[ :tooltip "]]
+			.. workspace.tooltip
+			.. '"'
+			.. ':onclick "'
+			-- close dashboard at every workspace except home workspace
+			-- .. "scripts/dashboard " .. ( index ~= #workspaces and "--close; " or "--open; " )
+			-- dispatch to intended workspace
+			.. "hyprctl dispatch workspace "
+			.. index
+			.. '" '
+			.. '"'
+			.. workspace.icon
+			.. '"'
+			.. ")"
+	end
 
-    return "(eventbox :onscroll \"" .. [[~/.config/eww/scripts/switch_workspace --{}"]]
-    .. [[(box :class "bubbly roundy workspaces" :orientation "v" :valign "start" :spacing 16 ]]
-    .. mapped_workspace_buttons .. "))\n"
+	return '(eventbox :onscroll "'
+		.. [[~/.config/eww/scripts/switch_workspace --{}"]]
+		.. [[(box :class "bubbly roundy workspaces" :orientation "v" :valign "start" :spacing 16 ]]
+		.. mapped_workspace_buttons
+		.. "))\n"
 end
 
 function output_result()
-    io.write(gen_eww_widget())
-    io.flush()
+	io.write(gen_eww_widget())
+	io.flush()
 end
 
 output_result()
 
 while true do
-    local new_workspace = match_output()
+	local new_workspace = match_output()
 
-    if workspace ~= new_workspace  then
-        workspace = new_workspace
-        output_result()
-    end
+	if workspace ~= new_workspace then
+		workspace = new_workspace
+		output_result()
+	end
 
-    os.execute("sleep " .. delay)
+	os.execute("sleep " .. delay)
 end

@@ -39,6 +39,7 @@
         yaml-language-server # yaml LSP
         alejandra # uncomprimising nix formatter
         fnlfmt # fennel formatter
+        stylua # lua formatter
       ];
     };
   };
