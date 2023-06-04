@@ -128,7 +128,7 @@
         :orientation "v"
         :valign "end"
         :spacing 12
-          (button :tooltip "swap theme" :class "biggie" :onclick "scripts/theme" '')
+          (button :timeout "2000ms" :tooltip "swap theme" :class "biggie" :onclick "scripts/theme" '')
           (button :tooltip "reboot" :class "biggie" :onclick "systemctl reboot" '')
           (button :tooltip "shut down" :class "biggie" :onclick "systemctl poweroff" ''))))
 
@@ -168,7 +168,9 @@
         (box :orientation "h"
           (box :class "music-heading"
             :orientation "h"
-            (image :path "/home/yor/Music/SpotiFlyer/Tracks/Tired.mp3" :image-width 100 :image-height 100)
+            (box :class "music-art"
+              (image :path "/home/yor/Pictures/cute.png" :image-width 40 :image-height 40)
+            )
             (box :class "music-meta"
               :orientation "v"
               (label :text "Tristam")
