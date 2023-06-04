@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# return the workspace number from command
+
+result=$(hyprctl monitors)
+if [[ $result =~ active\ workspace:[[:space:]]*([0-9]+) ]]; then
+  digit=${BASH_REMATCH[1]}
+  echo $digit
+else
+  exit 1
+fi

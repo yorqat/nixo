@@ -36,14 +36,11 @@ local workspaces = {
    { tooltip = "Home", icon = "󱄅" },
 }
 
-
 function match_output()
-    -- Get active window on hyprland
-    local cmd = "hyprctl monitors"
-    -- Pattern for matching the result of cmd
-    local pattern = "active workspace:%s*(%d+)"
-    
-    return tonumber(io.popen(cmd):read("*all"):match(pattern))
+    -- Gets active workspace number
+    local cmd = "~/.config/eww/scripts/active_workspace"
+
+    return tonumber(io.popen(cmd):read("*all"))
 end
 
 -- Active workspace
