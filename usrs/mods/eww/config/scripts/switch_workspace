@@ -3,13 +3,7 @@ ACTIVE_WORKSPACE=$(~/.config/eww/scripts/active_workspace)
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --up) hyprctl dispatch workspace $(($ACTIVE_WORKSPACE + 1));;
-        --down)
-            if [[ $(($ACTIVE_WORKSPACE - 1)) -lt 0 ]]; then
-                hyprctl dispatch workspace 0
-            else
-                hyprctl dispatch workspace $(($ACTIVE_WORKSPACE - 1))
-            fi
-            ;;
+        --down) hyprctl dispatch workspace $(($ACTIVE_WORKSPACE - 1));;
         *) hyprctl dispatch workspace $(($ACTIVE_WORKSPACE + 1));;
     esac
     shift
