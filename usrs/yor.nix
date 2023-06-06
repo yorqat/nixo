@@ -28,6 +28,7 @@
     packages = with pkgs; [
       chromium # dev browser
       discord-canary # messenger
+      signal-desktop # messenger
       gnome.nautilus
       prismlauncher # minecraft
       pavucontrol # audio device volume
