@@ -46,7 +46,10 @@
   virtualisation.docker.enable = true;
   programs.dconf.enable = true;
   hardware.opengl.enable = true;
-
+  # For steam
+  hardware.steam-hardware.enable = true;
+  programs.steam.enable = true;
+  
   services = {
     xserver = {
       layout = "us";
