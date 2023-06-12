@@ -22,7 +22,7 @@
   users.users.yor = {
     isNormalUser = true;
     description = "yor";
-    extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirtd" "docker"];
+    extraGroups = ["networkmanager" "wheel" "audio" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [
       wofi
       swaybg
