@@ -32,6 +32,8 @@
       denoland.vscode-deno
       lokalise.i18n-ally
 
+      github.vscode-github-actions
+
       # Cosmetics
       catppuccin.catppuccin-vsc
       pkief.material-icon-theme
