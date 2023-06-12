@@ -10,6 +10,7 @@
     ./mods/neofetch
     ./mods/git
     ./mods/shell
+    ./mods/mpd
 
     ./mods/apps/vscode
     ./mods/apps/neovim
