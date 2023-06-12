@@ -40,6 +40,11 @@ in {
     pngquant
     # swww 
     libsForQt5.qt5.qtwayland
+
+    wofi
+    mako
+    swaybg
+    libnotify
   ];
 
   wayland.windowManager.hyprland = {

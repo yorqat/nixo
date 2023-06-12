@@ -23,21 +23,6 @@
     isNormalUser = true;
     description = "yor";
     extraGroups = ["networkmanager" "wheel" "video" "input" "kvm" "libvirtd" "docker"];
-    packages = with pkgs; [
-      wofi
-      swaybg
-
-      # Screenshot
-      slurp
-      grim
-
-      # Notifications
-      mako
-      libnotify
-
-      # Clipboard
-      wl-clipboard
-    ];
   };
 
   programs.xwayland.enable = true;
