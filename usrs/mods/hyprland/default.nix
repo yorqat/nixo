@@ -38,7 +38,7 @@ in {
     screenshot
     wl-clipboard
     pngquant
-    # swww 
+    # swww
     libsForQt5.qt5.qtwayland
 
     wofi

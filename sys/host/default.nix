@@ -35,7 +35,7 @@
   # For steam
   hardware.steam-hardware.enable = true;
   programs.steam.enable = true;
-  
+
   services = {
     xserver = {
       layout = "us";
