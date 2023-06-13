@@ -45,6 +45,7 @@ in {
     mako
     swaybg
     libnotify
+    feh
   ];
 
   wayland.windowManager.hyprland = {
