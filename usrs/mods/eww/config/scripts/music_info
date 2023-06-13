@@ -1,0 +1,34 @@
+#!/usr/bin/env  bash
+COVER="/tmp/eww_mp_thumbnail.png"
+MUSIC_DIR="$HOME/Music"
+
+get_cover() {
+	ffmpeg -i "$MUSIC_DIR/$(mpc current -f %file%)" "${COVER}" -y &> /dev/null
+	STATUS=$?
+
+	# Check if the file has a embbeded album art
+	if [ "$STATUS" -eq 0 ];then
+		echo "$COVER"
+	else
+		echo "images/music.png"
+	fi
+}
+
+get_artist() {
+	mpc current -f %artist%
+}
+
+get_title() {
+	mpc current -f %title%
+}
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --cover) get_cover;;
+		--artist) get_artist;;
+		--title) get_title;;
+        *) echo "meow"
+        ;;
+    esac
+    shift
+done

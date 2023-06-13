@@ -4,6 +4,8 @@
 (defpoll time_hour :interval "1s" "date +\%H")
 (defpoll time_min :interval "1s" "date +\%M")
 (defpoll date :interval "30m" "date +\%D")
+(defpoll music_title :interval "1s" "scripts/music_info --title")
+(defpoll music_artist :interval "1s" "scripts/music_info --artist")
 (defpoll clock_tick :interval "500ms" "scripts/clock_tick")
 
 (defvar clock_tick_show true)
@@ -143,7 +145,7 @@
     :height "5px"
     :width "400px"
     :anchor "top center")
-  (eventbox :class "bubbly" :onhover "eww -c . open mp; eww -c . close mp-mini"))
+  (eventbox :class "bubbly" :onhover "eww -c . open mp; eww -c . close mp-mini; scripts/music_info --cover"))
   
 (defwindow mp
   :class "bubbly"
@@ -169,12 +171,12 @@
           (box :class "music-heading"
             :orientation "h"
             (box :class "music-art"
-              (image :path "/home/yor/Pictures/cute.png" :image-width 40 :image-height 40)
+              (image :path "/tmp/eww_mp_thumbnail.png" :image-width 100 :image-height 100)
             )
             (box :class "music-meta"
               :orientation "v"
-              (label :text "Tristam")
-              (label :text "Frame of Mind")
+              (label :text music_artist)
+              (label :class "music-player-label" :text music_title)
               (scale :orientation "h"
               :value 50
               :marks "hi"
