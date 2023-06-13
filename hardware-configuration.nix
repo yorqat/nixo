@@ -12,24 +12,35 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  boot.initrd.availableKernelModules = ["xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod"];
+  boot.initrd.availableKernelModules = ["xhci_pci" "ahci" "nvme" "usb_storage" "usbhid" "sd_mod"];
   boot.initrd.kernelModules = [];
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
 
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/ad300be4-0306-4a53-96db-785acf4c0805";
-    fsType = "ext4";
+    device = "/dev/disk/by-uuid/ceaae2a3-eca0-4198-a84a-b3432f6aae10";
+    fsType = "btrfs";
+  };
+
+  fileSystems."/var/lib/docker/btrfs" = {
+    device = "/var/lib/docker/btrfs";
+    fsType = "none";
+    options = ["bind"];
   };
 
   fileSystems."/boot/efi" = {
-    device = "/dev/disk/by-uuid/DC3E-4992";
+    device = "/dev/disk/by-uuid/D64A-9250";
     fsType = "vfat";
   };
 
   fileSystems."/dat" = {
     device = "/dev/disk/by-uuid/9497d692-3ec1-4035-bf55-87769d5c9c71";
     fsType = "btrfs";
+  };
+
+  fileSystems."/home/yor/mounts/home_server" = {
+    device = "192.168.18.67:/mnt/state";
+    fsType = "nfs4";
   };
 
   swapDevices = [];
@@ -39,7 +50,10 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
+  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
+  # networking.interfaces.virbr0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.vnet2.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
