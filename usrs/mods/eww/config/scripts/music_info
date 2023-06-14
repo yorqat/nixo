@@ -41,11 +41,22 @@ get_title() {
 	add_newlines "$TITLE" 20
 }
 
+get_time() {
+  mpc status '%currenttime% - %totaltime%'
+}
+
+get_time_percentile() {
+  # string="10%"; echo "${string/\%/}"
+  TIME=$(mpc status '%percenttime%')
+  echo "${TIME/\%/}"
+}
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --cover) get_cover;;
 		--artist) get_artist;;
 		--title) get_title;;
+    --time) get_time;;
+    --time_percent) get_time_percentile;;
         *) echo "meow"
         ;;
     esac

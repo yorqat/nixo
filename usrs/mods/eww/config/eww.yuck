@@ -6,6 +6,8 @@
 (defpoll date :interval "30m" "date +\%D")
 (defpoll music_title :interval "1s" "scripts/music_info --title")
 (defpoll music_artist :interval "1s" "scripts/music_info --artist")
+(defpoll music_time :interval "1s" "scripts/music_info --time" )
+(defpoll music_time_percent :interval "1s" "scripts/music_info --time_percent")
 (defpoll clock_tick :interval "500ms" "scripts/clock_tick")
 
 (defvar clock_tick_show true)
