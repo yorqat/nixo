@@ -89,8 +89,8 @@ tooltip {
 .music {
     margin-top: 1em;
     margin-bottom: 0.2em;
-    background-color: rgb(34, 33, 56);
-    border-radius: 10px;
+    border-radius: 0 10px 10px 0;
+    padding: 0;
 }
 
 .music-button {
