@@ -2,8 +2,25 @@
 COVER="/tmp/eww_mp_thumbnail.png"
 MUSIC_DIR="$HOME/Music"
 
+# Just for too long labels
+add_newlines() {
+  string="$1"
+  n="$2"
+  count=0
+
+  for ((i = 0; i < ${#string}; i++)); do
+    echo -n "${string:i:1}"
+    ((count++))
+
+    if ((count == n)); then
+      echo
+      count=0
+    fi
+  done
+}
+
 get_cover() {
-	ffmpeg -i "$MUSIC_DIR/$(mpc current -f %file%)" "${COVER}" -y &> /dev/null
+	ffmpeg -i "$MUSIC_DIR/$(mpc current -f %file%)" -map 0:v:0 -c copy "${COVER}" -y &> /dev/null
 	STATUS=$?
 
 	# Check if the file has a embbeded album art
@@ -15,11 +32,13 @@ get_cover() {
 }
 
 get_artist() {
-	mpc current -f %artist%
+	ARTIST=$(mpc current -f %artist%)
+	add_newlines "$ARTIST" 18
 }
 
 get_title() {
-	mpc current -f %title%
+	TITLE=$(mpc current -f %title%)
+	add_newlines "$TITLE" 20
 }
 
 while [[ "$#" -gt 0 ]]; do
