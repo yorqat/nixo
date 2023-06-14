@@ -16,6 +16,7 @@ scale trough highlight {
     all: unset;
     background-color: rgb(202, 55, 131);
     color: #000000;
+    border-radius: 10px;
 }
 
 .biggie {
@@ -47,7 +48,7 @@ scale trough highlight {
 }
 
 .bubbly {
-    background-color: rgba(34, 33, 56, 1);
+    background-color: rgba(34, 33, 56, 0.7);
 
     box-shadow: 0px 0px 0px 4px rgb(202, 55, 131);
     margin-right: 0.3em;
@@ -99,9 +100,9 @@ tooltip {
   border-radius: 2px;
 
   &:hover {
- box-shadow: 0px 5px 4px -5px rgb(158, 55, 202) inset,
+ box-shadow: 0px 0px 4px -5px rgb(158, 55, 202) inset,
     0px 0 4px -5px rgb(158, 55, 202) inset;
-    color:  rgba(158, 55, 202, 0.5);
+    color:  rgba(158, 55, 202, 1);
   }
 }
 
