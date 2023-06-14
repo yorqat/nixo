@@ -93,9 +93,15 @@ tooltip {
 }
 
 .music-button {
-  padding: 0.5em;
-  border-radius: 4px;
+  font-size: large;
+  padding: 0.4em 0;
+  border-radius: 2px;
   
+  &:hover {
+    box-shadow: 0px 5px 4px -5px #FF6000 inset,
+  0px 0 4px -5px #FFA559 inset;
+    color: #FF6000;
+  }
 }
 
 .music-player-label {
