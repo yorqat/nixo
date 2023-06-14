@@ -164,37 +164,34 @@
     (eventbox :onhoverlost "eww -c . close mp; eww -c . open mp-mini"
       (box :class "music bubbly"
         :orientation "v"
-        :space-evenly true
+        :space-evenly false
         :halign "left"
-        (label :class "music-player-label" :text "Music Player")
         (box :orientation "h"
           (box :class "music-heading"
             :orientation "h"
             (box :class "music-art"
-              (image :path "/tmp/eww_mp_thumbnail.png" :image-width 100 :image-height 100)
-            )
+              (image :path "/tmp/eww_mp_thumbnail.png" :image-width 225 :image-height 225))
             (box :class "music-meta"
               :orientation "v"
               (label :text music_artist)
               (label :class "music-player-label" :text music_title)
-              (scale :orientation "h"
-              :value 50
-              :marks "hi"
-              :max 100.0
-              :min 0.0
-              :class "music-slider")
-            (scale :orientation "h"
-              :value 50
-              :marks "hi"
-              :max 100.0
-              :min 0.0
-              :class "music-slider")
-            ))
-        )
-        (box :class "h" :orientation "h"
-          (button :class "music-button" "󰒮")
-          (button :class "music-button" "󰐊")
-          (button :class "music-button" "󰼧")
+              (box :class "h" :orientation "v"
+                (scale :orientation "h"
+                  :value 50
+                  :marks "hi"
+                  :max 100.0
+                  :min 0.0
+                  :onchange "notify-send 'new value' '{}'"
+                  :class "music-slider")
+              )
+              (box :orientation "h" :space-evenly true
+                  (button :class "music-button" :onclick "mpc repeat" "󰑖")
+                  (button :class "music-button" :onclick "mpc prev" "󰒮")
+                  (button :class "music-button" :onclick "mpc toggle" "󰐊")
+                  (button :class "music-button" :onclick "mpc next" "󰼧")
+                  (button :class "music-button" :onclick "mpc random" "󰒟")
+              ))
+          )
         )
   )))
   
