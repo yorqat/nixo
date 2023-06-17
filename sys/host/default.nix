@@ -28,7 +28,10 @@
 
   programs.xwayland.enable = true;
   # for virt-manager
-  virtualisation.libvirtd.enable = true;
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu.ovmf.packages = [ pkgs.OVMFFull.fd pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd ];
+  };
   virtualisation.docker.enable = true;
   programs.dconf.enable = true;
   hardware.opengl.enable = true;
