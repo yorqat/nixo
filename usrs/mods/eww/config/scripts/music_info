@@ -48,7 +48,7 @@ get_time() {
 get_time_percentile() {
   # string="10%"; echo "${string/\%/}"
   TIME=$(mpc status '%percenttime%')
-  echo "${TIME/\%/}"
+  echo "${TIME/\%/}"  | tr -d '[:space:]'
 }
 while [[ "$#" -gt 0 ]]; do
     case $1 in
