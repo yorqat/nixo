@@ -1,13 +1,12 @@
+;; music player widget
+(include "../../music.yuck")
+
 ;; listens to active workspace
 (deflisten workspace "scripts/workspace-widget")
 
 (defpoll time_hour :interval "1s" "date +\%H")
 (defpoll time_min :interval "1s" "date +\%M")
 (defpoll date :interval "30m" "date +\%D")
-(defpoll music_title :interval "1s" "scripts/music_info --title")
-(defpoll music_artist :interval "1s" "scripts/music_info --artist")
-(defpoll music_time :interval "1s" "scripts/music_info --time" )
-(defpoll music_time_percent :interval "1s" "scripts/music_info --time_percent")
 (defpoll clock_tick :interval "500ms" "scripts/clock_tick")
 
 (defvar clock_tick_show true)
@@ -62,67 +61,3 @@
           (button :timeout "2000ms" :tooltip "swap theme" :class "biggie" :onclick "scripts/theme" '')
           (button :tooltip "reboot" :class "biggie" :onclick "systemctl reboot" '')
           (button :tooltip "shut down" :class "biggie" :onclick "systemctl poweroff" ''))))
-
-;;; Music Player
-(defwindow mp-mini
-  :monitor 0
-  :stacking "fg"
-  :tooltip "music widget"
-  :geometry (geometry
-    :x "0%"
-    :y "0%"
-    :height "5px"
-    :width "400px"
-    :anchor "top center")
-  (eventbox :class "bubbly" :onhover "eww -c . open mp; eww -c . close mp-mini; scripts/music_info --cover"))
-  
-(defwindow mp
-  :class "bubbly"
-  :monitor 0
-  :stacking "fg"
-  :tooltip "music widget"
-  :geometry (geometry 
-    :x "0%"
-    :y "0%"
-    :height "30px"
-    :width "400px"
-    :anchor "top center")
-(music))
-  
-  (defwidget music []
-    (eventbox :onhoverlost "eww -c . close mp; eww -c . open mp-mini"
-      (box :class "music bubbly"
-        :orientation "v"
-        :space-evenly false
-        :halign "left"
-        (box :orientation "h"
-          (box :class "music-heading"
-            :orientation "h"
-            (box :class "music-art"
-              (image :path "/tmp/eww_mp_thumbnail.png" :image-width 225 :image-height 225))
-            (box :class "music-meta"
-              :orientation "v"
-              (label :text music_artist)
-              (label :class "music-player-label" :text music_title)
-              (box :class "h" :orientation "v" :class "music-progress" :valign "end"
-                (label :class "music-progress-time" :text music_time)
-                (scale :orientation "h" :halign "center"
-                  :value music_time_percent
-                  :marks "hi"
-                  :max 100.0
-                  :min 0.0
-                  :onchange "mpc seek {}%"
-                  :class "music-slider")
-              )
-              (box :orientation "h" :space-evenly true
-                  (button :class "music-button" :onclick "mpc repeat" "󰑖")
-                  (button :class "music-button" :onclick "mpc prev" "󰒮")
-                  (button :class "music-button" :onclick "mpc toggle" "󰐊")
-                  (button :class "music-button" :onclick "mpc next" "󰼧")
-                  (button :class "music-button" :onclick "mpc random" "󰒟")
-              ))
-          )
-        )
-  )))
-  
-
