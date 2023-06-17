@@ -111,7 +111,7 @@
                   :marks "hi"
                   :max 100.0
                   :min 0.0
-                  :onchange "notify-send 'new value' '{}'"
+                  :onchange "mpc seek {}%"
                   :class "music-slider")
               )
               (box :orientation "h" :space-evenly true
