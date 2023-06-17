@@ -104,9 +104,10 @@
               :orientation "v"
               (label :text music_artist)
               (label :class "music-player-label" :text music_title)
-              (box :class "h" :orientation "v"
-                (scale :orientation "h"
-                  :value 50
+              (box :class "h" :orientation "v" :class "music-progress" :valign "end"
+                (label :class "music-progress-time" :text music_time)
+                (scale :orientation "h" :halign "center"
+                  :value music_time_percent
                   :marks "hi"
                   :max 100.0
                   :min 0.0
