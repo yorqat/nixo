@@ -10,7 +10,6 @@
 (defpoll clock_tick :interval "500ms" "scripts/clock_tick")
 
 (defvar clock_tick_show true)
-(defvar mails 232)
 (defvar theme "")
 
 ;; main bar
@@ -32,10 +31,6 @@
     (workspaces)
     (time)
     (system)))
-
-;; nah
-(defwidget nah []
-  (box))
 
 ;; defined by script up top
 (defwidget workspaces []
