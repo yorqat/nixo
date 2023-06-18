@@ -41,18 +41,19 @@
     :orientation "v"
     :valign "end"
     :spacing 0
+    :tooltip date
     (box :orientation "v" :spacing 0
       (box time_hour)
       (revealer :reveal clock_tick ":" )
       (box time_min))))
 
 (defwidget system []
-    (box :orientation "v"
-      (box 
-        :class "system"
-        :orientation "v"
-        :valign "end"
-        :spacing 12
-          (button :timeout "2000ms" :tooltip "swap theme" :class "biggie" :onclick "scripts/theme" '')
-          (button :tooltip "reboot" :class "biggie" :onclick "systemctl reboot" '')
-          (button :tooltip "shut down" :class "biggie" :onclick "systemctl poweroff" ''))))
+  (box :orientation "v"
+    (box 
+      :class "system"
+      :orientation "v"
+      :valign "end"
+      :spacing 12
+        (button :timeout "2000ms" :tooltip "swap theme" :class "biggie" :onclick "scripts/theme" '')
+        (button :tooltip "reboot" :class "biggie" :onclick "systemctl reboot" '')
+        (button :tooltip "shut down" :class "biggie" :onclick "systemctl poweroff" ''))))
