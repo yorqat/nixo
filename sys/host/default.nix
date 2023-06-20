@@ -78,6 +78,8 @@
 
     # nfs support
     nfs-utils
+
+    wget
   ];
 
   environment.variables.EDITOR = "nvim";
