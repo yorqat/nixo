@@ -1,6 +1,9 @@
 ;; music player widget
 (include "../../music.yuck")
 
+;; notifications widget
+(include "../../notifs.yuck")
+
 ;; listens to active workspace
 (deflisten workspace "scripts/workspace-widget")
 

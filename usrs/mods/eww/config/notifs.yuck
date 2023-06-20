@@ -1,0 +1,34 @@
+(defwindow notify-mini
+  :monitor 0
+  :exclusive false
+  :stacking "fg"
+  :geometry (geometry 
+    :x "0%"
+    :y "0%"
+    :height "400px"
+    :width "5px"
+    :anchor "right center")
+  (eventbox :class "bubbly" :onhover "eww -c . open notify-bar; eww -c . close notify-mini;"))
+
+;; main bar
+(defwindow notify-bar
+  :monitor 0
+  :exclusive false
+  :stacking "fg"
+  :geometry (geometry 
+    :x "0%"
+    :y "0%"
+    :height "100%"
+    :anchor "right center")
+  (eventbox :onhoverlost "eww -c . open notify-mini; eww -c . close notify-bar;" (notifications)))
+  
+;; main bar layout
+(defwidget notifications []
+  (centerbox
+    :class "notifications bubbly"
+    :orientation "v"
+    :width 400
+    :valign "baseline"
+    (label :text "weather")
+    (label :text "notifications")
+    (calendar :class "calendar" :height 100)))

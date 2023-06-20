@@ -44,7 +44,7 @@ fi
 # launch bar and store the new state
 # add in the wallpaper to spicet things up
 pkill eww
-eww -c ../$NEW_THEME open-many bar mp-mini
+eww -c ../$NEW_THEME open-many bar mp-mini notify-mini
 eww -c ../$NEW_THEME update theme="themes/$NEW_THEME"
 swaybg -i ../$NEW_THEME/HOME_WALL -m fill &
 
