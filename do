@@ -3,7 +3,7 @@
 case "$1" in
     "--install")
         echo "Performing installation..."
-        sudo nixos-rebuild switch --flake .#qat
+        sudo nixos-rebuild switch --flake .#qat -v
         ;;
     "--gen-hardware")
         echo "Generating hardware information..."
