@@ -1,24 +1,26 @@
 (defpoll music_title :interval "1s" "scripts/music_info --title")
 (defpoll music_artist :interval "1s" "scripts/music_info --artist")
-(defpoll music_time :interval "1s" "scripts/music_info --time" )
+(defpoll music_time :interval "500ms" "scripts/music_info --time" )
 (defpoll music_time_percent :interval "1s" "scripts/music_info --time_percent")
+(defpoll music_cover :interval "2s" "scripts/music_info --cover")
 
 ;;; for summoning the music player
 (defwindow mp-mini
   :monitor 0
   :stacking "fg"
   :tooltip "music widget"
+  ; :exclusive true
   :geometry (geometry
     :x "0%"
     :y "0%"
-    :height "5px"
+    :height "2px"
     :width "400px"
     :anchor "top center")
-  (eventbox :class "bubbly"
-    :onhover "eww -c . open mp; eww -c . close mp-mini; scripts/music_info --cover"))
+  (eventbox :class "colored-prim rounded"
+    :onhover "eww -c . open mp; eww -c . close mp-mini;"))
     
 (defwindow mp
-  :class "bubbly"
+  :class ""
   :monitor 0
   :stacking "fg"
   :tooltip "music widget"
@@ -32,7 +34,7 @@
 
 (defwidget music []
   (eventbox :onhoverlost "eww -c . close mp; eww -c . open mp-mini"
-    (box :class "music bubbly"
+    (box :class "music colored-prim"
       :orientation "v"
       :space-evenly false
       :halign "left"
@@ -41,7 +43,7 @@
           :orientation "h"
           ; music thumbnail
           (box :class "music-art"
-            (image :path "/tmp/eww_mp_thumbnail.png" :image-width 225 :image-height 225))
+            (image :path music_cover :image-width 225 :image-height 225))
           ; music descriptors
           (box :class "music-meta"
             :orientation "v"

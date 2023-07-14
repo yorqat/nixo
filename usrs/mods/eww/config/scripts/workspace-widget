@@ -74,7 +74,7 @@ function gen_eww_widget()
 
 	return '(eventbox :onscroll "'
 		.. [[~/.config/eww/scripts/switch_workspace --{}"]]
-		.. [[(box :class "bubbly roundy workspaces" :orientation "v" :valign "start" :spacing 16 ]]
+		.. [[(box :class "workspaces" :orientation "v" :valign "start" :spacing 0 ]]
 		.. mapped_workspace_buttons
 		.. "))\n"
 end

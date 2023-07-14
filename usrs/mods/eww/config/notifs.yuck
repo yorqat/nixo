@@ -1,3 +1,5 @@
+(defpoll notify-date :interval "60s" "date '+\%d %m %y'")
+
 (defwindow notify-mini
   :monitor 0
   :exclusive false
@@ -6,9 +8,9 @@
     :x "0%"
     :y "0%"
     :height "400px"
-    :width "5px"
+    :width "2px"
     :anchor "right center")
-  (eventbox :class "bubbly" :onhover "eww -c . open notify-bar; eww -c . close notify-mini;"))
+  (eventbox :class "colored-prim rounded" :onhover "eww -c . open notify-bar; eww -c . close notify-mini;"))
 
 ;; main bar
 (defwindow notify-bar
@@ -25,10 +27,15 @@
 ;; main bar layout
 (defwidget notifications []
   (centerbox
-    :class "notifications bubbly"
+    :class "notifications colored-prim"
     :orientation "v"
     :width 400
     :valign "baseline"
+    (box :valign "start" :halign "center" :height 200 :width 400
+      (label :text notify-date :class "notify-date")
+      ; (label :text "" :class "notify-time")
+    )
     (label :text "weather")
     (label :text "notifications")
-    (calendar :class "calendar" :height 100)))
+    ; (calendar :class "calendar" :height 100)
+  ))
