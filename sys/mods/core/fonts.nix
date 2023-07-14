@@ -7,6 +7,8 @@
       # font-awesome
       # emacs-all-the-icons-fonts
       inter
+      comic-mono
+      fira-code
     ];
 
     fontconfig = {
