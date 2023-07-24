@@ -62,6 +62,6 @@
             (box :orientation "h" :space-evenly true
               (button :class "music-button" :onclick "mpc repeat" "󰑖")
               (button :class "music-button" :onclick "mpc prev" "󰒮")
-              (button :class "music-button" :onclick "mpc toggle" "󰐊")
+              (button :class "music-button" :onclick "mpc toggle" { music_playing_meta.playing ? "󰐊": "" })
               (button :class "music-button" :onclick "mpc next" "󰼧")
               (button :class "music-button" :onclick "mpc random" "󰒟"))))))))

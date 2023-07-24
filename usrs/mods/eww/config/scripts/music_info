@@ -53,9 +53,9 @@ get_time_percentile() {
 
 is_mpc_playing() {
     if mpc status | grep -q "\[playing\]"; then
-        return 0
-    else
         return 1
+    else
+        return 0
     fi
 }
 
@@ -85,21 +85,19 @@ listen_meta() {
 
 listen_playing_meta() {
   while true; do
-      if is_mpc_playing; then
-        TIME=$(get_time)
-        PERCENTILE=$(get_time_percentile)
+    IS_PLAYING=$(is_mpc_playing && echo "true" || echo "false")
+    TIME=$(get_time)
+    PERCENTILE=$(get_time_percentile)
 
-        LISTEN_PLAYING_META="{"
-        LISTEN_PLAYING_META+="\"time\": \"$TIME\", "
-        LISTEN_PLAYING_META+="\"percentile\": \"$PERCENTILE\""
-        LISTEN_PLAYING_META+="}"
+    LISTEN_PLAYING_META="{"
+    LISTEN_PLAYING_META+="\"time\": \"$TIME\", "
+    LISTEN_PLAYING_META+="\"playing\": \"$IS_PLAYING\", "
+    LISTEN_PLAYING_META+="\"percentile\": \"$PERCENTILE\""
+    LISTEN_PLAYING_META+="}"
 
 
-        echo "$LISTEN_PLAYING_META"
-        sleep 0.5
-      else
-        sleep 2
-      fi
+    echo "$LISTEN_PLAYING_META"
+    sleep 0.5
   done
 }
 
@@ -113,7 +111,7 @@ while [[ "$#" -gt 0 ]]; do
       --time_percent) get_time_percentile;;
       --listen_meta) listen_meta;;
       --listen_playing_meta) listen_playing_meta;;
-      --is_playing) is_mpc_playing;;
+      --is_playing) is_mpc_playing && echo "true" || echo "false";;
       *) return 1;;
     esac
     shift
