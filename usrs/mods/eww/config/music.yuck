@@ -1,8 +1,5 @@
-(defpoll music_title :interval "1s" "scripts/music_info --title")
-(defpoll music_artist :interval "1s" "scripts/music_info --artist")
-(defpoll music_time :interval "500ms" "scripts/music_info --time" )
-(defpoll music_time_percent :interval "1s" "scripts/music_info --time_percent")
-(defpoll music_cover :interval "2s" "scripts/music_info --cover")
+(deflisten music_meta "scripts/music_info --listen_meta")
+(deflisten music_playing_meta "scripts/music_info --listen_playing_meta")
 
 ;;; for summoning the music player
 (defwindow mp-mini
@@ -37,34 +34,34 @@
     (box :class "music colored-prim"
       :orientation "v"
       (box :orientation "h"
-      (box :class "music-heading"
-        :orientation "h"
-      ; music thumbnail
-      (box :class "music-art" :halign "start"
-          (image :path music_cover :image-width 225 :image-height 225))
-      ; music descriptors
-      (box :class "music-meta"
-        :orientation "v"
+        (box :class "music-heading"
+          :orientation "h"
+          ; music thumbnail
+          (box :class "music-art" :halign "start"
+            (image :path {music_meta.cover} :image-width 225 :image-height 225))
+          ; music descriptors
+          (box :class "music-meta"
+            :orientation "v"
 
-        ; artist and title
-        (label :text music_artist)
-        (label :class "music-player-label" :text music_title)
+            ; artist and title
+            (label :text {music_meta.artist})
+            (label :class "music-player-label" :text {music_meta.title})
 
-        ; music seeking
-        (box :class "h" :orientation "v" :class "music-progress" :valign "end" 
-          (label :class "music-progress-time" :text music_time)
-          (scale :orientation "h" :halign "center"
-            :value music_time_percent
-            :marks "hi"
-            :max 100.0
-            :min 0.0
-            :onchange "mpc seek {}%"
-            :class "music-slider"))
+            ; music seeking
+            (box :class "h" :orientation "v" :class "music-progress" :valign "end" 
+              (label :class "music-progress-time" :text {music_playing_meta.time})
+              (scale :orientation "h" :halign "center"
+                :value {music_playing_meta.percentile}
+                :marks "hi"
+                :max 100.0
+                :min 0.0
+                :onchange "mpc seek {}%"
+                :class "music-slider"))
 
-        ; music buttons
-        (box :orientation "h" :space-evenly true
-            (button :class "music-button" :onclick "mpc repeat" "󰑖")
-            (button :class "music-button" :onclick "mpc prev" "󰒮")
-            (button :class "music-button" :onclick "mpc toggle" "󰐊")
-            (button :class "music-button" :onclick "mpc next" "󰼧")
-            (button :class "music-button" :onclick "mpc random" "󰒟"))))))))
+            ; music buttons
+            (box :orientation "h" :space-evenly true
+              (button :class "music-button" :onclick "mpc repeat" "󰑖")
+              (button :class "music-button" :onclick "mpc prev" "󰒮")
+              (button :class "music-button" :onclick "mpc toggle" "󰐊")
+              (button :class "music-button" :onclick "mpc next" "󰼧")
+              (button :class "music-button" :onclick "mpc random" "󰒟"))))))))

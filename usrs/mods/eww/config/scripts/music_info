@@ -27,18 +27,18 @@ get_cover() {
 	if [ "$STATUS" -eq 0 ];then
 		echo "$COVER"
 	else
-		echo "images/music.png"
+		echo "images/icons/music.jpg"
 	fi
 }
 
 get_artist() {
 	ARTIST=$(mpc current -f %artist%)
-	add_newlines "$ARTIST" 18
+	add_newlines "$ARTIST" 40
 }
 
 get_title() {
 	TITLE=$(mpc current -f %title%)
-	add_newlines "$TITLE" 20
+	add_newlines "$TITLE" 40
 }
 
 get_time() {
@@ -50,15 +50,71 @@ get_time_percentile() {
   TIME=$(mpc status '%percenttime%')
   echo "${TIME/\%/}"  | tr -d '[:space:]'
 }
+
+is_mpc_playing() {
+    if mpc status | grep -q "\[playing\]"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+listen_meta() {
+  CURRENT_TITLE=""
+
+  while true; do
+      TITLE=$(get_title)
+
+      if [ "$CURRENT_TITLE" != "$TITLE" ] ; then
+        CURRENT_TITLE=$TITLE
+        ARTIST=$(get_artist)
+        COVER=$(get_cover)
+
+        LISTEN_META="{"
+        LISTEN_META+="\"title\": \"$TITLE\", "
+        LISTEN_META+="\"artist\": \"$ARTIST\", "
+        LISTEN_META+="\"cover\": \"$COVER\""
+        LISTEN_META+="}"
+
+        echo "$LISTEN_META"
+      fi
+
+      sleep 2
+  done
+}
+
+listen_playing_meta() {
+  while true; do
+      if is_mpc_playing; then
+        TIME=$(get_time)
+        PERCENTILE=$(get_time_percentile)
+
+        LISTEN_PLAYING_META="{"
+        LISTEN_PLAYING_META+="\"time\": \"$TIME\", "
+        LISTEN_PLAYING_META+="\"percentile\": \"$PERCENTILE\""
+        LISTEN_PLAYING_META+="}"
+
+
+        echo "$LISTEN_PLAYING_META"
+        sleep 0.5
+      else
+        sleep 2
+      fi
+  done
+}
+
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --cover) get_cover;;
-		--artist) get_artist;;
-		--title) get_title;;
-    --time) get_time;;
-    --time_percent) get_time_percentile;;
-        *) echo "meow"
-        ;;
+      --cover) get_cover;;
+      --artist) get_artist;;
+      --title) get_title;;
+      --time) get_time;;
+      --time_percent) get_time_percentile;;
+      --listen_meta) listen_meta;;
+      --listen_playing_meta) listen_playing_meta;;
+      --is_playing) is_mpc_playing;;
+      *) return 1;;
     esac
     shift
 done
