@@ -1,5 +1,5 @@
 (deflisten music_meta "scripts/music_info --listen_meta")
-(deflisten music_playing_meta "scripts/music_info --listen_playing_meta")
+(deflisten music_player "scripts/music_info --listen_playing_meta")
 
 ;;; for summoning the music player
 (defwindow mp-mini
@@ -49,9 +49,9 @@
 
             ; music seeking
             (box :class "h" :orientation "v" :class "music-progress" :valign "end" 
-              (label :class "music-progress-time" :text {music_playing_meta.time})
+              (label :class "music-progress-time" :text {music_player.time})
               (scale :orientation "h" :halign "center"
-                :value {music_playing_meta.percentile}
+                :value {music_player.percentile}
                 :marks "hi"
                 :max 100.0
                 :min 0.0
