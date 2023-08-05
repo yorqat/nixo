@@ -51,11 +51,36 @@ get_time_percentile() {
   echo "${TIME/\%/}"  | tr -d '[:space:]'
 }
 
+is_mpc_status_on() {
+    option="$1"
+    if mpc status | grep -q "$option: on"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 is_mpc_playing() {
     if mpc status | grep -q "\[playing\]"; then
-        return 1
-    else
         return 0
+    else
+        return 1
+    fi
+}
+
+is_mpc_repeat_on() {
+    if mpc status | grep -q "repeat: on"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+is_mpc_random_on() {
+    if mpc status | grep -q "random: on"; then
+        return 0
+    else
+        return 1
     fi
 }
 
@@ -86,12 +111,16 @@ listen_meta() {
 listen_playing_meta() {
   while true; do
     IS_PLAYING=$(is_mpc_playing && echo "true" || echo "false")
+    IS_REPEATING=$(is_mpc_repeat_on && echo "true" || echo "false")
+    IS_RANDOM=$(is_mpc_random_on && echo "true" || echo "false")
     TIME=$(get_time)
     PERCENTILE=$(get_time_percentile)
 
     LISTEN_PLAYING_META="{"
     LISTEN_PLAYING_META+="\"time\": \"$TIME\", "
     LISTEN_PLAYING_META+="\"playing\": \"$IS_PLAYING\", "
+    LISTEN_PLAYING_META+="\"repeat\": \"$IS_REPEATING\", "
+    LISTEN_PLAYING_META+="\"random\": \"$IS_RANDOM\", "
     LISTEN_PLAYING_META+="\"percentile\": \"$PERCENTILE\""
     LISTEN_PLAYING_META+="}"
 
@@ -112,6 +141,8 @@ while [[ "$#" -gt 0 ]]; do
       --listen_meta) listen_meta;;
       --listen_playing_meta) listen_playing_meta;;
       --is_playing) is_mpc_playing && echo "true" || echo "false";;
+      --is_repeat) is_mpc_repeat_on && echo "true" || echo "false";;
+      --is_random) is_mpc_random_on && echo "true" || echo "false";;
       *) return 1;;
     esac
     shift
