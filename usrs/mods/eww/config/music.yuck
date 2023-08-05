@@ -60,8 +60,8 @@
 
             ; music buttons
             (box :orientation "h" :space-evenly true
-              (button :class "music-button" :onclick "mpc repeat" "󰑖")
+              (button :class "music-button" :onclick "mpc repeat" { music_player.repeat ? "󰑖" : "󰑗" })
               (button :class "music-button" :onclick "mpc prev" "󰒮")
-              (button :class "music-button" :onclick "mpc toggle" { music_playing_meta.playing ? "󰐊": "" })
+              (button :class "music-button" :onclick "mpc toggle" { music_player.playing ? "" : "󰐊" })
               (button :class "music-button" :onclick "mpc next" "󰼧")
-              (button :class "music-button" :onclick "mpc random" "󰒟"))))))))
+              (button :class "music-button" :onclick "mpc random" { music_player.random ? "󰒝" : "󰒞" }))))))))
