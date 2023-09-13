@@ -37,9 +37,9 @@ tooltip {
     }
 
     &.active-workspace {
-      box-shadow: 6px 0px 5px -5px rgb(232, 169, 87) inset,
-      -6px 0px 5px -5px rgb(232, 169, 87) inset;
-      color: #FF6000;
+      box-shadow: 6px 0px 5px -5px #4a4c50 inset,
+      -6px 0px 5px -5px #bcc1cb inset;
+      color: #4a4c50;
     }
   }
 }
