@@ -34,7 +34,6 @@
       prismlauncher # minecraft
       pavucontrol # audio device volume
       helvum # media routing
-      yuzu-mainline # switch
     ];
   };
 
