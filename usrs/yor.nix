@@ -20,6 +20,7 @@
     inputs.hyprland.homeManagerModules.default
   ];
 
+  # Symlink Home directories from Drives 
   systemd.user.tmpfiles.rules = [
     "L /home/yor/Documents - - - - /home/yor/mounts/state/Documents"
     "L /home/yor/Downloads - - - - /home/yor/mounts/state/Downloads"
