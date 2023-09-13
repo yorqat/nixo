@@ -28,5 +28,5 @@ in {
     };
   };
 
-  services.xserver.videoDrivers = ["nouveau"];
+  services.xserver.videoDrivers = ["nvidia"];
 }
