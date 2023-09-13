@@ -26,6 +26,8 @@
     "L /home/yor/Videos - - - - /home/yor/mounts/state/Videos"
     "L /home/yor/Pictures - - - - /home/yor/mounts/state/Pictures"
     "L /home/yor/Music - - - - /home/yor/mounts/state/Music"
+
+    "L /home/yor/.ssh - - - - /home/yor/Documents/.ssh"
   ];
 
   home = {
