@@ -20,6 +20,14 @@
     inputs.hyprland.homeManagerModules.default
   ];
 
+  systemd.user.tmpfiles.rules = [
+    "L /home/yor/Documents - - - - /home/yor/mounts/state/Documents"
+    "L /home/yor/Downloads - - - - /home/yor/mounts/state/Downloads"
+    "L /home/yor/Videos - - - - /home/yor/mounts/state/Videos"
+    "L /home/yor/Pictures - - - - /home/yor/mounts/state/Pictures"
+    "L /home/yor/Music - - - - /home/yor/mounts/state/Music"
+  ];
+
   home = {
     username = "yor";
     homeDirectory = "/home/yor";
@@ -38,7 +46,4 @@
   };
 
   programs.home-manager.enable = true;
-
-  # Enable automatic login for the user.
-  # services.getty.autologinUser = "yor";
 }
