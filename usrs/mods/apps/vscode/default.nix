@@ -6,6 +6,7 @@
     userSettings = {
       "window.titleBarStyle" = "custom";
       "window.titleSeparator" = "  <->  ";
+      "window.zoomLevel" = 2;
 
       "workbench.colorTheme" = "Catppuccin Mocha";
       # "workbench.colorTheme" = "Gruvbox Light Hard";
