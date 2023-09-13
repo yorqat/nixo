@@ -1,0 +1,10 @@
+#!/usr/bin/env  lua
+
+function match_output()
+	-- Gets active workspace number
+	local cmd = "makoctl list"
+
+	return io.popen(cmd):read("*all")
+end
+
+print(match_output())

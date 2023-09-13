@@ -6,7 +6,7 @@
   hyprland-nvidia = inputs.hyprland.packages.${pkgs.system}.default.override {
     wlroots = inputs.hyprland.packages.${pkgs.system}.wlroots-hyprland;
 
-    nvidiaPatches = true;
+    enableNvidiaPatches = true;
   };
 
   hyprland = inputs.hyprland.packages.${pkgs.system}.default;
