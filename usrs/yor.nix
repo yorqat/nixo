@@ -22,13 +22,16 @@
 
   # Symlink Home directories from Drives 
   systemd.user.tmpfiles.rules = [
-    "L /home/yor/Documents - - - - /home/yor/mounts/state/Documents"
-    "L /home/yor/Downloads - - - - /home/yor/mounts/state/Downloads"
-    "L /home/yor/Videos - - - - /home/yor/mounts/state/Videos"
-    "L /home/yor/Pictures - - - - /home/yor/mounts/state/Pictures"
-    "L /home/yor/Music - - - - /home/yor/mounts/state/Music"
+    "L /home/yor/Documents - - - - /dat/Documents"
+    "L /home/yor/Downloads - - - - /dat/Downloads"
+    "L /home/yor/Videos - - - - /dat/Videos"
+    "L /home/yor/Pictures - - - - /dat/Pictures"
+    "L /home/yor/Music - - - - /dat/Music"
 
-    "L /home/yor/.ssh - - - - /home/yor/Documents/.ssh"
+    # ssh credentials
+    "L /home/yor/.ssh - - - - /cred/.ssh"
+    # wakatime credentials
+    "L /home/yor/.wakatime.cfg - - - - /cred/.wakatime.cfg"
   ];
 
   home = {
