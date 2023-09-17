@@ -6,11 +6,9 @@
   inputs = self.inputs;
   bootloader = ./mods/core/boot;
   core = ./mods/core;
-  #intel = ./modules/intel;
   nvidia = ./mods/nvidia;
   wayland = ./mods/wayland;
   #printing = ./mods/printing;
-  #teamviewer = ./mods/teamviewer;
   hmModule = inputs.home-manager.nixosModules.home-manager;
 
   yor = ../usrs/yor.nix;
