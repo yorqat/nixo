@@ -14,6 +14,10 @@ case "$1" in
         sudo nixos-generate-config --root /mnt --show-hardware-config > hardware-configuration.nix
         sudo nixos-install --root /mnt --flake .#qat
         ;;
+    "--gen-meta-hardware")
+        echo "Generating hardware information with \`/mnt\` as root"
+        sudo nixos-generate-config --root /mnt --show-hardware-config > hardware-configuration.nix
+        ;;
     *)
         ./do --install
         ;;
