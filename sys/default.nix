@@ -30,6 +30,8 @@ in {
       nvidia
       wayland
 
+      { nixpkgs.overlays = [ inputs.nur.overlay ]; }
+
       hmModule
       {
         home-manager = {

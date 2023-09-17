@@ -3,6 +3,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:nixos/nixpkgs/nixos";
 
+    nur.url = "github:nix-community/NUR";
+
     hyprland = {
       url = "github:hyprwm/Hyprland/";
       inputs.nixpkgs.follows = "nixpkgs";
