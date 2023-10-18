@@ -10,6 +10,7 @@
   wayland = ./mods/wayland;
   #printing = ./mods/printing;
   hmModule = inputs.home-manager.nixosModules.home-manager;
+  lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
 
   yor = ../usrs/yor.nix;
 in {
@@ -27,6 +28,9 @@ in {
 
       nvidia
       wayland
+
+      # secure boot requirement
+      lbtModule
 
       { nixpkgs.overlays = [ inputs.nur.overlay ]; }
 

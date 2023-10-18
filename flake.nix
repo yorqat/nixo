@@ -26,6 +26,9 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # secure boot 
+    lanzaboote.url = "github:nix-community/lanzaboote";
   };
 
   outputs = {self, ...} @ inputs: let

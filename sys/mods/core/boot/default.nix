@@ -1,15 +1,24 @@
 {
   config,
   pkgs,
+  lib,
   ...
 }: {
   boot = {
     loader = {
-      systemd-boot.enable = true;
+      # force disable systemd-boot for lanzaboote
+      systemd-boot.enable = lib.mkForce false;
       efi = {
         canTouchEfiVariables = true;
         efiSysMountPoint = "/boot";
       };
+    };
+
+    # secure boot requirement
+    bootspec.enable = true;
+    lanzaboote = {
+      enable = true;
+      pkiBundle = "/etc/secureboot";
     };
 
     initrd = {
