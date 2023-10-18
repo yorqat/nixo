@@ -32,6 +32,7 @@ in {
       # secure boot requirement
       lbtModule
 
+      # firefox extensions
       { nixpkgs.overlays = [ inputs.nur.overlay ]; }
 
       hmModule
