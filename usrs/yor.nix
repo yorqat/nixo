@@ -48,6 +48,7 @@
       prismlauncher # minecraft
       pavucontrol # audio device volume
       helvum # media routing
+      libreoffice-fresh # open sauce office
     ];
   };
 
