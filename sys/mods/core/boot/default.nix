@@ -7,7 +7,9 @@
   boot = {
     loader = {
       # force disable systemd-boot for lanzaboote
-      systemd-boot.enable = lib.mkForce false;
+      # systemd-boot.enable = lib.mkForce false;
+      
+      systemd-boot.enable = true;
       efi = {
         canTouchEfiVariables = true;
         efiSysMountPoint = "/boot";
@@ -15,11 +17,11 @@
     };
 
     # secure boot requirement
-    bootspec.enable = true;
-    lanzaboote = {
-      enable = true;
-      pkiBundle = "/etc/secureboot";
-    };
+    # bootspec.enable = true;
+    # lanzaboote = {
+      # enable = true;
+      # pkiBundle = "/etc/secureboot";
+    # };
 
     initrd = {
       supportedFilesystems = ["nfs"];
