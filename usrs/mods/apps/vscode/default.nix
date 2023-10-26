@@ -17,6 +17,8 @@
       "explorer.sortOrder" = "filesFirst";
 
       "editor.fontFamily" = "'JetBrainsMono', 'monospace', monospace";
+
+      "svelte.enable-ts-plugin"= true;
     };
     extensions = with pkgs.vscode-extensions; [
       vscodevim.vim
