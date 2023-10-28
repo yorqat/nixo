@@ -5,9 +5,14 @@ A pretty cool system on wayland with some cool widgets.
 
 <br />
 
+## Config in a config
+You may tailor the [config](setup/default.nix) to how you want it.
+
+<br />
+
 # Required directories
 Since these are located at `/` it would be desirable if these are mountpoints or symlinks.
-.
+
 
 > **Note:** Ability to change locations rolling out soon.
 

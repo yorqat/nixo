@@ -1,5 +1,6 @@
+# TODO: turn this to a function
 let 
-    preIncludes = {
+    includes = {
         kubernetes = true;
         docker = true;
         virt-manager = true;
@@ -22,6 +23,4 @@ in {
 
     defaultLocale = "en_PH.UTF-8";
     extraLocale = "fil_PH";
-
-    includes = preIncludes;
 }
