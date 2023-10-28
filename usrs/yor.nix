@@ -50,7 +50,7 @@ in {
       chromium # dev browser
       discord-canary # messenger
       signal-desktop # messenger
-      gnome.nautilus
+      gnome.nautilus # file explorer
       pavucontrol # audio device volume
       helvum # media routing
     ] ++ includeLibreOffice ++ includePrismMinecraft;
