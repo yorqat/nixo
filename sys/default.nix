@@ -15,7 +15,7 @@
   userDefault = ../usrs;
   setup = import ../setup;
 in {
-  qat = nixpkgs.lib.nixosSystem {
+  "${setup.hostName}" = nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
     specialArgs = {
       inherit inputs;
