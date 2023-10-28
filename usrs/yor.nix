@@ -8,6 +8,7 @@
   setup = import ../setup;
 
   includeLibreOffice = lib.optional setup.includes.libreoffice pkgs.libreoffice-fresh;
+  includePrismMinecraft = lib.optional setup.includes.minecraftPrismLauncher pkgs.prismlauncher;
 in {
   imports = [
     ./mods/hyprland
@@ -50,10 +51,9 @@ in {
       discord-canary # messenger
       signal-desktop # messenger
       gnome.nautilus
-      prismlauncher # minecraft
       pavucontrol # audio device volume
       helvum # media routing
-    ] ++ includeLibreOffice ;
+    ] ++ includeLibreOffice ++ includePrismMinecraft;
   };
 
   programs.home-manager.enable = true;
