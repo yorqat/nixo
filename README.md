@@ -23,7 +23,7 @@ Secrets like `.ssh` and `.wakatime.cfg`
 
 # Try it out!
 ```
-$ git clone git@github.com:YorQat/my-nixos.git
+$ git clone git@github.com:yorqat/nixo.git
 ```
 
 ## Installing from a nixos live environment
