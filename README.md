@@ -15,20 +15,31 @@ Since these are located at `/` it would be desirable if these are mountpoints or
 Home folders: `Desktop`, `Documents`, `Videos`, `Pictures`, `Music`
 ## [`/cred`](usrs/default.nix#L38)
 Secrets like `.ssh` and `.wakatime.cfg`
-```
 
 # Try it out!
-```sh
+```
 $ git clone https://github.com/YorQat/my-nixos/
-$ chmod +x do
-$ ./do --gen-hardware # Generate hardware configuration first
-$ ./do --install
 ```
 
-## Install from another nixos machine/live environment
-Since this is manual installation, consider reading on [nixos mount points]("https://nixos.org/manual/nixos/stable/index.html#sec-installation-manual-partitioning")
+## Installing from a nixos live environment
+* Since this is manual installation, consider reading on [nixos mount points]("https://nixos.org/manual/nixos/stable/index.html#sec-installation-manual-partitioning")
+
+* Partitions should look like this on your live environment. Tip: I just turned on esp flag for boot partition using [gparted](https://gparted.org/)
+```
+/
+├── mnt/
+│   └── boot/
+└── ...
+```
+
+> **Note:** Make sure you are cd'd correctly as it will override [hardware-configuration.nix](hardware-configuration.nix)
 ```sh
-$ ./do --meta-install # installs on /mnt
+# Generate config to persist mount points
+$ nixos-generate-config --root /mnt --show-hardware-config > hardware-configuration.nix
+
+# Install on /mnt
+# Replace <hostName> with your host name like .#qat
+$ nixos-install --root /mnt --flake .#<hostName>
 ```
 
 ## Launch window manager
@@ -36,4 +47,14 @@ $ ./do --meta-install # installs on /mnt
 $ Hyprland
 ```
 
-> **Warning:** Changing [`userName`](setup/default.nix#L16) don't move your stuff but will create a new home directory I'm almost sure of it.
+## Rebuilding on changes
+
+> **Note:** If you update hardware or change mount points just regenerate hardware configuration
+> 
+> `$ nixos-generate-config --show-hardware-config > hardware-configuration.nix`
+```sh
+$ nixos-rebuild switch --flake .#<hostName> -v
+```
+
+
+> **Warning:** Changing [`userName`](setup/default.nix#L16) don't move your stuff but will create a new home directory.
