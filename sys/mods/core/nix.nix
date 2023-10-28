@@ -10,6 +10,7 @@
   };
 
   hyprland = inputs.hyprland.packages.${pkgs.system}.default;
+  setup = import ../../../setup;
 in {
   environment.defaultPackages = [];
 
@@ -31,7 +32,7 @@ in {
   nix = {
     package = pkgs.nixStable;
     settings = {
-      trusted-users = ["root" "yor"];
+      trusted-users = ["root" "${setup.userName}"];
       auto-optimise-store = true;
       trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="

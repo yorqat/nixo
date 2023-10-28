@@ -3,7 +3,12 @@
   inputs,
   pkgs,
   ...
-}: {
+}: let
+  # Define your local variables here
+  setup = import ../setup;
+
+  includeLibreOffice = lib.optional setup.includes.libreoffice pkgs.libreoffice-fresh;
+in {
   imports = [
     ./mods/hyprland
     ./mods/eww
@@ -35,8 +40,8 @@
   ];
 
   home = {
-    username = "yor";
-    homeDirectory = "/home/yor";
+    username = "${setup.userName}";
+    homeDirectory = "/home/${setup.userName}";
 
     stateVersion = "23.11";
 
@@ -48,8 +53,7 @@
       prismlauncher # minecraft
       pavucontrol # audio device volume
       helvum # media routing
-      libreoffice-fresh # open sauce office
-    ];
+    ] ++ includeLibreOffice ;
   };
 
   programs.home-manager.enable = true;

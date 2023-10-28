@@ -11,14 +11,15 @@
   #printing = ./mods/printing;
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
-
+  
   yor = ../usrs/yor.nix;
+  setup = import ../setup;
 in {
   qat = nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
     specialArgs = {
       inherit inputs;
-      hostname = "qat";
+      hostname = "${setup.hostName}";
     };
     modules = [
       ../hardware-configuration.nix
@@ -45,7 +46,7 @@ in {
             inherit self;
             packages = self.packages."x86_64-linux";
           };
-          users.yor = yor;
+          users."${setup.userName}" = yor;
         };
       }
     ];

@@ -1,27 +1,31 @@
-{pkgs, ...}: {
-  time.timeZone = "Asia/Manila";
+{ pkgs, lib, ... }: let
+  setup = import ../../setup;
+
+  includeVirtManager = lib.optional setup.includes.virt-manager pkgs.virt-manager;
+in {
+  time.timeZone = "${setup.timeZone}";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_PH.UTF-8";
+  i18n.defaultLocale = "${setup.defaultLocale}";
 
   i18n.extraLocaleSettings = {
-    LC_ADDRESS = "fil_PH";
-    LC_IDENTIFICATION = "fil_PH";
-    LC_MEASUREMENT = "fil_PH";
-    LC_MONETARY = "fil_PH";
-    LC_NAME = "fil_PH";
-    LC_NUMERIC = "fil_PH";
-    LC_PAPER = "fil_PH";
-    LC_TELEPHONE = "fil_PH";
-    LC_TIME = "fil_PH";
+    LC_ADDRESS = "${setup.extraLocale}";
+    LC_IDENTIFICATION = "${setup.extraLocale}";
+    LC_MEASUREMENT = "${setup.extraLocale}";
+    LC_MONETARY = "${setup.extraLocale}";
+    LC_NAME = "${setup.extraLocale}";
+    LC_NUMERIC = "${setup.extraLocale}";
+    LC_PAPER = "${setup.extraLocale}";
+    LC_TELEPHONE = "${setup.extraLocale}";
+    LC_TIME = "${setup.extraLocale}";
   };
 
-  networking.hostName = "qat";
-  services.getty.autologinUser = "yor";
+  networking.hostName = "${setup.hostName}";
+  services.getty.autologinUser = "${setup.userName}";
 
-  users.users.yor = {
+  users.users."${setup.userName}" = {
     isNormalUser = true;
-    description = "yor";
+    description = "${setup.userName} (very cool person)";
     extraGroups = ["networkmanager" "wheel" "audio" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [];
   };
@@ -29,15 +33,16 @@
   programs.xwayland.enable = true;
   # for virt-manager
   virtualisation.libvirtd = {
-    enable = true;
+    enable = setup.includes.virt-manager;
     # qemu.ovmf.packages = [ pkgs.OVMFFull.fd pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd ];
   };
-  virtualisation.docker.enable = true;
+
+  virtualisation.docker.enable = setup.includes.docker;
   programs.dconf.enable = true;
   hardware.opengl.enable = true;
   # For steam
-  hardware.steam-hardware.enable = true;
-  programs.steam.enable = true;
+  hardware.steam-hardware.enable = setup.includes.steam;
+  programs.steam.enable = setup.includes.steam;
 
   services = {
     xserver = {
@@ -74,13 +79,12 @@
     ffmpeg_6-full
 
     ifuse
-    virt-manager
-
+    
     # nfs support
     nfs-utils
 
     wget
-  ];
+  ] ++ includeVirtManager;
 
   environment.variables.EDITOR = "nvim";
 }
