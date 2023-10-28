@@ -12,7 +12,7 @@
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
   
-  yor = ../usrs/yor.nix;
+  userDefault = ../usrs;
   setup = import ../setup;
 in {
   qat = nixpkgs.lib.nixosSystem {
@@ -46,7 +46,7 @@ in {
             inherit self;
             packages = self.packages."x86_64-linux";
           };
-          users."${setup.userName}" = yor;
+          users."${setup.userName}" = userDefault;
         };
       }
     ];
