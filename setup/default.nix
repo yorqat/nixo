@@ -23,4 +23,6 @@ in {
 
     defaultLocale = "en_PH.UTF-8";
     extraLocale = "fil_PH";
+
+    inherit includes;
 }
