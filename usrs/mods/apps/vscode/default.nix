@@ -15,6 +15,7 @@
 
       "explorer.compactFolders" = false;
       "explorer.sortOrder" = "filesFirst";
+      "explorer.confirmDelete" = false;
 
       "editor.fontFamily" = "'JetBrainsMono', 'monospace', monospace";
 
