@@ -35,6 +35,9 @@
       denoland.vscode-deno
       lokalise.i18n-ally
 
+      # Ssh
+      ms-vscode-remote.remote-ssh
+      
       # Cosmetics
       catppuccin.catppuccin-vsc
       pkief.material-icon-theme
