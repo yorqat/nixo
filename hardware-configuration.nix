@@ -8,18 +8,13 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/8b5575f5-66cb-46f8-8cb5-e47309f7e75c";
-      fsType = "btrfs";
-    };
-
-  fileSystems."/dat" =
-    { device = "/dev/disk/by-uuid/9497d692-3ec1-4035-bf55-87769d5c9c71";
+    { device = "/dev/disk/by-uuid/10cdcb7f-4faa-4c21-a29a-eed6659185c2";
       fsType = "btrfs";
     };
 
@@ -29,8 +24,13 @@
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/7609-718E";
+    { device = "/dev/disk/by-uuid/B6FF-3946";
       fsType = "vfat";
+    };
+
+  fileSystems."/dat" =
+    { device = "/dev/disk/by-uuid/9497d692-3ec1-4035-bf55-87769d5c9c71";
+      fsType = "btrfs";
     };
 
   swapDevices = [ ];
@@ -40,6 +40,7 @@
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
+  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
