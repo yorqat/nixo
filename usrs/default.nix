@@ -44,7 +44,7 @@ in {
     username = "${setup.userName}";
     homeDirectory = "/home/${setup.userName}";
 
-    stateVersion = "23.11";
+    stateVersion = "24.05";
 
     packages = with pkgs; [
       chromium # dev browser
