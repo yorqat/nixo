@@ -5,8 +5,6 @@
 }: let
   hyprland-nvidia = inputs.hyprland.packages.${pkgs.system}.default.override {
     wlroots = inputs.hyprland.packages.${pkgs.system}.wlroots-hyprland;
-
-    enableNvidiaPatches = true;
   };
 
   hyprland = inputs.hyprland.packages.${pkgs.system}.default;
@@ -67,5 +65,5 @@ in {
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "23.11"; # Did you read the comment tho
+  system.stateVersion = "24.05"; # Did you read the comment tho
 }
