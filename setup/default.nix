@@ -21,6 +21,7 @@ let
 
     # I use mountpoints /dat for my media and /cred for my secrets
     symLinks = [
+        # [ "dest" "src" ]
         ["${homeDir}/Documents" "/dat/Documents"]
         ["${homeDir}/Downloads" "/dat/Downloads"]
         ["${homeDir}/Videos" "/dat/Videos"]
