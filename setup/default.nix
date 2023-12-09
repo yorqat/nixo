@@ -1,12 +1,12 @@
 # TODO: turn this to a function
 let 
     includes = {
-        kubernetes = true;
+        kubernetes = false;
         docker = true;
         virt-manager = true;
-        libreoffice = true;
-        minecraftPrismLauncher = true;
-        steam = true;
+        libreoffice = false;
+        minecraftPrismLauncher = false;
+        steam = false;
     };
 
     extraPackages = [
@@ -46,4 +46,14 @@ in {
     inherit defaultLocale;
     inherit extraLocale;
     inherit includes;
+
+    # This value determines the NixOS release from which the default
+    # settings for stateful data, like file locations and database versions
+    # on your system were taken.
+
+    # It‘s perfectly fine and recommended to leave
+    # this value at the release version of the first install of this system.
+    # Before changing this value read the documentation for this option
+    # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+    stateVersion = "24.05"; # TLDR; only change on fresh install
 }
