@@ -39,6 +39,7 @@ let
 in {
     inherit userName;
     inherit hostName;
+    inherit homeDir;
     inherit symLinks;
     inherit timeZone;
     inherit defaultLocale;

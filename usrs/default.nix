@@ -40,7 +40,7 @@ in {
 
   home = {
     username = "${setup.userName}";
-    homeDirectory = "/home/${setup.userName}";
+    homeDirectory = "${setup.homeDir}";
 
     stateVersion = "24.05";
 
