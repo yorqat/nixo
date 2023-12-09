@@ -7,6 +7,15 @@
   # Define your local variables here
   setup = import ../setup;
 
+  createTmpfilesRules = rules:
+    let
+      # Define a helper function to format each pair of strings as a tmpfiles rule
+      formatRule = rulePair:
+        "L ${builtins.elemAt rulePair 0} - - - - ${builtins.elemAt rulePair 1}";
+    in
+      # Map each pair of strings to the desired format using `formatRule`
+      map formatRule rules;
+
   includeLibreOffice = lib.optional setup.includes.libreoffice pkgs.libreoffice-fresh;
   includePrismMinecraft = lib.optional setup.includes.minecraftPrismLauncher pkgs.prismlauncher;
 in {
@@ -26,19 +35,8 @@ in {
     inputs.hyprland.homeManagerModules.default
   ];
 
-  # Symlink Home directories from Drives 
-  systemd.user.tmpfiles.rules = [
-    "L /home/yor/Documents - - - - /dat/Documents"
-    "L /home/yor/Downloads - - - - /dat/Downloads"
-    "L /home/yor/Videos - - - - /dat/Videos"
-    "L /home/yor/Pictures - - - - /dat/Pictures"
-    "L /home/yor/Music - - - - /dat/Music"
-
-    # ssh credentials
-    "L /home/yor/.ssh - - - - /cred/.ssh"
-    # wakatime credentials
-    "L /home/yor/.wakatime.cfg - - - - /cred/.wakatime.cfg"
-  ];
+  # Symlink Home directories from Drives
+  systemd.user.tmpfiles.rules = createTmpfilesRules setup.symLinks;
 
   home = {
     username = "${setup.userName}";

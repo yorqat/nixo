@@ -17,7 +17,20 @@ in {
     userName = "yor";
     hostName = "qat";
 
-    symLinks = [];
+    homeDir = "/home/${userName}";
+
+    # I use mountpoints /dat for my media and /cred for my secrets
+    symLinks = [
+        ["${homeDir}/Documents" "/dat/Documents"]
+        ["${homeDir}/Downloads" "/dat/Downloads"]
+        ["${homeDir}/Videos" "/dat/Videos"]
+        ["${homeDir}/Pictures" "/dat/Pictures"]
+        ["${homeDir}/Music" "/dat/Music"]
+        ["${homeDir}/.ssh" "/cred/.ssh"]
+        ["${homeDir}/.wakatime.cfg" "/cred/.wakatime.cfg"]
+
+        ["${homeDir}/my-nixos" "/dat/Documents/my-nixos" ]
+    ];
 
     timeZone = "Asia/Manila";
 
