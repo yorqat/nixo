@@ -39,10 +39,9 @@ in {
   systemd.user.tmpfiles.rules = createTmpfilesRules setup.symLinks;
 
   home = {
-    username = "${setup.userName}";
-    homeDirectory = "${setup.homeDir}";
-
-    stateVersion = "${setup.stateVersion}";
+    username = setup.userName;
+    homeDirectory = setup.homeDir;
+    stateVersion = setup.stateVersion;
 
     packages = with pkgs; [
       chromium # dev browser
