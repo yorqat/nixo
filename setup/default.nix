@@ -13,7 +13,7 @@ let
         "signal-desktop"
         "discord-canary"
     ];
-in {
+
     userName = "yor";
     hostName = "qat";
 
@@ -36,6 +36,12 @@ in {
 
     defaultLocale = "en_PH.UTF-8";
     extraLocale = "fil_PH";
-
+in {
+    inherit userName;
+    inherit hostName;
+    inherit symLinks;
+    inherit timeZone;
+    inherit defaultLocale;
+    inherit extraLocale;
     inherit includes;
 }
