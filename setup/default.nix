@@ -2,8 +2,8 @@
 let 
     includes = {
         kubernetes = false;
-        docker = true;
-        virt-manager = true;
+        docker = false;
+        virt-manager = false;
         libreoffice = false;
         minecraftPrismLauncher = false;
         steam = false;
@@ -51,8 +51,8 @@ in {
     # for enabling secure boot
     # https://nixos.wiki/wiki/Secure_Boot
     secureBoot = {
-        bootspec = false;
-        lanzaboote = false;
+        bootspec = true;
+        lanzaboote = true;
     };
 
     # This value determines the NixOS release from which the default
