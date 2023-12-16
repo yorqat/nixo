@@ -2,7 +2,6 @@
 let 
     includes = {
         kubernetes = false;
-        docker = false;
         virt-manager = false;
         libreoffice = false;
         minecraftPrismLauncher = false;
