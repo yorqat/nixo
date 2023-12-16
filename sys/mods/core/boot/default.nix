@@ -3,25 +3,26 @@
   pkgs,
   lib,
   ...
-}: {
+}: 
+let
+  setup = import ../../../../setup;
+  # Disabled when secure boot
+  systemd-boot-enable = !setup.secureBoot.lanzaboote;
+in {
   boot = {
     loader = {
-      # force disable systemd-boot for lanzaboote
-      # systemd-boot.enable = lib.mkForce false;
-      
-      systemd-boot.enable = true;
+      systemd-boot.enable = lib.mkForce systemd-boot-enable;
       efi = {
         canTouchEfiVariables = true;
         efiSysMountPoint = "/boot";
       };
     };
 
-    # secure boot requirement
-    # bootspec.enable = true;
-    # lanzaboote = {
-      # enable = true;
-      # pkiBundle = "/etc/secureboot";
-    # };
+    bootspec.enable = setup.secureBoot.bootspec;
+    lanzaboote = {
+      enable = setup.secureBoot.lanzaboote;
+      pkiBundle = "/etc/secureboot";
+    };
 
     initrd = {
       supportedFilesystems = ["nfs"];

@@ -47,6 +47,14 @@ in {
     inherit extraLocale;
     inherit includes;
 
+    # This section are step by step instructions
+    # for enabling secure boot
+    # https://nixos.wiki/wiki/Secure_Boot
+    secureBoot = {
+        bootspec = true;
+        lanzaboote = true;
+    };
+
     # This value determines the NixOS release from which the default
     # settings for stateful data, like file locations and database versions
     # on your system were taken.
