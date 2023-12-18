@@ -50,8 +50,8 @@ in {
     # for enabling secure boot
     # https://nixos.wiki/wiki/Secure_Boot
     secureBoot = {
-        bootspec = true;
-        lanzaboote = true;
+        bootspec = false;
+        lanzaboote = false;
     };
 
     # This value determines the NixOS release from which the default
