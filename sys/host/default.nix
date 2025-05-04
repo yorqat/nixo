@@ -83,9 +83,6 @@ in {
     # nfs support
     nfs-utils
 
-    # jump dirs
-    jump
-
     wget
   ] ++ includeVirtManager;
 

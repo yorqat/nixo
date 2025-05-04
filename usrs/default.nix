@@ -50,7 +50,9 @@ in {
       gnome.nautilus # file explorer
       pavucontrol # audio device volume
       helvum # media routing
-      sonixd
+      sonixd # music player
+
+      jump # change directory changes
     ] ++ includeLibreOffice ++ includePrismMinecraft;
   };
 
