@@ -37,7 +37,7 @@ in {
     # qemu.ovmf.packages = [ pkgs.OVMFFull.fd pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd ];
   };
 
-  virtualisation.docker.enable = setup.includes.docker;
+  # virtualisation.docker.enable = setup.includes.docker;
   programs.dconf.enable = true;
   hardware.opengl.enable = true;
   # For steam
@@ -82,6 +82,9 @@ in {
     
     # nfs support
     nfs-utils
+
+    # jump dirs
+    jump
 
     wget
   ] ++ includeVirtManager;
