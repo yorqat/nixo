@@ -2,15 +2,19 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:nixos/nixpkgs/nixos";
-
-    nur.url = "github:nix-community/NUR";
-
-    hyprland = {
-      url = "github:hyprwm/Hyprland/";
+    niri = {
+      url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland-contrib.url = "github:hyprwm/contrib";
+    nur.url = "github:nix-community/NUR";
+
+    #hyprland = {
+      #url = "github:hyprwm/Hyprland/";
+      #inputs.nixpkgs.follows = "nixpkgs";
+    #};
+
+    #hyprland-contrib.url = "github:hyprwm/contrib";
 
     xdg-desktop-portal-hyprland = {
       url = "github:hyprwm/xdg-desktop-portal-hyprland";

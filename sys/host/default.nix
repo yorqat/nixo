@@ -65,7 +65,7 @@ in {
     usbmuxd.enable = true;
     avahi.enable = true;
     avahi.nssmdns = true;
-    flatpak.enable = true;
+    # flatpak.enable = true;
     openssh.enable = true;
   };
 

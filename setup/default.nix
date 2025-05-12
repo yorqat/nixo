@@ -2,9 +2,9 @@
 let 
     includes = {
         kubernetes = false;
-        virt-manager = false;
+        virt-manager = true;
         libreoffice = false;
-        minecraftPrismLauncher = false;
+        minecraftPrismLauncher = true;
         steam = false;
     };
 

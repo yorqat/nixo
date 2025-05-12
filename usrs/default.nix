@@ -20,7 +20,7 @@
   includePrismMinecraft = lib.optional setup.includes.minecraftPrismLauncher pkgs.prismlauncher;
 in {
   imports = [
-    ./mods/hyprland
+    # ./mods/hyprland
     ./mods/eww
     ./mods/neofetch
     ./mods/git
@@ -32,7 +32,7 @@ in {
     ./mods/apps/kitty
     ./mods/apps/firefox
 
-    inputs.hyprland.homeManagerModules.default
+    # inputs.hyprland.homeManagerModules.default
   ];
 
   # Symlink Home directories from Drives
