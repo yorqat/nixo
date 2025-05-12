@@ -16,10 +16,10 @@
 
     #hyprland-contrib.url = "github:hyprwm/contrib";
 
-    xdg-desktop-portal-hyprland = {
-      url = "github:hyprwm/xdg-desktop-portal-hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    #xdg-desktop-portal-hyprland = {
+      #url = "github:hyprwm/xdg-desktop-portal-hyprland";
+      #inputs.nixpkgs.follows = "nixpkgs";
+    #};
 
     nixpkgs-wayland = {
       url = "github:nix-community/nixpkgs-wayland";
