@@ -1,7 +1,4 @@
 {lib, ...}: {
-  sound.enable = lib.mkForce false; # Pipewire doesn't like this on
-
-  hardware.pulseaudio.enable = false;
   services.pipewire = {
     enable = true;
 
@@ -15,6 +12,7 @@
 
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
 
   environment.etc = {

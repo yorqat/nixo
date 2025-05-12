@@ -47,7 +47,7 @@ in {
       chromium # dev browser
       discord-canary # messenger
       signal-desktop # messenger
-      gnome.nautilus # file explorer
+      nautilus # file explorer
       pavucontrol # audio device volume
       helvum # media routing
       sonixd # music player

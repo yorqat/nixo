@@ -39,15 +39,15 @@ in {
 
   # virtualisation.docker.enable = setup.includes.docker;
   programs.dconf.enable = true;
-  hardware.opengl.enable = true;
+  hardware.graphics.enable = true;
   # For steam
   hardware.steam-hardware.enable = setup.includes.steam;
   programs.steam.enable = setup.includes.steam;
 
   services = {
-    xserver = {
+    xserver.xkb = {
       layout = "us";
-      xkbVariant = "";
+      variant = "";
     };
 
     #plex = {
@@ -60,11 +60,11 @@ in {
       gnome-keyring.enable = true;
     };
 
-    udev.packages = with pkgs; [gnome.gnome-settings-daemon];
+    udev.packages = with pkgs; [gnome-settings-daemon];
 
     usbmuxd.enable = true;
     avahi.enable = true;
-    avahi.nssmdns = true;
+    avahi.nssmdns4 = true;
     # flatpak.enable = true;
     openssh.enable = true;
   };
@@ -72,7 +72,7 @@ in {
   environment.systemPackages = with pkgs; [
     lua
     libimobiledevice
-    gnome.adwaita-icon-theme
+    adwaita-icon-theme
     neofetch
 
     imagemagick

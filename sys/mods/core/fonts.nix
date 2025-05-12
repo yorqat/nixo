@@ -2,10 +2,7 @@
   fonts = {
     enableDefaultPackages = true;
     packages = with pkgs; [
-      (nerdfonts.override {fonts = ["JetBrainsMono"];})
-      #(nerdfonts.override {fonts = ["FiraCode"];})
-      # font-awesome
-      # emacs-all-the-icons-fonts
+      # nerdfonts.droid-sans-mono
       inter
       comic-mono
       fira-code
@@ -13,8 +10,8 @@
 
     fontconfig = {
       defaultFonts = {
-        sansSerif = ["Inter"];
-        monospace = ["JetBrainsMono Nerd Font"];
+        # sansSerif = ["Inter"];
+        # monospace = ["DroidSansMono Nerd Font"];
       };
     };
   };

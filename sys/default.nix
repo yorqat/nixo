@@ -34,7 +34,7 @@ in {
       lbtModule
 
       # firefox extensions
-      { nixpkgs.overlays = [ inputs.nur.overlay ]; }
+      #{ nixpkgs.overlays = [ inputs.nur.overlay ]; }
 
       hmModule
       {

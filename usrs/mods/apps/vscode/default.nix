@@ -3,45 +3,49 @@
 
   programs.vscode = {
     enable = true;
-    userSettings = {
-      "window.titleBarStyle" = "custom";
-      "window.titleSeparator" = "  <->  ";
-      "window.zoomLevel" = 2;
 
-      "workbench.colorTheme" = "Catppuccin Mocha";
-      # "workbench.colorTheme" = "Gruvbox Light Hard";
-      "workbench.iconTheme" = "material-icon-theme";
-      "workbench.editor.titleScrollbarSizing" = "large";
+    profiles.default = {
+      userSettings = {
+        "window.titleBarStyle" = "custom";
+        "window.titleSeparator" = "  <->  ";
+        "window.zoomLevel" = 2;
 
-      "explorer.compactFolders" = false;
-      "explorer.sortOrder" = "filesFirst";
-      "explorer.confirmDelete" = false;
+        "workbench.colorTheme" = "Catppuccin Mocha";
+        # "workbench.colorTheme" = "Gruvbox Light Hard";
+        "workbench.iconTheme" = "material-icon-theme";
+        "workbench.editor.titleScrollbarSizing" = "large";
 
-      "editor.fontFamily" = "'JetBrainsMono', 'monospace', monospace";
+        "explorer.compactFolders" = false;
+        "explorer.sortOrder" = "filesFirst";
+        "explorer.confirmDelete" = false;
 
-      "svelte.enable-ts-plugin"= true;
-    };
-    extensions = with pkgs.vscode-extensions; [
-      vscodevim.vim
-      yzhang.markdown-all-in-one
-      # Nix
-      bbenoist.nix
-      # Python
-      ms-python.python
-      WakaTime.vscode-wakatime
-      mkhl.direnv
-      dbaeumer.vscode-eslint
-      eamodio.gitlens
-      svelte.svelte-vscode
-      denoland.vscode-deno
-      lokalise.i18n-ally
+        "editor.fontFamily" = "'JetBrainsMono', 'monospace', monospace";
 
-      # Ssh
-      ms-vscode-remote.remote-ssh
+        "svelte.enable-ts-plugin"= true;
+      };
+      extensions = with pkgs.vscode-extensions; [
+        vscodevim.vim
+        yzhang.markdown-all-in-one
+        # Nix
+        bbenoist.nix
+        # Python
+        ms-python.python
+        wakatime.vscode-wakatime
+        mkhl.direnv
+        dbaeumer.vscode-eslint
+        eamodio.gitlens
+        svelte.svelte-vscode
+        denoland.vscode-deno
+        lokalise.i18n-ally
+
+        # Ssh
+        ms-vscode-remote.remote-ssh
       
-      # Cosmetics
-      catppuccin.catppuccin-vsc
-      pkief.material-icon-theme
-    ];
+        # Cosmetics
+        catppuccin.catppuccin-vsc
+        pkief.material-icon-theme
+      ];
+
+    };
   };
 }
