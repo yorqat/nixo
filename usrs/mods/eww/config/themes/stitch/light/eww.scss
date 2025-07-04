@@ -1,0 +1,57 @@
+button {
+  all: unset;
+}
+
+.hovered-prim {
+  &:hover {
+    background: #F0D1A4;
+  }
+
+  &:active {
+    background: #F2E1B4;
+  }
+}
+
+.time {
+  color: #5E5E5E;
+  padding: 0 8px;
+
+  .time-element {
+    background: skyblue;
+  }
+}
+
+.bar {
+  border-radius: 16px;
+  background: transparent;
+
+  margin: 16px;
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.bordered {
+  border: 2px #C9A580 solid;
+  background: #FFF0D3;
+  opacity: 0.85;
+}
+
+.start-menu {
+  .start-icon {
+    border-radius: 12px 0 0 12px;
+    background: #FFDA61;
+  }
+
+  .start-label {
+    background: #FFECA2;
+    color: #936033;
+    padding: 0 8px;
+  }
+}
+
+.system {
+  color: #E69E5E;
+  font-weight: 800;
+  padding: 0 16px;
+}

@@ -1,25 +1,28 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos";
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
+    };
+
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nur.url = "github:nix-community/NUR";
+    nix4nvchad = {
+      url = "github:nix-community/nix4nvchad";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    #hyprland = {
-      #url = "github:hyprwm/Hyprland/";
-      #inputs.nixpkgs.follows = "nixpkgs";
-    #};
+    nur = {
+      url = "github:nix-community/NUR";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    #hyprland-contrib.url = "github:hyprwm/contrib";
-
-    #xdg-desktop-portal-hyprland = {
-      #url = "github:hyprwm/xdg-desktop-portal-hyprland";
-      #inputs.nixpkgs.follows = "nixpkgs";
-    #};
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     nixpkgs-wayland = {
       url = "github:nix-community/nixpkgs-wayland";
@@ -44,7 +47,6 @@
 
     devShells.x86_64-linux.default = pkgs.mkShell {
       packages = with pkgs; [
-        rnix-lsp # nix LSP
         yaml-language-server # yaml LSP
         alejandra # uncomprimising nix formatter
         fnlfmt # fennel formatter

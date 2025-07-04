@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   programs.neovim = {
-    enable = true;
+    enable = false;
     extraConfig = ''
       set number relativenumber
     '';
@@ -15,5 +15,9 @@
       pkgs.vimPlugins.vim-be-good
       pkgs.vimPlugins.yuck-vim
     ];
+  };
+
+  programs.nvchad = {
+    enable = true;
   };
 }

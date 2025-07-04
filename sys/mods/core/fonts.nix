@@ -2,16 +2,17 @@
   fonts = {
     enableDefaultPackages = true;
     packages = with pkgs; [
-      # nerdfonts.droid-sans-mono
+      nerd-fonts.droid-sans-mono
       inter
       comic-mono
+      comic-neue
       fira-code
     ];
 
     fontconfig = {
       defaultFonts = {
-        # sansSerif = ["Inter"];
-        # monospace = ["DroidSansMono Nerd Font"];
+        sansSerif = ["Comic Neue"];
+        monospace = ["Comic Mono" "DroidSansMono Nerd Font"];
       };
     };
   };

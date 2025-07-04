@@ -31,6 +31,18 @@ in {
   };
 
   programs.xwayland.enable = true;
+
+  programs.niri = {
+    enable = true;
+  };
+
+  services.xserver.desktopManager.gnome.enable = true;
+
+  programs.zoxide = {
+    enable = true;
+    enableBashIntegration = true;
+  };
+
   # for virt-manager
   virtualisation.libvirtd = {
     enable = setup.includes.virt-manager;
@@ -45,15 +57,21 @@ in {
   programs.steam.enable = setup.includes.steam;
 
   services = {
-    xserver.xkb = {
-      layout = "us";
-      variant = "";
+    dbus.enable = true;
+    # enable powerprofilesctl
+    power-profiles-daemon.enable = true;
+
+    xserver = 
+    {
+      enable = true;
+
+      xkb = {
+        layout = "us";
+        variant = "";
+      };
     };
 
-    #plex = {
-    #enable = true;
-    #openFirewall = true;
-    #};
+    displayManager.sddm.enable = true;
 
     gnome = {
       glib-networking.enable = true;

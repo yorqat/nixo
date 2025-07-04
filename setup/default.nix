@@ -11,10 +11,13 @@ let
     extraPackages = [
         "signal-desktop"
         "discord-canary"
+        "aseprite"
     ];
 
     userName = "yor";
     hostName = "qat";
+
+    userWebsite = "https://yorqat.com/";
 
     homeDir = "/home/${userName}";
 

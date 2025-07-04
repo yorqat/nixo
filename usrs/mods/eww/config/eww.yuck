@@ -1,14 +1,11 @@
 ;; music player widget
-(include "../../music.yuck")
+;; (include "../../music.yuck")
 
 ;; notifications widget
-(include "../../notifs.yuck")
-
-;; listens to active workspace
-(deflisten workspace "scripts/workspace-widget")
+;; (include "../../notifs.yuck")
 
 (defvar clock_tick_show true)
-(defvar theme "")
+(defvar theme "dark")
 
 ;; main bar
 (defwindow bar
@@ -18,40 +15,51 @@
   :geometry (geometry 
     :x "0%"
     :y "0%"
-    :height "100%"
-    :width "50px"
-    :anchor "left center")
-  (centerbox :orientation "v" :class "colored-prim"
-    (workspaces)
+    :height "36px"
+    :width "100%"
+    :anchor "top center")
+  (centerbox :orientation "h" :class "bar bordered"
+    (start_menu)
     (time)
     (system)))
 
-;; defined by script up top
-(defwidget workspaces []
-  (literal :content workspace))
-
 (defpoll time_hour :interval "1s" "date +\%H")
 (defpoll time_min :interval "1s" "date +\%M")
+(defpoll time_sec :interval "1s" "date +\%S")
 (defpoll date :interval "30m" "date +\%D")
-(defpoll clock_tick :interval "500ms" "scripts/clock_tick")
+
+(defwidget start_menu []
+  (box :orientation "h" :class "start-menu" :width 100  :halign "start"
+    (button :width 32 :height 32 :class "start-icon" 
+      (image :path "./START" :image-width 24 :image-height 24)
+    )
+    (box :width 32 :height 32 :class "start-label" "(◠‿◠✿)")
+  )
+)
 
 (defwidget time []
-  (box :class "time"
-    :orientation "v"
-    :valign "end"
+  (button :class "time hovered-prim"
+    :orientation "h"
     :spacing 0
     :tooltip date
-    (box :orientation "v" :spacing 0
-      (box time_hour)
-      (revealer :class "clock-tick" :reveal clock_tick ":" )
-      (box time_min))))
+    (box :orientation "h" :spacing 16 :halign "center"
+      (box :width 16 :height 32 time_hour)
+      ;; (box :width 0 ":")
+      (box :width 16 :height 32 time_min)
+      ;; (box :width 0 ":")
+      (box :width 16 :height 32 time_sec)
+    )
+  )
+)
 
 (defwidget system []
-  (box :orientation "v" :class "system padded"
+  (box :orientation "h" :class "system padded"  :halign "end"
     (box 
-      :orientation "v"
-      :valign "end"
-      :spacing 12
-      (button :timeout "2000ms" :tooltip "swap theme" :onclick "scripts/theme" '')
-      (button :tooltip "reboot" :onclick "systemctl reboot" '')
-      (button :tooltip "shut down" :onclick "systemctl poweroff" '󰤆'))))
+      :orientation "h"
+      :spacing 16
+      (button :class "" :timeout "2000ms" :tooltip "swap theme" :onclick "scripts/theme" '')
+      (button :class "" :tooltip "reboot" :onclick "systemctl reboot" '')
+      (button :class "" :tooltip "shut down" :onclick "systemctl poweroff" '󰤆')
+    )
+  )
+)

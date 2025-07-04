@@ -21,18 +21,20 @@
 in {
   imports = [
     # ./mods/hyprland
+    ./mods/niri
     ./mods/eww
     ./mods/neofetch
     ./mods/git
     ./mods/shell
     ./mods/mpd
+    #./mods/themes
 
     ./mods/apps/vscode
     ./mods/apps/neovim
     ./mods/apps/kitty
     ./mods/apps/firefox
 
-    # inputs.hyprland.homeManagerModules.default
+    inputs.nix4nvchad.homeManagerModules.default
   ];
 
   # Symlink Home directories from Drives
@@ -44,15 +46,13 @@ in {
     stateVersion = setup.stateVersion;
 
     packages = with pkgs; [
-      chromium # dev browser
       discord-canary # messenger
       signal-desktop # messenger
       nautilus # file explorer
       pavucontrol # audio device volume
       helvum # media routing
       sonixd # music player
-
-      jump # change directory changes
+      blender
     ] ++ includeLibreOffice ++ includePrismMinecraft;
   };
 
