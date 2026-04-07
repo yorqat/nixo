@@ -11,7 +11,7 @@
   #printing = ./mods/printing;
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
-  niriModule = inputs.niri.nixosModules.niri;
+  #niriModule = inputs.niri.nixosModules.niri;
   
   userDefault = ../usrs;
   setup = import ../setup;
@@ -37,7 +37,7 @@ in {
       # firefox extensions
       { nixpkgs.overlays = [ inputs.nur.overlays.default ]; }
 
-      niriModule
+      #niriModule
 
       hmModule
       {

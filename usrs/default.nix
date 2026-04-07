@@ -21,7 +21,7 @@
 in {
   imports = [
     # ./mods/hyprland
-    ./mods/niri
+    # ./mods/niri
     ./mods/eww
     ./mods/neofetch
     ./mods/git

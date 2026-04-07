@@ -32,11 +32,12 @@ in {
 
   programs.xwayland.enable = true;
 
-  programs.niri = {
-    enable = true;
-  };
+  #programs.niri = {
+    #enable = true;
+  #};
 
-  services.xserver.desktopManager.gnome.enable = true;
+  # services.xserver.desktopManager.gnome.enable = true;
+  services.desktopManager.gnome.enable = true;
 
   programs.zoxide = {
     enable = true;
@@ -57,7 +58,7 @@ in {
   programs.steam.enable = setup.includes.steam;
 
   services = {
-    dbus.enable = true;
+    # dbus.enable = true;
     # enable powerprofilesctl
     power-profiles-daemon.enable = true;
 
@@ -81,8 +82,9 @@ in {
     udev.packages = with pkgs; [gnome-settings-daemon];
 
     usbmuxd.enable = true;
+    
     avahi.enable = true;
-    avahi.nssmdns4 = true;
+    avahi.nssmdns6 = true;
     # flatpak.enable = true;
     openssh.enable = true;
   };

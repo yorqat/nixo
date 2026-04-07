@@ -12,6 +12,7 @@ let
         "signal-desktop"
         "discord-canary"
         "aseprite"
+        "obs-studio"
     ];
 
     userName = "yor";
