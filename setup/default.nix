@@ -5,7 +5,7 @@ let
         virt-manager = true;
         libreoffice = false;
         minecraftPrismLauncher = true;
-        steam = false;
+        steam = true;
     };
 
     extraPackages = [

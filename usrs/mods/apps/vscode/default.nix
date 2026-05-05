@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  home.packages = with pkgs; [wakatime];
+  home.packages = with pkgs; [wakatime-cli];
 
   programs.vscode = {
     enable = true;

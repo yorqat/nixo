@@ -11,7 +11,7 @@
   };
 
   home.packages = [
-    pkgs.mpc-cli
+    pkgs.mpc
     pkgs.ncmpcpp
   ];
 }

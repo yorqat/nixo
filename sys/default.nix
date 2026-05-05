@@ -11,7 +11,8 @@
   #printing = ./mods/printing;
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
-  #niriModule = inputs.niri.nixosModules.niri;
+  niriModule = inputs.niri.nixosModules.niri;
+  # stylixModule = inputs.stylix.nixosModules.stylix;
   
   userDefault = ../usrs;
   setup = import ../setup;
@@ -28,7 +29,7 @@ in {
       bootloader
       core
 
-      # nvidia
+      nvidia
       wayland
 
       # secure boot requirement
@@ -37,7 +38,9 @@ in {
       # firefox extensions
       { nixpkgs.overlays = [ inputs.nur.overlays.default ]; }
 
-      #niriModule
+      niriModule
+
+      # stylixModule
 
       hmModule
       {

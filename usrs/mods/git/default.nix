@@ -5,15 +5,25 @@
 }: {
   home.packages = with pkgs; [openssl pinentry-qt gitui ghq];
 
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+  };
+
   programs.git = {
     enable = true;
-    userName = "YorQat";
-    userEmail = "qarkdev+gh@gmail.com";
-    extraConfig = {
-      init = {defaultBranch = "main";};
-      delta = {
-        # syntax-theme = "Nord";
-        line-numbers = true;
+
+    signing = {
+      format = null;
+    };
+
+    settings = {
+      user = { 
+        name = "YorQat";
+        email = "qarkdev+gh@gmail.com";
+      };
+      init = {
+        defaultBranch = "main";
       };
 
       # Sign commits
@@ -22,8 +32,8 @@
       # gpg.ssh.allowedSignersFile = "~/.ssh/allowed_signers";
       # user.signingkey = "~/.ssh/id_ed25519.pub";
     };
+
     lfs.enable = true;
-    delta.enable = true;
   };
 
   programs.gh = {enable = true;};

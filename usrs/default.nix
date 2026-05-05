@@ -21,7 +21,8 @@
 in {
   imports = [
     # ./mods/hyprland
-    # ./mods/niri
+    # niri works alongside the nixos module
+    ./mods/niri
     ./mods/eww
     ./mods/neofetch
     ./mods/git
@@ -29,12 +30,13 @@ in {
     ./mods/mpd
     #./mods/themes
 
-    ./mods/apps/vscode
+    # ./mods/apps/vscode
     ./mods/apps/neovim
     ./mods/apps/kitty
     ./mods/apps/firefox
 
     inputs.nix4nvchad.homeManagerModules.default
+    inputs.nixvim.homeModules.nixvim
   ];
 
   # Symlink Home directories from Drives
@@ -50,7 +52,8 @@ in {
       signal-desktop # messenger
       nautilus # file explorer
       pavucontrol # audio device volume
-      helvum # media routing
+      # helvum # media routing
+      crosspipe
       sonixd # music player
       blender
     ] ++ includeLibreOffice ++ includePrismMinecraft;

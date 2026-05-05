@@ -40,7 +40,7 @@ else
 	for i = 1, #arg do
 		if arg[i] == "--absolute-path" then
 			-- Function to get the current working directory
-			io.write(os.getenv("HOME") .. "/.config/eww/themes" .. "/" .. result)
+			io.write(os.getenv("HOME") .. "/.config/eww/themes/stitch" .. "/" .. result)
 		else
 			-- Handle other arguments
 		end

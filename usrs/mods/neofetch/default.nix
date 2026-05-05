@@ -3,6 +3,6 @@
   lib,
   ...
 }: {
-  home.packages = [pkgs.neofetch];
-  xdg.configFile."neofetch".source = ./config;
+  home.packages = [pkgs.fastfetch];
+  xdg.configFile."fastfetch".source = ./config;
 }

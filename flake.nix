@@ -9,9 +9,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixvim = {
+      url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix4nvchad = {
       url = "github:nix-community/nix4nvchad";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nur = {
@@ -26,7 +30,6 @@
 
     nixpkgs-wayland = {
       url = "github:nix-community/nixpkgs-wayland";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     home-manager = {
@@ -35,7 +38,10 @@
     };
 
     # secure boot 
-    lanzaboote.url = "github:nix-community/lanzaboote";
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {self, ...} @ inputs: let

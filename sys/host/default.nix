@@ -32,9 +32,9 @@ in {
 
   programs.xwayland.enable = true;
 
-  #programs.niri = {
-    #enable = true;
-  #};
+  programs.niri = {
+    enable = true;
+  };
 
   # services.xserver.desktopManager.gnome.enable = true;
   services.desktopManager.gnome.enable = true;
@@ -93,7 +93,7 @@ in {
     lua
     libimobiledevice
     adwaita-icon-theme
-    neofetch
+    fastfetch
 
     imagemagick
     ffmpeg_6-full
