@@ -45,7 +45,7 @@ in {
   home = {
     username = setup.userName;
     homeDirectory = setup.homeDir;
-    stateVersion = setup.stateVersion;
+    stateVersion = setup.homeManagerVersion;
 
     packages = with pkgs; [
       discord-canary # messenger

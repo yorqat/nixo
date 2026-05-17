@@ -3,7 +3,7 @@
   config,
   ...
 }: {
-  home.packages = with pkgs; [openssl pinentry-qt gitui ghq];
+  home.packages = with pkgs; [pinentry-qt gitui ghq];
 
   programs.delta = {
     enable = true;
