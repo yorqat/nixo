@@ -54,7 +54,7 @@ in {
     # for enabling secure boot
     # https://nixos.wiki/wiki/Secure_Boot
     secureBoot = {
-        bootspec = false;
+        bootspec = true;
         lanzaboote = false;
     };
 
@@ -66,5 +66,8 @@ in {
     # this value at the release version of the first install of this system.
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-    stateVersion = "24.05"; # TLDR; only change on fresh install
+    stateVersion = "25.11"; # TLDR; only change on fresh install
+
+    # Home manager
+    homeManagerVersion = "26.05";
 }
