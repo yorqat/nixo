@@ -1,17 +1,4 @@
-{ pkgs, ...}: 
-let
-  # 1. Instruct Nix how to fetch the plugin directly from GitHub
-  opencode-nvim = pkgs.vimUtils.buildVimPlugin {
-    name = "opencode.nvim";
-    src = pkgs.fetchFromGitHub {
-      owner = "sudo-tee";
-      repo = "opencode.nvim";
-      rev = "main";
-      hash = "sha256-0ccf9gtUyA2fBD70XmzOe0LMTy8EEsnVV6oURWZ+jLA="; 
-    };
-  };
-in
-{
+{ pkgs, ... }: {
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
@@ -32,11 +19,6 @@ in
           "kanagawa-lotus",
         },
         livePreview = true,
-      })
-
-      require('opencode').setup({
-        default_global_keymaps = true,
-        default_mode = 'build', -- Start in 'build' mode
       })
 
       require('claude-code').setup({
@@ -120,7 +102,6 @@ in
     # System Packages (replaces extraPackages)
     extraPackages = with pkgs; [
       ripgrep
-      opencode
     ];
 
     # Plugins (Declarative equivalents)
@@ -248,7 +229,6 @@ in
       tokyonight-nvim
       kanagawa-nvim
 
-      opencode-nvim
       claude-code-nvim
     ];
 
@@ -287,18 +267,6 @@ in
       { mode = "n"; key = "<A-Left>";  action = "<cmd>vertical resize -2<CR>"; }
       { mode = "n"; key = "<A-Right>"; action = "<cmd>vertical resize +2<CR>"; }
 
-      {
-        mode = "n";
-        key = "<leader>oo";
-        action = "<cmd>lua require('opencode.api').open_output()<cr>";
-        options.desc = "Opencode: Open Chat Panel";
-      }
-      {
-        mode = "n";
-        key = "<leader>ot";
-        action = "<cmd>lua require('opencode.api').toggle_focus()<cr>";
-        options.desc = "Opencode: Toggle Focus";
-      }
     ];
   };
 }

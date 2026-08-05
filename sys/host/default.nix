@@ -64,10 +64,6 @@ in {
   };
 
 
-  # services.xserver.desktopManager.gnome.enable = true;
-  # services.desktopManager.gnome.enable = true;
-  # services.desktopManager.cosmic.enable = true;
-  # services.xserver.desktopManager.cinnamon.enable = true;
   services.desktopManager.plasma6.enable = true;
 
   programs.zoxide = {

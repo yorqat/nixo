@@ -33,7 +33,7 @@ in {
     # ./mods/apps/vscode
     ./mods/apps/neovim
     ./mods/apps/kitty
-    ./mods/apps/firefox
+    ./mods/apps/chromium
     ./mods/apps/mpv
 
     inputs.nix4nvchad.homeManagerModules.default
