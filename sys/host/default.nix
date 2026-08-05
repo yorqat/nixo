@@ -37,18 +37,6 @@ in {
     enable = true;
   };
 
-  programs.chromium = {
-    enable = true;
-
-    extraOpts = {
-      "DefaultSearchProviderEnabled" = true;
-      "DefaultSearchProviderName" = "SearXNG";
-      "DefaultSearchProviderKeyword" = "searx";
-      "DefaultSearchProviderSearchURL" = "https://searx.be/search?q={searchTerms}";
-      "DefaultSearchProviderSuggestURL" = "https://searx.be/format/json?q={searchTerms}";
-    };
-  };
-
   programs.firefox = {
     enable = true;
     package = pkgs.firefox-devedition;
@@ -65,11 +53,6 @@ in {
 
 
   services.desktopManager.plasma6.enable = true;
-
-  programs.zoxide = {
-    enable = true;
-    enableBashIntegration = true;
-  };
 
   # for virt-manager
   virtualisation.libvirtd = {
@@ -117,21 +100,8 @@ in {
   };
 
   environment.systemPackages = with pkgs; [
-    lua
-    libimobiledevice
     adwaita-icon-theme
-    fastfetch
-
-    imagemagick
-    ffmpeg_6-full
-
     ifuse
-    
-    # nfs support
     nfs-utils
-
-    wget
   ] ++ includeVirtManager;
-
-  environment.variables.EDITOR = "nvim";
 }

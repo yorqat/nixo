@@ -3,5 +3,5 @@
   lib,
   ...
 }: {
-  home.packages = with pkgs; [alacritty tmux];
+  home.packages = with pkgs; [alacritty];
 }

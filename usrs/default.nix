@@ -20,7 +20,6 @@
   includePrismMinecraft = lib.optional setup.includes.minecraftPrismLauncher pkgs.prismlauncher;
 in {
   imports = [
-    # ./mods/hyprland
     # niri works alongside the nixos module
     ./mods/niri
     ./mods/eww
