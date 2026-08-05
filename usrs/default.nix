@@ -49,6 +49,7 @@ in {
     stateVersion = setup.homeManagerVersion;
 
     packages = with pkgs; [
+      deluge-gtk # torrent client
       discord-canary # messenger
       signal-desktop # messenger
       nautilus # file explorer
