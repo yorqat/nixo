@@ -4,5 +4,6 @@
     ./network.nix
     ./sound.nix
     ./fonts.nix
+    ./stylix.nix
   ];
 }

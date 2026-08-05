@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 ACTIVE_WORKSPACE=$(~/.config/eww/scripts/active_workspace)
 LIMIT=6
 
@@ -5,13 +7,13 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --up)
             if [[ $(($ACTIVE_WORKSPACE + 1)) -gt $LIMIT ]]; then
-                hyprctl dispatch workspace 6
+                niri msg action focus-workspace "$LIMIT"
             else
-                hyprctl dispatch workspace $(($ACTIVE_WORKSPACE + 1))
+                niri msg action focus-workspace $(($ACTIVE_WORKSPACE + 1))
             fi
             ;;
-        --down) hyprctl dispatch workspace $(($ACTIVE_WORKSPACE - 1));;
-        *) hyprctl dispatch workspace $(($ACTIVE_WORKSPACE + 1));;
+        --down) niri msg action focus-workspace $(($ACTIVE_WORKSPACE - 1));;
+        *) niri msg action focus-workspace $(($ACTIVE_WORKSPACE + 1));;
     esac
     shift
 done

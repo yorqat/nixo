@@ -33,9 +33,6 @@
     :valign "baseline"
     (box :valign "start" :halign "center" :height 200 :width 400
       (label :text notify-date :class "notify-date")
-      ; (label :text "" :class "notify-time")
     )
-    (label :text "weather")
-    (label :text "notifications")
-    ; (calendar :class "calendar" :height 100)
+    (label :text "No notifications" :class "notify-empty")
   ))

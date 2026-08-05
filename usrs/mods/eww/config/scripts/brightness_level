@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# print current backlight brightness as an integer 0-100 (0 if unavailable)
+LEVEL=$(brightnessctl -m 2>/dev/null | awk -F, '{print $4}' | tr -d '%\n')
+echo "${LEVEL:-0}"

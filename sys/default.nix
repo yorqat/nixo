@@ -12,7 +12,7 @@
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
   niriModule = inputs.niri.nixosModules.niri;
-  # stylixModule = inputs.stylix.nixosModules.stylix;
+  stylixModule = inputs.stylix.nixosModules.stylix;
   
   userDefault = ../usrs;
   setup = import ../setup;
@@ -39,8 +39,7 @@ in {
       { nixpkgs.overlays = [ inputs.nur.overlays.default ]; }
 
       niriModule
-
-      # stylixModule
+      stylixModule
 
       hmModule
       {

@@ -1,0 +1,154 @@
+// theme.scss is generated at build time from the active Stylix base16 scheme
+// (see usrs/mods/eww/default.nix) - swapping the home-manager specialisation
+// regenerates it with a different palette, no manual edits needed here.
+@import "theme.scss";
+
+* {
+  all: unset; // Unsets everything so you can style everything from scratch
+}
+
+.bordered {
+  box-shadow: 0px 0px 0px 4px $accent inset;
+}
+
+.rounded {
+  border-radius: 8px;
+}
+
+.colored-prim {
+  background-color: $bg;
+}
+
+.padded {
+  padding: 12px;
+}
+
+tooltip {
+  background-color: $bg;
+  color: $fg;
+}
+
+.bar {
+  background-color: $bg;
+  color: $fg;
+}
+
+.workspaces {
+  button {
+    font-size: large;
+    padding: 0.8em;
+
+    &.inactive-workspace:hover {
+      background-color: $bg-alt;
+    }
+
+    &.active-workspace {
+      box-shadow: -9px 5px 7px -5px $bg inset;
+      background-color: $bg;
+      color: $accent-alt;
+    }
+  }
+}
+
+.time {
+  border-radius: 0px 100px 100px 0;
+
+  .clock-tick {
+    font-size: large;
+  }
+}
+
+.time-sep {
+  color: $fg-dim;
+}
+
+.system {
+  font-size: large;
+  button:hover {
+    color: $accent-alt;
+  }
+}
+
+.systray {
+  padding: 0 0.4em;
+
+  image {
+    padding: 0 0.3em;
+  }
+}
+
+// music widget
+.music {
+  margin-top: 1em;
+  margin-bottom: 0.2em;
+  padding: 0;
+  background-color: $bg;
+}
+
+.music-button {
+  font-size: large;
+  padding: 0.4em 0;
+  border-radius: 2px;
+
+  &:hover {
+    box-shadow: 0px 0px 4px -5px $accent-alt inset,
+      0px 0 4px -5px $accent-alt inset;
+    color: $accent-alt;
+  }
+}
+
+.music-player-label {
+  font-family: $mono-font;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.music-progress {
+  scale trough {
+    all: unset;
+    background-color: $fg-dim;
+    border-radius: 50px;
+    min-height: 10px;
+    min-width: 225px;
+    margin-left: 0px;
+    margin-right: 0px;
+
+    highlight {
+      all: unset;
+      background-color: $accent;
+      color: $bg;
+      border-radius: 10px;
+    }
+  }
+}
+
+.osc {
+  font-size: x-large;
+}
+
+.osc-slider {
+  trough {
+    all: unset;
+    background-color: $fg-dim;
+    border-radius: 50px;
+    min-height: 10px;
+    min-width: 150px;
+
+    highlight {
+      all: unset;
+      background-color: $accent;
+      border-radius: 10px;
+    }
+  }
+}
+
+.notify-date {
+  font-family: $mono-font;
+  color: $accent-alt;
+  font-size: 5em;
+}
+
+.notify-empty {
+  color: $fg-dim;
+  font-size: 1.1em;
+}

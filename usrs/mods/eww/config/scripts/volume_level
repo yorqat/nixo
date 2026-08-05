@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# print current default sink volume as an integer 0-100 (0 if unavailable)
+LEVEL=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk '{printf "%d", $2 * 100}')
+echo "${LEVEL:-0}"

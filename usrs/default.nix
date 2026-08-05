@@ -27,7 +27,6 @@ in {
     ./mods/git
     ./mods/shell
     ./mods/mpd
-    #./mods/themes
 
     # ./mods/apps/vscode
     ./mods/apps/neovim
@@ -61,4 +60,11 @@ in {
   };
 
   programs.home-manager.enable = true;
+
+  # near-instant theme toggle: both palettes are pre-built, switching is
+  # just running the specialisation's activation script (no rebuild needed)
+  specialisation.light.configuration = {
+    stylix.polarity = lib.mkForce "light";
+    stylix.base16Scheme = lib.mkForce "${pkgs.base16-schemes}/share/themes/catppuccin-latte.yaml";
+  };
 }

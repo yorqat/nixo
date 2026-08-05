@@ -5,12 +5,11 @@
 }: let 
   adnauseam = pkgs.stdenv.mkDerivation rec {
     pname = "adnauseam";
-    version = "3.28.6"; # Check GitHub for the latest release tag
+    version = "3.28.8";
 
     src = pkgs.fetchurl {
       url = "https://github.com/dhowe/AdNauseam/releases/download/v${version}/adnauseam-${version}.chromium.zip";
-      # Swap this with the actual SHA-256 hash or use lib.fakeHash to get it
-      hash = "sha256-uLp50pAaEYZbTQD7E4KffuSFqBqz6hjE3ZJdY/5nbn8=";
+      hash = "sha256-CUZOsOvmYtWWz7z1dscIq/8T5N0AjiqAg+nbXTL32+c=";
     };
 
     nativeBuildInputs = [ pkgs.unzip ];

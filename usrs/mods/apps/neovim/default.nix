@@ -108,42 +108,6 @@
     plugins = {
       render-markdown.enable = true;
 
-      keymaps = {
-        silent = true;
-        # Expected LSP Bindings
-        lspBuf = {
-          gd = "definition";
-          gD = "declaration";
-          gr = "references";
-          gi = "implementation";
-          K = "hover";
-
-          "<leader>ca" = "code_action";
-          "<leader>rn" = "rename";
-          "[d" = "goto_prev";
-          "]d" = "goto_next";
-          "<leader>e" = "open_float";
-          "<leader>q" = "setloclist";
-        };
-
-        diagnostic = {
-          "<leader>j" = "goto_next";
-          "<leader>k" = "goto_prev";
-        };
-      };
-
-      # Theming
-      themery = {
-        enable = true;
-        settings = {
-          themes = [
-            "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha"
-            "gruvbox" "kanagawa"
-          ];
-          livePreview = true;
-        };
-      };
-
       # UI Components
       bufferline = {
         enable = true;
@@ -185,6 +149,26 @@
       # LSP Configuration
       lsp = {
         enable = true;
+        keymaps = {
+          silent = true;
+          lspBuf = {
+            gd = "definition";
+            gD = "declaration";
+            gr = "references";
+            gi = "implementation";
+            K = "hover";
+            "<leader>ca" = "code_action";
+            "<leader>rn" = "rename";
+            "[d" = "goto_prev";
+            "]d" = "goto_next";
+            "<leader>e" = "open_float";
+            "<leader>q" = "setloclist";
+          };
+          diagnostic = {
+            "<leader>j" = "goto_next";
+            "<leader>k" = "goto_prev";
+          };
+        };
         servers = {
           nil_ls.enable = true;      # Nix
           rust_analyzer = {          # Rust (Replacing coc-rust-analyzer)

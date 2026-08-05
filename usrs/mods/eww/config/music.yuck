@@ -48,7 +48,7 @@
             (label :class "music-player-label" :text {music_meta.title})
 
             ; music seeking
-            (box :class "h" :orientation "v" :class "music-progress" :valign "end" 
+            (box :orientation "v" :class "music-progress" :valign "end"
               (label :class "music-progress-time" :text {music_player.time})
               (scale :orientation "h" :halign "center"
                 :value {music_player.percentile}

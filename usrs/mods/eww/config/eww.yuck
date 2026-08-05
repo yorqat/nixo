@@ -1,27 +1,35 @@
 ;; music player widget
-;; (include "../../music.yuck")
+(include "music.yuck")
 
 ;; notifications widget
-;; (include "../../notifs.yuck")
+(include "notifs.yuck")
+
+;; volume/brightness OSD + powermenu
+(include "osc.yuck")
 
 (defvar clock_tick_show true)
 (defvar theme "dark")
+
+(deflisten workspaces_widget :initial "(box)" "scripts/workspace-widget")
 
 ;; main bar
 (defwindow bar
   :monitor 0
   :exclusive true
   :stacking "fg"
-  :geometry (geometry 
+  :geometry (geometry
     :x "0%"
     :y "0%"
     :height "36px"
     :width "100%"
     :anchor "top center")
   (centerbox :orientation "h" :class "bar bordered"
-    (start_menu)
+    (box :orientation "h" :spacing 8 (start_menu) (workspaces))
     (time)
     (system)))
+
+(defwidget workspaces []
+  (literal :content workspaces_widget))
 
 (defpoll time_hour :interval "1s" "date +\%H")
 (defpoll time_min :interval "1s" "date +\%M")
@@ -31,22 +39,19 @@
 (defwidget start_menu []
   (box :orientation "h" :class "start-menu" :width 100  :halign "start"
     (button :width 32 :height 32 :class "start-icon" 
-      (image :path "./START" :image-width 24 :image-height 24)
+      (image :path "images/icons/nixos--sandy.png" :image-width 24 :image-height 24)
     )
-    (box :width 32 :height 32 :class "start-label" "(◠‿◠✿)")
   )
 )
 
 (defwidget time []
   (button :class "time hovered-prim"
-    :orientation "h"
-    :spacing 0
     :tooltip date
-    (box :orientation "h" :spacing 16 :halign "center"
+    (box :orientation "h" :spacing 4 :halign "center"
       (box :width 16 :height 32 time_hour)
-      ;; (box :width 0 ":")
+      (label :class "time-sep" :text ":")
       (box :width 16 :height 32 time_min)
-      ;; (box :width 0 ":")
+      (label :class "time-sep" :text ":")
       (box :width 16 :height 32 time_sec)
     )
   )
@@ -57,9 +62,10 @@
     (box 
       :orientation "h"
       :spacing 16
-      (button :class "" :timeout "2000ms" :tooltip "swap theme" :onclick "scripts/theme" '')
-      (button :class "" :tooltip "reboot" :onclick "systemctl reboot" '')
-      (button :class "" :tooltip "shut down" :onclick "systemctl poweroff" '󰤆')
+      (systray :class "systray" :orientation "h" :spacing 8 :icon-size 20)
+      (button :class "" :timeout "2000ms" :tooltip "Swap Theme" :onclick "scripts/theme" '')
+      (button :class "" :tooltip "Reboot" :onclick "systemctl reboot" '')
+      (button :class "" :tooltip "Shut Down" :onclick "systemctl poweroff" '󰤆')
     )
   )
 )

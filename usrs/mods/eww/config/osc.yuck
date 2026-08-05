@@ -1,0 +1,46 @@
+;; on-screen controls: volume/brightness OSD popups and the powermenu,
+;; opened by niri keybinds (see usrs/mods/niri/default.nix)
+
+(defpoll volume_level :interval "1s" :initial "0" "scripts/volume_level")
+(defpoll brightness_level :interval "1s" :initial "0" "scripts/brightness_level")
+
+(defwindow osc-volume
+  :monitor 0
+  :stacking "overlay"
+  :geometry (geometry
+    :x "0%"
+    :y "10%"
+    :width "220px"
+    :height "48px"
+    :anchor "top center")
+  (box :class "colored-prim rounded padded osc" :orientation "h" :spacing 8
+    (label :text "󰕾")
+    (scale :min 0 :max 100 :value volume_level :active false :class "osc-slider")))
+
+(defwindow osc-brightness
+  :monitor 0
+  :stacking "overlay"
+  :geometry (geometry
+    :x "0%"
+    :y "10%"
+    :width "220px"
+    :height "48px"
+    :anchor "top center")
+  (box :class "colored-prim rounded padded osc" :orientation "h" :spacing 8
+    (label :text "󰃟")
+    (scale :min 0 :max 100 :value brightness_level :active false :class "osc-slider")))
+
+(defwindow powermenu
+  :monitor 0
+  :stacking "overlay"
+  :geometry (geometry
+    :x "0%"
+    :y "0%"
+    :width "260px"
+    :height "80px"
+    :anchor "center center")
+  (box :class "colored-prim rounded padded osc" :orientation "h" :space-evenly true
+    (button :tooltip "Lock" :onclick "eww close powermenu; loginctl lock-session" "󰌾")
+    (button :tooltip "Log Out" :onclick "eww close powermenu; niri msg action quit" "󰗽")
+    (button :tooltip "Reboot" :onclick "eww close powermenu; systemctl reboot" "")
+    (button :tooltip "Shut Down" :onclick "eww close powermenu; systemctl poweroff" "󰤆")))

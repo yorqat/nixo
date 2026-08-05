@@ -37,6 +37,16 @@ in {
     enable = true;
   };
 
+  # ungoogled-chromium strips Google from the built-in search engine list;
+  # restore it via a managed policy (the home-manager chromium module has
+  # no policy support, so this must live at the system level).
+  programs.chromium = {
+    enable = true;
+    defaultSearchProviderEnabled = true;
+    defaultSearchProviderSearchURL = "https://www.google.com/search?q={searchTerms}";
+    defaultSearchProviderSuggestURL = "https://www.google.com/complete/search?output=chrome&q={searchTerms}";
+  };
+
   programs.firefox = {
     enable = true;
     package = pkgs.firefox-devedition;

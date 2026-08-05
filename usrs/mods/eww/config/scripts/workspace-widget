@@ -60,10 +60,8 @@ function gen_eww_widget()
 			.. workspace.tooltip
 			.. '"'
 			.. ':onclick "'
-			-- close dashboard at every workspace except home workspace
-			-- .. "scripts/dashboard " .. ( index ~= #workspaces and "--close; " or "--open; " )
 			-- dispatch to intended workspace
-			.. "hyprctl dispatch workspace "
+			.. "niri msg action focus-workspace "
 			.. index
 			.. '" '
 			.. '"'
@@ -74,7 +72,7 @@ function gen_eww_widget()
 
 	return '(eventbox :onscroll "'
 		.. [[~/.config/eww/scripts/switch_workspace --{}"]]
-		.. [[(box :class "workspaces" :orientation "v" :valign "start" :spacing 0 ]]
+		.. [[(box :class "workspaces" :orientation "h" :halign "start" :spacing 0 ]]
 		.. mapped_workspace_buttons
 		.. "))\n"
 end

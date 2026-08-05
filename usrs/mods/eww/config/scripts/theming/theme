@@ -1,4 +1,4 @@
-#!//usr/bin/env bash
+#!/usr/bin/env bash
 
 # MIT License
 
@@ -24,31 +24,27 @@
 
 # Contact: YorQat <qarkdev+gh@gmail.com>
 
-# Get current theme from the existing eww instance
-export THEME=$(eww -c . get theme)
+# Toggle between the default (dark) Stylix scheme and the "light"
+# home-manager specialisation defined in usrs/default.nix. Both generations
+# are already built by the last `nixos-rebuild switch` - toggling just runs
+# the matching generation's activation script (relinks dotfiles, including
+# eww's generated theme.scss) and asks eww to reload. No rebuild involved.
 
-OLD_BG_PROCESS=$(pgrep swaybg)
+STATE_FILE="$HOME/.cache/eww-theme-state"
+PROFILE_DIR="$HOME/.local/state/nix/profiles/home-manager"
 
-# For startup
-if [ -z "$THEME" ]; then
-  export THEME=$(./scripts/start_theme)
+CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "dark")
+
+if [[ "$CURRENT" == "dark" ]]; then
+  NEW="light"
+  ACTIVATE="$PROFILE_DIR/specialisation/light/activate"
+else
+  NEW="dark"
+  ACTIVATE="$PROFILE_DIR/activate"
 fi
 
-#  swap them light and darks
-if [[ $THEME == "themes/dark" ]]; then
-  NEW_THEME="light"
-elif [[ $THEME == "themes/light" ]]; then
-  NEW_THEME="dark"
-fi  
+"$ACTIVATE"
+echo "$NEW" >"$STATE_FILE"
 
-# launch bar and store the new state
-# add in the wallpaper to spicet things up
-pkill eww
-eww -c ../$NEW_THEME open-many bar mp-mini notify-mini
-eww -c ../$NEW_THEME update theme="themes/$NEW_THEME"
-swaybg -i ../$NEW_THEME/HOME_WALL -m fill &
-
-# window styling
-./scripts/hypr_theme ../$NEW_THEME/hyprland.conf
-
-kill $OLD_BG_PROCESS
+eww reload
+eww update theme="$NEW"

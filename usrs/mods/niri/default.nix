@@ -11,6 +11,7 @@
     wf-recorder
     brightnessctl
     pamixer
+    jq
     # python39Packages.requests
     slurp
     tesseract5
@@ -18,7 +19,7 @@
     wl-clipboard
     pngquant
     # swww
-    libsForQt5.qt5.qtwayland
+    qt5.qtwayland
 
     xwayland-satellite
 
@@ -34,13 +35,7 @@
 
     spawn-at-startup = [
       {
-        command = [
-          "sh"
-          "-c"
-          ''
-            swaybg --image "$(lua $HOME/.config/eww/scripts/theming/start_theme --absolute-path)/HOME_WALL" --mode fill --output "*"
-          ''
-        ];
+        command = ["swaybg" "--image" "${config.stylix.image}" "--mode" "fill" "--output" "*"];
       }
     ];
 
@@ -82,9 +77,13 @@
 
     binds = {
     # spawn now expects a list for multiple arguments
-    "XF86AudioRaiseVolume".action.spawn = [ "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+" ];
-    "XF86AudioLowerVolume".action.spawn = [ "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-" ];
-    
+    "XF86AudioRaiseVolume".action.spawn = [ "sh" "-c" "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ && eww open osc-volume --duration 2s" ];
+    "XF86AudioLowerVolume".action.spawn = [ "sh" "-c" "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1- && eww open osc-volume --duration 2s" ];
+    "XF86MonBrightnessUp".action.spawn = [ "sh" "-c" "brightnessctl set +5% && eww open osc-brightness --duration 2s" ];
+    "XF86MonBrightnessDown".action.spawn = [ "sh" "-c" "brightnessctl set 5%- && eww open osc-brightness --duration 2s" ];
+
+    "Mod+Escape".action.spawn = [ "eww" "open" "--toggle" "powermenu" ];
+
     # Actions with no arguments MUST be empty sets
     "Mod+M".action.power-off-monitors = {};
 

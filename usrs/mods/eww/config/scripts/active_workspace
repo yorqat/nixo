@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# return the workspace number from command
+# print the index of the currently focused niri workspace
 
-result=$(hyprctl monitors)
-if [[ $result =~ active\ workspace:[[:space:]]*([0-9]+) ]]; then
-  digit=${BASH_REMATCH[1]}
-  echo $digit
+digit=$(niri msg --json workspaces | jq -r 'map(select(.is_focused))[0].idx')
+
+if [[ -n "$digit" && "$digit" != "null" ]]; then
+  echo "$digit"
 else
   exit 1
 fi

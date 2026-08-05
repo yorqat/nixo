@@ -18,7 +18,6 @@ in {
       };
     };
 
-    bootspec.enable = setup.secureBoot.bootspec;
     lanzaboote = {
       enable = setup.secureBoot.lanzaboote;
       pkiBundle = "/etc/secureboot";
