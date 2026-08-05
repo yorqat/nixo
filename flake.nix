@@ -47,7 +47,10 @@
   outputs = {self, ...} @ inputs: let
     system = "x86_64-linux";
     # pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-    pkgs = import inputs.nixpkgs {inherit system;};
+    pkgs = import inputs.nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+    };
   in {
     nixosConfigurations = import ./sys inputs;
 
@@ -57,6 +60,7 @@
         alejandra # uncomprimising nix formatter
         fnlfmt # fennel formatter
         stylua # lua formatter
+        pkgs.claude-code
       ];
     };
   };

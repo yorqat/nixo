@@ -34,6 +34,7 @@ in {
     ./mods/apps/neovim
     ./mods/apps/kitty
     ./mods/apps/firefox
+    ./mods/apps/mpv
 
     inputs.nix4nvchad.homeManagerModules.default
     inputs.nixvim.homeModules.nixvim

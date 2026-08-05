@@ -22,6 +22,7 @@ in {
 
   networking.hostName = "${setup.hostName}";
   services.getty.autologinUser = "${setup.userName}";
+  services.ollama.enable = true;
 
   users.users."${setup.userName}" = {
     isNormalUser = true;
@@ -36,8 +37,38 @@ in {
     enable = true;
   };
 
+  programs.chromium = {
+    enable = true;
+
+    extraOpts = {
+      "DefaultSearchProviderEnabled" = true;
+      "DefaultSearchProviderName" = "SearXNG";
+      "DefaultSearchProviderKeyword" = "searx";
+      "DefaultSearchProviderSearchURL" = "https://searx.be/search?q={searchTerms}";
+      "DefaultSearchProviderSuggestURL" = "https://searx.be/format/json?q={searchTerms}";
+    };
+  };
+
+  programs.firefox = {
+    enable = true;
+    package = pkgs.firefox-devedition;
+    policies = {
+      ExtensionSettings = {
+        # The key MUST match the extension's internal ID
+        "adnauseam@rednoise.org" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/adnauseam/latest.xpi";
+        };
+      };
+    };
+  };
+
+
   # services.xserver.desktopManager.gnome.enable = true;
-  services.desktopManager.gnome.enable = true;
+  # services.desktopManager.gnome.enable = true;
+  # services.desktopManager.cosmic.enable = true;
+  # services.xserver.desktopManager.cinnamon.enable = true;
+  services.desktopManager.plasma6.enable = true;
 
   programs.zoxide = {
     enable = true;
