@@ -56,6 +56,7 @@ in {
       crosspipe
       sonixd # music player
       blender
+      dolphin-emu
     ] ++ includeLibreOffice ++ includePrismMinecraft;
   };
 

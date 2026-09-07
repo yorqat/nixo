@@ -31,6 +31,8 @@ in {
     packages = with pkgs; [];
   };
 
+  programs.ente-auth.enable = true;
+
   programs.xwayland.enable = true;
 
   programs.niri = {

@@ -1,4 +1,15 @@
 { pkgs, ... }: {
+xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
+  "$schema" = "https://opencode.ai/config.json";
+  provider = {
+    openrouter = {
+      models = {
+        "z-ai/glm-5.3-flash" = {};
+      };
+    };
+  };
+  model = "openrouter/z-ai/glm-5.3-flash";
+};
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
@@ -58,16 +69,7 @@
     popd_cmd = 'popd',       -- Command to pop directory from stack (e.g., 'popd' for bash/zsh, 'exit' for nushell)
   },
   -- Command settings
-  command = "claude",        -- Command used to launch Claude Code
-  -- Command variants
-  command_variants = {
-    -- Conversation management
-    continue = "--continue", -- Resume the most recent conversation
-    resume = "--resume",     -- Display an interactive conversation picker
-
-    -- Output options
-    verbose = "--verbose",   -- Enable verbose logging with full turn-by-turn output
-  },
+  command = "opencode",        -- Command used to launch Claude Code
   -- Keymaps
   keymaps = {
     toggle = {
@@ -102,6 +104,7 @@
     # System Packages (replaces extraPackages)
     extraPackages = with pkgs; [
       ripgrep
+      opencode
     ];
 
     # Plugins (Declarative equivalents)

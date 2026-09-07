@@ -39,7 +39,6 @@ in {
   xdg.configFile."eww".source = ewwConfig;
 
   systemd.user.services.eww = mkService {
-    Unit.Description = "eww widgets";
     Service = {
       ExecStart = "${pkgs.eww}/bin/eww daemon --no-daemonize";
       ExecStartPost = "${pkgs.eww}/bin/eww open-many bar mp-mini notify-mini";
