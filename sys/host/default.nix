@@ -77,7 +77,6 @@ in {
 
   # virtualisation.docker.enable = setup.includes.docker;
   programs.dconf.enable = true;
-  hardware.graphics.enable = true;
   # For steam
   hardware.steam-hardware.enable = setup.includes.steam;
   programs.steam.enable = setup.includes.steam;
