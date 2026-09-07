@@ -31,7 +31,7 @@
     ];
 
     settings = {
-      user = { 
+      user = {
         name = "YorQat";
         email = "qarkdev+gh@gmail.com";
       };

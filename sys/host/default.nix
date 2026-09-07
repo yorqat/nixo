@@ -1,4 +1,8 @@
-{ pkgs, lib, ... }: let
+{
+  pkgs,
+  lib,
+  ...
+}: let
   setup = import ../../setup;
 
   includeVirtManager = lib.optional setup.includes.virt-manager pkgs.virt-manager;
@@ -63,7 +67,6 @@ in {
     };
   };
 
-
   services.desktopManager.plasma6.enable = true;
 
   # for virt-manager
@@ -84,8 +87,7 @@ in {
     # enable powerprofilesctl
     power-profiles-daemon.enable = true;
 
-    xserver = 
-    {
+    xserver = {
       enable = true;
 
       xkb = {
@@ -104,16 +106,18 @@ in {
     udev.packages = with pkgs; [gnome-settings-daemon];
 
     usbmuxd.enable = true;
-    
+
     avahi.enable = true;
     avahi.nssmdns6 = true;
     # flatpak.enable = true;
     openssh.enable = true;
   };
 
-  environment.systemPackages = with pkgs; [
-    adwaita-icon-theme
-    ifuse
-    nfs-utils
-  ] ++ includeVirtManager;
+  environment.systemPackages = with pkgs;
+    [
+      adwaita-icon-theme
+      ifuse
+      nfs-utils
+    ]
+    ++ includeVirtManager;
 }

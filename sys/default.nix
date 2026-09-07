@@ -13,7 +13,7 @@
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
   niriModule = inputs.niri.nixosModules.niri;
   stylixModule = inputs.stylix.nixosModules.stylix;
-  
+
   userDefault = ../usrs;
   setup = import ../setup;
 in {
@@ -36,7 +36,7 @@ in {
       lbtModule
 
       # firefox extensions
-      { nixpkgs.overlays = [ inputs.nur.overlays.default ]; }
+      {nixpkgs.overlays = [inputs.nur.overlays.default];}
 
       niriModule
       stylixModule

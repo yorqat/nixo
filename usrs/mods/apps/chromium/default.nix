@@ -2,7 +2,7 @@
   pkgs,
   lib,
   ...
-}: let 
+}: let
   adnauseam = pkgs.stdenv.mkDerivation rec {
     pname = "adnauseam";
     version = "3.28.8";
@@ -12,7 +12,7 @@
       hash = "sha256-CUZOsOvmYtWWz7z1dscIq/8T5N0AjiqAg+nbXTL32+c=";
     };
 
-    nativeBuildInputs = [ pkgs.unzip ];
+    nativeBuildInputs = [pkgs.unzip];
 
     unpackPhase = ''
       unzip $src -d temp_out

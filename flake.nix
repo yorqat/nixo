@@ -36,7 +36,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # secure boot 
+    # secure boot
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -47,8 +47,8 @@
     system = "x86_64-linux";
     # pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
     pkgs = import inputs.nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
+      inherit system;
+      config.allowUnfree = true;
     };
   in {
     nixosConfigurations = import ./sys inputs;

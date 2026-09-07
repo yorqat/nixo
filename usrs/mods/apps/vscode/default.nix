@@ -21,7 +21,7 @@
 
         "editor.fontFamily" = "'JetBrainsMono', 'monospace', monospace";
 
-        "svelte.enable-ts-plugin"= true;
+        "svelte.enable-ts-plugin" = true;
       };
       extensions = with pkgs.vscode-extensions; [
         vscodevim.vim
@@ -40,12 +40,11 @@
 
         # Ssh
         ms-vscode-remote.remote-ssh
-      
+
         # Cosmetics
         catppuccin.catppuccin-vsc
         pkief.material-icon-theme
       ];
-
     };
   };
 }

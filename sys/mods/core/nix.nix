@@ -4,9 +4,8 @@
   ...
 }: let
   #hyprland-nvidia = inputs.hyprland.packages.${pkgs.system}.default.override {
-    #wlroots = inputs.hyprland.packages.${pkgs.system}.wlroots-hyprland;
+  #wlroots = inputs.hyprland.packages.${pkgs.system}.wlroots-hyprland;
   #};
-
   #hyprland = inputs.hyprland.packages.${pkgs.system}.default;
   setup = import ../../../setup;
 in {
@@ -19,13 +18,13 @@ in {
   };
 
   #nixpkgs.overlays = [
-    #inputs.xdg-desktop-portal-hyprland.overlays.default
-    #(final: super: {
-      #makeModulesClosure = x:
-        #super.makeModulesClosure (x // {allowMissing = true;});
+  #inputs.xdg-desktop-portal-hyprland.overlays.default
+  #(final: super: {
+  #makeModulesClosure = x:
+  #super.makeModulesClosure (x // {allowMissing = true;});
 
-      #inherit hyprland-nvidia hyprland;
-    #})
+  #inherit hyprland-nvidia hyprland;
+  #})
   #];
 
   nix = {
