@@ -22,7 +22,8 @@ let
 
   homeDir = "/home/${userName}";
 
-  # I use mountpoints /dat for my media and /cred for my secrets
+  # /dat is a mountpoint for media and documents.
+  # secrets are managed by sops-nix, not symlinks (see migrate-cred.sh)
   symLinks = [
     # [ "dest" "src" ]
     ["${homeDir}/Documents" "/dat/Documents"]
@@ -30,8 +31,6 @@ let
     ["${homeDir}/Videos" "/dat/Videos"]
     ["${homeDir}/Pictures" "/dat/Pictures"]
     ["${homeDir}/Music" "/dat/Music"]
-    ["${homeDir}/.ssh" "/cred/.ssh"]
-    ["${homeDir}/.wakatime.cfg" "/cred/.wakatime.cfg"]
 
     ["${homeDir}/my-nixos" "/dat/Documents/my-nixos"]
   ];

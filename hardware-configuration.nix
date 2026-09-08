@@ -28,11 +28,6 @@
     options = ["fmask=0022" "dmask=0022"];
   };
 
-  fileSystems."/cred" = {
-    device = "/dev/disk/by-uuid/cafff508-1786-489e-9e59-99428bb38bb4";
-    fsType = "btrfs";
-  };
-
   fileSystems."/dat" = {
     device = "/dev/disk/by-uuid/9497d692-3ec1-4035-bf55-87769d5c9c71";
     fsType = "btrfs";

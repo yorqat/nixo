@@ -41,6 +41,12 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # secrets
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {self, ...} @ inputs: let
@@ -53,14 +59,6 @@
   in {
     nixosConfigurations = import ./sys inputs;
 
-    devShells.x86_64-linux.default = pkgs.mkShell {
-      packages = with pkgs; [
-        yaml-language-server # yaml LSP
-        alejandra # uncomprimising nix formatter
-        fnlfmt # fennel formatter
-        stylua # lua formatter
-        pkgs.claude-code
-      ];
-    };
+    devShells.x86_64-linux.default = pkgs.callPackage ./devshell {};
   };
 }

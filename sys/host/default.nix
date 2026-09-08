@@ -25,7 +25,8 @@ in {
   };
 
   networking.hostName = "${setup.hostName}";
-  services.getty.autologinUser = "${setup.userName}";
+
+  zramSwap.enable = true;
   services.ollama.enable = true;
 
   users.users."${setup.userName}" = {
@@ -109,7 +110,14 @@ in {
     avahi.enable = true;
     avahi.nssmdns6 = true;
     # flatpak.enable = true;
-    openssh.enable = true;
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false;
+        PermitRootLogin = "no";
+      };
+    };
   };
 
   environment.systemPackages = with pkgs;

@@ -5,5 +5,6 @@
     ./sound.nix
     ./fonts.nix
     ./stylix.nix
+    ./secrets.nix
   ];
 }

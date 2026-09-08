@@ -11,6 +11,7 @@
   #printing = ./mods/printing;
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
+  sopsModule = inputs.sops-nix.nixosModules.sops;
   niriModule = inputs.niri.nixosModules.niri;
   stylixModule = inputs.stylix.nixosModules.stylix;
 
@@ -34,6 +35,9 @@ in {
 
       # secure boot requirement
       lbtModule
+
+      # secrets
+      sopsModule
 
       # firefox extensions
       {nixpkgs.overlays = [inputs.nur.overlays.default];}

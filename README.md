@@ -16,10 +16,26 @@ Since these are located at `/` it would be desirable if these are mountpoints or
 
 > **Note:** Ability to change locations rolling out soon.
 
-## [`/dat`](usrs/default.nix#L31)
+## [`/dat`](usrs/default.nix)
 Home folders: `Desktop`, `Documents`, `Videos`, `Pictures`, `Music`
-## [`/cred`](usrs/default.nix#L38)
-Secrets like `.ssh` and `.wakatime.cfg`
+
+## Secrets
+Managed by [sops-nix](https://github.com/Mic92/sops-nix): payloads are encrypted in [`secrets/`](secrets/) with age, committed to the repo, and deployed at boot into their home locations (`~/.ssh/*`, `~/.wakatime.cfg`) with `0600` permissions. The age key lives at `~/.config/sops/age/keys.txt` (for editing) and `/var/lib/sops-nix/key.txt` (for boot decryption) — they must be the same key.
+
+Use the `secrets` util from the devshell:
+
+```sh
+$ nix develop
+$ secrets add <name> <file>   # stage, encrypt, git add; warns if unregistered
+$ secrets edit <name>         # decrypt, open $EDITOR, re-encrypt
+$ secrets rename <old> <new>  # git mv, no re-encryption needed
+$ secrets rm <name>           # remove a payload
+$ secrets list                # encryption and registration status
+```
+
+New names must be registered in [`userSecrets`](sys/mods/core/secrets.nix) — and `deployPath` extended if they should not land in `~/.ssh/` — the util will remind you.
+
+One-time migration from an old `/cred` partition: `./migrate-cred.sh`
 
 # Try it out!
 ```
@@ -49,7 +65,7 @@ $ nixos-install --root /mnt --flake .#<hostName>
 
 ## Launch window manager
 ```sh
-$ Hyprland
+$ niri-session
 ```
 
 ## Rebuilding on changes
@@ -62,4 +78,4 @@ $ nixos-rebuild switch --flake .#<hostName> -v
 ```
 
 
-> **Warning:** Changing [`userName`](setup/default.nix#L16) don't move your stuff but will create a new home directory.
+> **Warning:** Changing [`userName`](setup/default.nix) don't move your stuff but will create a new home directory.
