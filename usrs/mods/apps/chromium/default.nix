@@ -32,7 +32,6 @@ in {
     commandLineArgs = [
       "--disable-features=ExtensionManifestV2Unsupported"
       "--load-extension=${adnauseam}"
-      "--use-angle=vulkan"
     ];
   };
 }
