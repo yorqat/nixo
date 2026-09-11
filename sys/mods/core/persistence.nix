@@ -4,10 +4,26 @@
   environment.persistence."/persist" = {
     hideMounts = true;
     directories = [
-      "/etc"
-      "/var"
+      "/var/log"
+      "/var/lib/bluetooth"
+      "/var/lib/nixos"
+      "/var/lib/systemd/coredump"
+      "/var/lib/NetworkManager"
       "/home"
-      "/root"
+    ];
+    files = [
+      "/etc/machine-id"
+      "/etc/shadow"
+      "/etc/passwd"
+      "/etc/group"
+      "/etc/subuid"
+      "/etc/subgid"
+      {
+        file = "/var/lib/sops-nix/key.txt";
+        parentDirectory = {
+	  mode = "0700";
+	};
+      }
     ];
   };
 }
