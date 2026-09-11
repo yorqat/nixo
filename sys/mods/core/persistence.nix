@@ -16,8 +16,8 @@
       {
         file = "/var/lib/sops-nix/key.txt";
         parentDirectory = {
-	       mode = "0700";
-	      };
+          mode = "0700";
+        };
       }
     ];
   };
