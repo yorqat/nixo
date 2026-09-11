@@ -58,6 +58,11 @@ in {
 
   programs.home-manager.enable = true;
 
+  # plasma6 makes stylix pick the "kde" qt platform, which stylix explicitly
+  # does not support (eval warning, no theming). qtct/kvantum is the supported
+  # path; plasma sessions still set their own platform theme on top.
+  stylix.targets.qt.platform = lib.mkForce "qtct";
+
   # near-instant theme toggle: both palettes are pre-built, switching is
   # just running the specialisation's activation script (no rebuild needed)
   specialisation.light.configuration = {

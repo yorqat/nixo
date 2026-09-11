@@ -44,7 +44,6 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
   + sops key), `/dat` on sda1 (1.8T btrfs, documents/media/code; home dirs
   symlink into it via `setup.symLinks` tmpfiles rules), `/boot` on nvme0n1p5,
   nvme0n1p7 is blank 2G.
-- The stylix "qt platform kde unsupported" eval warning is cosmetic.
 
 ## Roadmap
 
