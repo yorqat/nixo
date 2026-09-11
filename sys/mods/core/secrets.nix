@@ -25,23 +25,33 @@ in {
     "d ${setup.homeDir}/.ssh 0700 ${setup.userName} users - -"
   ];
 
-  sops = lib.optionalAttrs (available != []) {
-    age.keyFile = "/var/lib/sops-nix/key.txt";
+  sops = lib.optionalAttrs (available != [] || builtins.pathExists (secretsDir + "/yor-password-hash")) {
+    age.keyFile = "/persist/var/lib/sops-nix/key.txt";
 
     # payloads are whole files (keys, host lists), not yaml/json docs
     defaultSopsFormat = "binary";
 
-    secrets = builtins.listToAttrs (map
-      (name: {
-        inherit name;
-        value = {
-          sopsFile = secretsDir + "/${name}";
-          path = deployPath name;
-          owner = setup.userName;
-          group = "users";
-          mode = "0600";
+    secrets =
+      (builtins.listToAttrs (map
+        (name: {
+          inherit name;
+          value = {
+            sopsFile = secretsDir + "/${name}";
+            path = deployPath name;
+            owner = setup.userName;
+            group = "users";
+            mode = "0600";
+          };
+        })
+        available))
+      // (lib.optionalAttrs (builtins.pathExists (secretsDir + "/yor-password-hash")) {
+        "yor-password-hash" = {
+          sopsFile = secretsDir + "/yor-password-hash";
+          owner = "root";
+          group = "root";
+          mode = "0400";
+          neededForUsers = true;
         };
-      })
-      available);
+      });
   };
 }

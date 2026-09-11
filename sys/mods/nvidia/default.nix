@@ -1,22 +1,29 @@
-{config, ...}: {
-  # nvidia driver toggles (G-Sync/VRR off to avoid flicker)
-  environment.variables = {
-    __GL_GSYNC_ALLOWED = "0";
-    __GL_VRR_ALLOWED = "0";
+{
+  config,
+  pkgs,
+  ...
+}: let
+  nvidia-offload = pkgs.writeShellScriptBin "nvidia-offload" ''
+    export __NV_PRIME_RENDER_OFFLOAD=1
+    export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
+    export __GLX_VENDOR_LIBRARY_NAME=nvidia
+    export __VK_LAYER_NV_optimus=NVIDIA_only
+    exec "$@"
+  '';
+in {
+  environment = {
+    systemPackages = [nvidia-offload];
+    variables = {
+      GBM_BACKEND = "nvidia-drm";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    };
   };
 
   hardware = {
-    graphics = {
-      enable = true;
-      # 32-bit vulkan/gl comes from the steam module
-      # va-api (videoAcceleration) defaults to true
-    };
-
     nvidia = {
-      modesetting.enable = true;
       open = true;
-      # preserve video memory across suspend/resume (wayland compositors)
-      powerManagement.enable = true;
+      modesetting.enable = true;
+      powerManagement.enable = false;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
     };
   };

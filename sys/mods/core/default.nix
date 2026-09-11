@@ -6,5 +6,6 @@
     ./fonts.nix
     ./stylix.nix
     ./secrets.nix
+    ./persistence.nix
   ];
 }

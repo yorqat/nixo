@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }: let
   setup = import ../../setup;
@@ -29,11 +30,14 @@ in {
   zramSwap.enable = true;
   services.ollama.enable = true;
 
+  users.mutableUsers = false;
   users.users."${setup.userName}" = {
     isNormalUser = true;
     description = "${setup.userName} (very cool person)";
     extraGroups = ["networkmanager" "wheel" "audio" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [];
+
+    hashedPasswordFile = config.sops.secrets."yor-password-hash".path;
   };
 
   programs.ente-auth.enable = true;
@@ -78,6 +82,7 @@ in {
 
   # virtualisation.docker.enable = setup.includes.docker;
   programs.dconf.enable = true;
+  hardware.graphics.enable = true;
   # For steam
   hardware.steam-hardware.enable = setup.includes.steam;
   programs.steam.enable = setup.includes.steam;
