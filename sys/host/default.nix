@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }: let
   setup = import ../../setup;
@@ -29,11 +30,14 @@ in {
   zramSwap.enable = true;
   services.ollama.enable = true;
 
+  users.mutableUsers = false;
   users.users."${setup.userName}" = {
     isNormalUser = true;
     description = "${setup.userName} (very cool person)";
     extraGroups = ["networkmanager" "wheel" "audio" "video" "input" "kvm" "libvirtd" "docker"];
     packages = with pkgs; [];
+
+    hashedPasswordFile = config.sops.secrets."yor-password-hash".path;
   };
 
   programs.ente-auth.enable = true;

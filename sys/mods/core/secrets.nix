@@ -25,13 +25,13 @@ in {
     "d ${setup.homeDir}/.ssh 0700 ${setup.userName} users - -"
   ];
 
-  sops = lib.optionalAttrs (available != []) {
+  sops = lib.optionalAttrs (available != [] || builtins.pathExists (secretsDir + "/yor-password-hash")) {
     age.keyFile = "/var/lib/sops-nix/key.txt";
 
     # payloads are whole files (keys, host lists), not yaml/json docs
     defaultSopsFormat = "binary";
 
-    secrets = builtins.listToAttrs (map
+    secrets = (builtins.listToAttrs (map
       (name: {
         inherit name;
         value = {
@@ -42,6 +42,13 @@ in {
           mode = "0600";
         };
       })
-      available);
+      available)) // (lib.optionalAttrs (builtins.pathExists (secretsDir + "/yor-password-hash")) {
+        "yor-password-hash" = {
+          sopsFile = secretsDir + "/yor-password-hash";
+          owner = "root";
+          group = "root";
+          mode = "0400";
+        };
+      });
   };
 }

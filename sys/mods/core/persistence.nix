@@ -13,16 +13,11 @@
     ];
     files = [
       "/etc/machine-id"
-      "/etc/shadow"
-      "/etc/passwd"
-      "/etc/group"
-      "/etc/subuid"
-      "/etc/subgid"
       {
         file = "/var/lib/sops-nix/key.txt";
         parentDirectory = {
-	  mode = "0700";
-	};
+	       mode = "0700";
+	      };
       }
     ];
   };
