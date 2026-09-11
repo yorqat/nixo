@@ -27,7 +27,11 @@ Almost everything personal lives in [`setup/default.nix`](setup/default.nix):
 - `userName` / `hostName` — the host is built as `nixosConfigurations.<hostName>`, so
   changing `hostName` changes what you pass to `--flake .#<hostName>`
 - `timeZone`, `defaultLocale`, `extraLocale`
-- `includes` — feature toggles (`steam`, `virt-manager`, `libreoffice`, ...)
+- `lite` — **start with `lite = true` on a fresh install.** It gates everything that
+  assumes this machine: the nvidia driver module, the ollama daemon, and the plasma6
+  session. With `lite = true` you get niri + core apps on anything; flip it to `false`
+  only on hardware that actually has those things (or flip individual
+  `includes.<name>` flags for fine control)
 - `symLinks` — home dirs (`Documents`, `Downloads`, ...) are symlinked onto `/dat` via
   tmpfiles rules. Point these at wherever your data disk is, or make `/dat` a symlink itself
 
@@ -130,7 +134,8 @@ mount --mkdir -o compress=zstd,noatime /dev/<data-part> /mnt/dat   # optional
 
 Now make it yours:
 1. Edit [`setup/default.nix`](setup/default.nix) — at minimum `userName`, `hostName`,
-   `timeZone`, and the locales
+   `timeZone`, the locales, and **`lite = true`** (leaves out nvidia/ollama/plasma6;
+   flip it later if your hardware wants them)
 2. Update the device UUIDs in [hardware-configuration.nix](hardware-configuration.nix)
    to match your disks (`lsblk -f`)
 3. Generate your own age key and re-encrypt the secrets (see above) — you can't decrypt mine

@@ -1,26 +1,20 @@
-# TODO: turn this to a function
+# THE config. everything personal lives here.
+# system modules read this via specialArgs (see sys/default.nix) — import it nowhere else.
 let
-  includes = {
-    kubernetes = false;
-    virt-manager = false;
-    libreoffice = false;
-    minecraftPrismLauncher = false;
-    steam = false;
-  };
-
-  extraPackages = [
-    "signal-desktop"
-    "discord-canary"
-    "aseprite"
-    "obs-studio"
-  ];
-
   userName = "yor";
   hostName = "qat";
-
-  userWebsite = "https://yorqat.com/";
-
   homeDir = "/home/${userName}";
+
+  # lite = fresh-install-safe profile: niri + core apps only, nothing that
+  # assumes this machine (nvidia gpu, ollama daemon, plasma6). flip to false
+  # on hardware that actually has those things.
+  lite = false;
+in {
+  inherit userName hostName homeDir;
+
+  timeZone = "Asia/Manila";
+  defaultLocale = "en_PH.UTF-8";
+  extraLocale = "fil_PH";
 
   # /dat is a mountpoint for media and documents.
   # secrets are managed by sops-nix, not symlinks (see migrate-cred.sh)
@@ -35,37 +29,24 @@ let
     ["${homeDir}/my-nixos" "/dat/Documents/my-nixos"]
   ];
 
-  timeZone = "Asia/Manila";
+  includes = {
+    # heavyweight / machine-specific — these are what lite mode gates
+    nvidia = !lite;
+    ollama = !lite;
+    plasma6 = !lite;
 
-  defaultLocale = "en_PH.UTF-8";
-  extraLocale = "fil_PH";
-in {
-  inherit userName;
-  inherit hostName;
-  inherit homeDir;
-  inherit symLinks;
-  inherit timeZone;
-  inherit defaultLocale;
-  inherit extraLocale;
-  inherit includes;
-
-  # This section are step by step instructions
-  # for enabling secure boot
-  # https://nixos.wiki/wiki/Secure_Boot
-  secureBoot = {
-    bootspec = true;
-    lanzaboote = false;
+    # opt-in extras, off on any profile
+    steam = false;
+    virt-manager = false;
+    libreoffice = false;
+    minecraftPrismLauncher = false;
   };
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken.
+  # enable only after enrolling your own keys into /etc/secureboot
+  secureBoot.lanzaboote = false;
 
-  # It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  stateVersion = "25.11"; # TLDR; only change on fresh install
+  # only change on fresh install
+  stateVersion = "25.11";
 
   # Home manager
   homeManagerVersion = "26.05";

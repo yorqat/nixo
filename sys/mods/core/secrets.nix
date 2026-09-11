@@ -1,6 +1,8 @@
-{lib, ...}: let
-  setup = import ../../../setup;
-
+{
+  lib,
+  setup,
+  ...
+}: let
   # encrypted payloads live here; see migrate-cred.sh at the repo root
   # names must be git-tracked to be seen by the flake (git add secrets/ after migrating)
   secretsDir = ../../../secrets;

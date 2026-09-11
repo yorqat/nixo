@@ -11,13 +11,11 @@
     brightnessctl
     pamixer
     jq
-    # python39Packages.requests
     slurp
     tesseract5
     grim
     wl-clipboard
     pngquant
-    # swww
     qt5.qtwayland
 
     xwayland-satellite
@@ -25,7 +23,6 @@
     wofi
     mako
     swaybg
-    libnotify
     imv
   ];
 

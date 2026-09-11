@@ -2,16 +2,12 @@
   lib,
   inputs,
   pkgs,
+  setup,
   ...
 }: let
-  # Define your local variables here
-  setup = import ../setup;
-
   createTmpfilesRules = rules: let
-    # Define a helper function to format each pair of strings as a tmpfiles rule
     formatRule = rulePair: "L ${builtins.elemAt rulePair 0} - - - - ${builtins.elemAt rulePair 1}";
   in
-    # Map each pair of strings to the desired format using `formatRule`
     map formatRule rules;
 
   includeLibreOffice = lib.optional setup.includes.libreoffice pkgs.libreoffice-fresh;

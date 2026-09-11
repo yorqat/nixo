@@ -4,11 +4,9 @@
   ...
 }: let
   inputs = self.inputs;
-  bootloader = ./mods/core/boot;
-  core = ./mods/core;
-  nvidia = ./mods/nvidia;
-  wayland = ./mods/wayland;
-  #printing = ./mods/printing;
+  lib = nixpkgs.lib;
+  setup = import ../setup;
+
   hmModule = inputs.home-manager.nixosModules.home-manager;
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
   sopsModule = inputs.sops-nix.nixosModules.sops;
@@ -17,52 +15,52 @@
   stylixModule = inputs.stylix.nixosModules.stylix;
 
   userDefault = ../usrs;
-  setup = import ../setup;
 in {
   "${setup.hostName}" = nixpkgs.lib.nixosSystem {
     system = "x86_64-linux";
+    # the single pass: setup travels to every module from here —
+    # never `import ../setup` inside a module
     specialArgs = {
-      inherit inputs;
-      hostname = "${setup.hostName}";
+      inherit inputs setup;
     };
-    modules = [
-      ../hardware-configuration.nix
-      ./host
-      bootloader
-      core
+    modules =
+      [
+        ../hardware-configuration.nix
+        ./host
+        ./mods/core
+        ./mods/wayland
 
-      nvidia
-      wayland
+        # secure boot requirement
+        lbtModule
 
-      # secure boot requirement
-      lbtModule
+        # secrets
+        sopsModule
 
-      # secrets
-      sopsModule
+        # persistence
+        impermanenceModule
 
-      # persistence
-      impermanenceModule
+        # firefox extensions
+        {nixpkgs.overlays = [inputs.nur.overlays.default];}
 
-      # firefox extensions
-      {nixpkgs.overlays = [inputs.nur.overlays.default];}
+        niriModule
+        stylixModule
 
-      niriModule
-      stylixModule
-
-      hmModule
-      {
-        home-manager = {
-          useUserPackages = true;
-          useGlobalPkgs = true;
-          backupFileExtension = "bak";
-          extraSpecialArgs = {
-            inherit inputs;
-            inherit self;
-            packages = self.packages."x86_64-linux";
+        hmModule
+        {
+          home-manager = {
+            useUserPackages = true;
+            useGlobalPkgs = true;
+            backupFileExtension = "bak";
+            extraSpecialArgs = {
+              inherit inputs setup;
+              inherit self;
+              packages = self.packages."x86_64-linux";
+            };
+            users."${setup.userName}" = userDefault;
           };
-          users."${setup.userName}" = userDefault;
-        };
-      }
-    ];
+        }
+      ]
+      # gpu: only with a matching card, so fresh installs stay bootable
+      ++ lib.optional setup.includes.nvidia ./mods/nvidia;
   };
 }

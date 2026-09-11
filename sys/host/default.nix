@@ -2,10 +2,9 @@
   pkgs,
   lib,
   config,
+  setup,
   ...
 }: let
-  setup = import ../../setup;
-
   includeVirtManager = lib.optional setup.includes.virt-manager pkgs.virt-manager;
 in {
   time.timeZone = "${setup.timeZone}";
@@ -25,17 +24,14 @@ in {
     LC_TIME = "${setup.extraLocale}";
   };
 
-  networking.hostName = "${setup.hostName}";
-
   zramSwap.enable = true;
-  services.ollama.enable = true;
+  services.ollama.enable = setup.includes.ollama;
 
   users.mutableUsers = false;
   users.users."${setup.userName}" = {
     isNormalUser = true;
     description = "${setup.userName} (very cool person)";
     extraGroups = ["networkmanager" "wheel" "audio" "video" "input" "kvm" "libvirtd" "docker"];
-    packages = with pkgs; [];
 
     hashedPasswordFile = config.sops.secrets."yor-password-hash".path;
   };
@@ -72,15 +68,13 @@ in {
     };
   };
 
-  services.desktopManager.plasma6.enable = true;
+  services.desktopManager.plasma6.enable = setup.includes.plasma6;
 
   # for virt-manager
   virtualisation.libvirtd = {
     enable = setup.includes.virt-manager;
-    # qemu.ovmf.packages = [ pkgs.OVMFFull.fd pkgs.pkgsCross.aarch64-multiplatform.OVMF.fd ];
   };
 
-  # virtualisation.docker.enable = setup.includes.docker;
   programs.dconf.enable = true;
   hardware.graphics.enable = true;
   # For steam

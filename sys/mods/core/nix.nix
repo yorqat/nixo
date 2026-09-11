@@ -1,14 +1,8 @@
 {
   pkgs,
-  inputs,
+  setup,
   ...
-}: let
-  #hyprland-nvidia = inputs.hyprland.packages.${pkgs.system}.default.override {
-  #wlroots = inputs.hyprland.packages.${pkgs.system}.wlroots-hyprland;
-  #};
-  #hyprland = inputs.hyprland.packages.${pkgs.system}.default;
-  setup = import ../../../setup;
-in {
+}: {
   environment.defaultPackages = [];
 
   nixpkgs.config = {
@@ -17,20 +11,10 @@ in {
     allowInsecure = false;
   };
 
-  #nixpkgs.overlays = [
-  #inputs.xdg-desktop-portal-hyprland.overlays.default
-  #(final: super: {
-  #makeModulesClosure = x:
-  #super.makeModulesClosure (x // {allowMissing = true;});
-
-  #inherit hyprland-nvidia hyprland;
-  #})
-  #];
-
   nix = {
     package = pkgs.nixVersions.stable;
     settings = {
-      trusted-users = ["root" "${setup.userName}"];
+      trusted-users = ["root" setup.userName];
       auto-optimise-store = true;
       trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
@@ -58,11 +42,5 @@ in {
     };
   };
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = setup.stateVersion; # Did you read the comment tho
+  system.stateVersion = setup.stateVersion;
 }

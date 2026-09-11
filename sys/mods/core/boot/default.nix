@@ -2,9 +2,9 @@
   config,
   pkgs,
   lib,
+  setup,
   ...
 }: let
-  setup = import ../../../../setup;
   # Disabled when secure boot
   systemd-boot-enable = !setup.secureBoot.lanzaboote;
 in {

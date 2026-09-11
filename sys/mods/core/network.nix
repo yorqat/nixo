@@ -1,11 +1,7 @@
-{
-  pkgs,
-  hostname,
-  ...
-}: {
+{setup, ...}: {
   networking = {
     firewall.enable = false;
-    hostName = hostname;
+    hostName = setup.hostName;
 
     timeServers = [
       "0.asia.pool.ntp.org"

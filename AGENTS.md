@@ -1,9 +1,19 @@
-# Session notes (yor / qat)
+## Session notes (yor / qat)
 
 NixOS flake config for host `qat`, user `yor`. Format with alejandra before
 committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
 --flake .#qat`); verify changes with evals instead:
 `nix eval .#nixosConfigurations.qat.config.system.build.toplevel.drvPath`.
+
+## Conventions
+
+- `setup/default.nix` is THE user config and is passed everywhere via
+  specialArgs from `sys/default.nix` (system modules get `setup` as a module
+  arg; HM modules via `home-manager.extraSpecialArgs`). Never `import
+  .../setup` inside a module.
+- `setup.lite = true` is the fresh-install-safe profile: gates the nvidia
+  module (conditionally imported in sys/default.nix), ollama, and plasma6.
+  Machine-specific stuff must stay behind it or another `includes` flag.
 
 ## Layout
 
@@ -40,9 +50,8 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
 
 - Phase 3 (config only, no downtime): enumerate `/persist` per app instead of
   whole `/home`; snapper on `@persist`; dedupe plasma6+niri (pick one stack);
-  make ollama on-demand; refactor setup/default.nix to a single specialArgs
-  pass (kills the fragile per-module relative imports); delete dead setup
-  fields (`extraPackages`, `userWebsite`, `secureBoot.bootspec`).
+  make ollama on-demand. (Done in the setup refactor: single specialArgs pass,
+  dead setup fields deleted, `setup.lite` fresh-install profile.)
 - Phase 4 (reinstall-scale): LUKS full-disk encryption + lanzaboote secure
   boot + TPM unlock. sops/subvolumes/impermanence carry over unchanged; this
   is the one step that cannot be retrofitted in place.
