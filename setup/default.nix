@@ -2,10 +2,10 @@
 let
   includes = {
     kubernetes = false;
-    virt-manager = true;
+    virt-manager = false;
     libreoffice = false;
-    minecraftPrismLauncher = true;
-    steam = true;
+    minecraftPrismLauncher = false;
+    steam = false;
   };
 
   extraPackages = [
