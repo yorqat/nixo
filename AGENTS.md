@@ -5,15 +5,12 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
 --flake .#qat`); verify changes with evals instead:
 `nix eval .#nixosConfigurations.qat.config.system.build.toplevel.drvPath`.
 
-## Layout / branch state
+## Layout
 
-- `main` = phase 1: sops-nix secrets, devshell `secrets` util, zram, ssh
-  hardening, autologin removed. The old `/cred` partition is retired and wiped.
-- `phase2` = btrfs subvolumes (`@`, `@nix`, `@persist`) + impermanence
-  scaffolding. **Do not merge into `main` before the live-USB disk migration
-  in PHASE2.md succeeds.** It gets installed from the USB (`nixos-install`),
-  never rebuilt against on the running system — subvolume mounts pointing at
-  subvolumes that don't exist yet make the next boot fail.
+- Everything lives on `main`. Phase 1 (sops-nix secrets, devshell `secrets`
+  util, zram, ssh hardening, autologin removed) and phase 2 (btrfs
+  subvolumes `@`/`@nix`/`@persist` + impermanence) are merged; the live-USB
+  disk migration succeeded and `PHASE2.md` / `migrate-subvols.sh` are deleted.
 
 ## Gotchas learned the hard way
 
@@ -32,8 +29,9 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
   (editing) and `/var/lib/sops-nix/key.txt` (boot decryption). An offline
   backup of it is still outstanding — every secret in the repo is unrecoverable
   without it.
-- Disks: `/` on nvme0n1p6 (840G btrfs, raw top-level until the phase 2
-  migration), `/dat` on sda1 (1.8T btrfs, documents/media/code; home dirs
+- Disks: `/` on nvme0n1p6 (840G btrfs; subvols `@` -> `/`, `@nix` -> `/nix`,
+  `@persist` -> `/persist`, impermanence persists /var + /home + /etc/machine-id
+  + sops key), `/dat` on sda1 (1.8T btrfs, documents/media/code; home dirs
   symlink into it via `setup.symLinks` tmpfiles rules), `/boot` on nvme0n1p5,
   nvme0n1p7 is blank 2G.
 - The stylix "qt platform kde unsupported" eval warning is cosmetic.
