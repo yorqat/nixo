@@ -25,7 +25,6 @@ in {
   };
 
   zramSwap.enable = true;
-  services.ollama.enable = setup.includes.ollama;
 
   users.mutableUsers = false;
   users.users."${setup.userName}" = {

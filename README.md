@@ -28,7 +28,7 @@ Almost everything personal lives in [`setup/default.nix`](setup/default.nix):
   changing `hostName` changes what you pass to `--flake .#<hostName>`
 - `timeZone`, `defaultLocale`, `extraLocale`
 - `lite` — **start with `lite = true` on a fresh install.** It gates everything that
-  assumes this machine: the nvidia driver module, the ollama daemon, and the plasma6
+  assumes this machine: the nvidia driver module, the on-demand ollama module, and the plasma6
   session. With `lite = true` you get niri + core apps on anything; flip it to `false`
   only on hardware that actually has those things (or flip individual
   `includes.<name>` flags for fine control)
@@ -52,8 +52,10 @@ This config expects btrfs subvolumes with an ephemeral root:
 
 Everything outside [`/persist`](sys/mods/core/persistence.nix) is blank at boot. The
 persistence module whitelists `/var/log`, `/var/lib/{bluetooth,nixos,NetworkManager,...}`,
-`/etc/machine-id`, the sops key, and all of `/home`. **Anything you create that should
-survive a reboot must be added to that list** — or live on `/dat`.
+`/etc/machine-id`, the sops key, and per-app state under `$HOME` — the home list lives
+in `setup.persist` in [`setup/default.nix`](setup/default.nix). **Anything you create
+that should survive a reboot must be added to that list** — or live on `/dat`. Loose
+files dropped directly in `$HOME` do not survive a reboot.
 
 <br />
 

@@ -11,8 +11,8 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
   specialArgs from `sys/default.nix` (system modules get `setup` as a module
   arg; HM modules via `home-manager.extraSpecialArgs`). Never `import
   .../setup` inside a module.
-- `setup.lite = true` is the fresh-install-safe profile: gates the nvidia
-  module (conditionally imported in sys/default.nix), ollama, and plasma6.
+- `setup.lite = true` is the fresh-install-safe profile: gates the nvidia and
+  ollama modules (both conditionally imported in sys/default.nix) and plasma6.
   Machine-specific stuff must stay behind it or another `includes` flag.
 
 ## Layout
@@ -37,6 +37,10 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
   (payload -> home-relative path, e.g. ssh keys), `envNames` (payload -> env var,
   rendered into `~/.config/secrets/env` which `.bashrc` sources), `root`
   (root-owned neededForUsers payloads like the password hash).
+- Per-app home persistence lives in `setup.persist` (setup/default.nix):
+  `homeDirs`/`homeFiles`, home-relative. System-level paths stay in
+  sys/mods/core/persistence.nix; modules self-register by appending to
+  `environment.persistence."/persist"`.
 - `known_hosts` is deliberately NOT in sops: it is state, not a secret, and
   ssh must be able to append new host keys across reboots.
 - The age key exists twice and must stay identical: `~/.config/sops/age/keys.txt`
@@ -53,8 +57,9 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
 
 - Phase 3 (config only, no downtime): enumerate `/persist` per app instead of
   whole `/home`; snapper on `@persist`; dedupe plasma6+niri (pick one stack);
-  make ollama on-demand. (Done in the setup refactor: single specialArgs pass,
-  dead setup fields deleted, `setup.lite` fresh-install profile.)
+  make ollama on-demand. (Done: per-app persistence, on-demand ollama module
+  with boot-free daemon + idle-stop timer, setup refactor. Remaining: snapper,
+  plasma6+niri dedupe.)
 - Phase 4 (reinstall-scale): LUKS full-disk encryption + lanzaboote secure
   boot + TPM unlock. sops/subvolumes/impermanence carry over unchanged; this
   is the one step that cannot be retrofitted in place.

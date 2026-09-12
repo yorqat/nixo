@@ -61,6 +61,8 @@ in {
         }
       ]
       # gpu: only with a matching card, so fresh installs stay bootable
-      ++ lib.optional setup.includes.nvidia ./mods/nvidia;
+      ++ lib.optional setup.includes.nvidia ./mods/nvidia
+      # ollama: on-demand daemon, nothing at boot
+      ++ lib.optional setup.includes.ollama ./mods/ollama;
   };
 }
