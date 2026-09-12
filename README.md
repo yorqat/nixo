@@ -59,8 +59,10 @@ survive a reboot must be added to that list** — or live on `/dat`.
 
 # Secrets
 Managed by sops-nix: payloads are encrypted in [`secrets/`](secrets/) with age, committed
-to the repo, and deployed at boot into their home locations (`~/.ssh/*`, `~/.wakatime.cfg`)
-with `0600` permissions.
+to the repo, and deployed at boot with `0600` permissions. Every tracked payload deploys
+to `~/.config/secrets/<name>` automatically — there is no allowlist. The personal bits
+(deploy-path pins, env-var names, root-owned payloads) live in `setup.secrets` in
+[`setup/default.nix`](setup/default.nix).
 
 The age key must exist in **two places, identical**:
 - `~/.config/sops/age/keys.txt` — for editing secrets
@@ -81,15 +83,22 @@ Manage payloads from the devshell:
 
 ```sh
 $ nix develop
-$ secrets add <name> <file>   # stage, encrypt, git add; warns if unregistered
+$ secrets add <name> <file>   # stage, encrypt, git add; prints where it will deploy
 $ secrets edit <name>         # decrypt, open $EDITOR, re-encrypt
 $ secrets rename <old> <new>  # git mv, no re-encryption needed
 $ secrets rm <name>           # remove a payload
-$ secrets list                # encryption and registration status
+$ secrets list                # encryption, git-tracking, deploy path, env var
 ```
 
-New names must be registered in [`userSecrets`](sys/mods/core/secrets.nix) — and
-`deployPath` extended if they should not land in `~/.ssh/` — the util will remind you.
+Staging a payload is all it takes: `secrets add <name> <file>` + rebuild. To also export
+it as an env var, add `"<name>" = "<VAR>"` to `setup.secrets.envNames` — sops-nix renders
+`~/.config/secrets/env`, which `.bashrc` sources. So an API token is:
+
+```sh
+$ secrets add openrouter-api-key ./token    # + one line in setup.secrets.envNames
+$ sudo nixos-rebuild switch --flake .#qat   # $OPENROUTER_API_KEY now set in bash
+```
+`secrets add <name> <file>` → register it in `userSecrets` + `envNames` → rebuild.
 
 <br />
 
@@ -142,9 +151,10 @@ Now make it yours:
 4. Create your own password hash — the user password is a sops secret:
    ```sh
    $ mkpasswd -m sha-512 > /tmp/hash   # then from the devshell:
-   $ secrets add <name>-password-hash /tmp/hash
+   $ secrets add yor-password-hash /tmp/hash
    ```
-   and point [`hashedPasswordFile`](sys/host/default.nix) at the new secret.
+   Add `"yor-password-hash"` to `setup.secrets.root` (it deploys root-owned for user
+   creation) and point [`hashedPasswordFile`](sys/host/default.nix) at it.
 
 Clone and install:
 

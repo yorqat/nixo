@@ -30,9 +30,13 @@ committing. The user runs rebuilds themselves (`sudo nixos-rebuild switch
   payloads) before rebuilding, or sops silently deploys nothing.
 - sops payloads in `secrets/` are whole-file binary format (extensionless);
   `defaultSopsFormat = "binary"` in sys/mods/core/secrets.nix is load-bearing.
-- Adding a secret: `secrets add <name> <file>` in the devshell, then register
-  the name in `userSecrets` (sys/mods/core/secrets.nix) and extend `deployPath`
-  if it should not land in `~/.ssh/<name>`. Edit with `secrets edit <name>`.
+- Adding a secret: `secrets add <name> <file>` in the devshell — every git-tracked
+  payload in `secrets/` deploys automatically to `~/.config/secrets/<name>` (no
+  allowlist; the flake enumerates the dir). Edit with `secrets edit <name>`.
+- Personal secret config lives in `setup.secrets` (setup/default.nix): `deployPaths`
+  (payload -> home-relative path, e.g. ssh keys), `envNames` (payload -> env var,
+  rendered into `~/.config/secrets/env` which `.bashrc` sources), `root`
+  (root-owned neededForUsers payloads like the password hash).
 - `known_hosts` is deliberately NOT in sops: it is state, not a secret, and
   ssh must be able to append new host keys across reboots.
 - The age key exists twice and must stay identical: `~/.config/sops/age/keys.txt`

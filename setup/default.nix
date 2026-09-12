@@ -29,6 +29,28 @@ in {
     ["${homeDir}/my-nixos" "/dat/Documents/my-nixos"]
   ];
 
+  # every git-tracked file in secrets/ deploys to ~/.config/secrets/<name>.
+  # the personal bits:
+  #   deployPaths  payload -> home-relative path, for keys/dotfiles that
+  #                belong somewhere else (e.g. ".ssh/id_ed25519")
+  #   envNames     payload -> env var name, exported via ~/.config/secrets/env
+  #   root         payloads deployed root-owned (account hashes, neededForUsers)
+  secrets = {
+    deployPaths = {
+      "id_ed25519" = ".ssh/id_ed25519";
+      "id_ed25519.pub" = ".ssh/id_ed25519.pub";
+      "id_gitlab" = ".ssh/id_gitlab";
+      "id_gitlab.pub" = ".ssh/id_gitlab.pub";
+      "wakatime.cfg" = ".wakatime.cfg";
+    };
+
+    envNames = {
+      "openrouter-api-key" = "OPENROUTER_API_KEY";
+    };
+
+    root = ["yor-password-hash"];
+  };
+
   includes = {
     # heavyweight / machine-specific — these are what lite mode gates
     nvidia = !lite;

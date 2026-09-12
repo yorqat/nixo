@@ -7,7 +7,7 @@ REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || {
   exit 1
 }
 SECRETS="$REPO/secrets"
-MODULE="$REPO/sys/mods/core/secrets.nix"
+SETUP="$REPO/setup/default.nix"
 
 usage() {
   cat <<'EOF'
@@ -18,7 +18,7 @@ commands:
   edit <name>         decrypt, open $EDITOR, re-encrypt
   rename <old> <new>  rename a payload (no re-encryption needed)
   rm <name>           remove a payload
-  list                show payload status and registration
+  list                show payload status and configuration
 EOF
 }
 
@@ -27,14 +27,58 @@ die() {
   exit 1
 }
 
-registered() {
-  grep -q "\"$1\"" "$MODULE"
+# lines of the `<key> = { ... };` attrset in setup/default.nix
+attr_block() {
+  awk -v key="$1" '
+    $0 ~ key" *= *\\{" { on = 1; next }
+    on && /\};/ { exit }
+    on { print }
+  ' "$SETUP"
 }
 
-registration_hint() {
-  printf 'note: "%s" is not registered\n' "$1"
-  printf '      add it to userSecrets in sys/mods/core/secrets.nix\n'
-  printf '      and extend deployPath if it should not land in ~/.ssh/%s\n' "$1"
+# lines of the `<key> = [ ... ];` list in setup/default.nix
+list_block() {
+  awk -v key="$1" '
+    $0 ~ key" *= *\\[" { on = 1 }
+    on { print }
+    on && /\];/ { exit }
+  ' "$SETUP"
+}
+
+# pinned home-relative deploy path, empty if none
+pinned_path() {
+  attr_block deployPaths | grep -F "\"$1\" =" |
+    sed -E 's/^[^=]*= *"([^"]*)".*/\1/'
+}
+
+# env var name the payload is exported as, empty if none
+env_var_for() {
+  attr_block envNames | grep -F "\"$1\" =" |
+    sed -E 's/^[^=]*= *"([^"]*)".*/\1/'
+}
+
+is_root_secret() {
+  list_block root | grep -Fq "\"$1\""
+}
+
+is_tracked() {
+  git -C "$REPO" ls-files --error-unmatch -- "secrets/$1" >/dev/null 2>&1
+}
+
+deploy_dest() {
+  local pin
+  pin="$(pinned_path "$1" || true)"
+  if [ -n "$pin" ]; then
+    printf '~/%s' "$pin"
+  else
+    printf '~/.config/secrets/%s' "$1"
+  fi
+}
+
+hint_env() {
+  printf 'note: "%s" deploys to %s\n' "$1" "$(deploy_dest "$1")"
+  printf '      to export it as an env var, add      "%s" = "<VAR>" to setup.secrets.envNames\n' "$1"
+  printf '      to deploy elsewhere, add             "%s" = "<path>" to setup.secrets.deployPaths\n' "$1"
 }
 
 encrypted() {
@@ -66,11 +110,8 @@ case "$cmd" in
     fi
     git -C "$REPO" add "$dst"
     printf 'encrypted secrets/%s\n' "$name"
-    if registered "$name"; then
-      printf 'rebuild to deploy: sudo nixos-rebuild switch --flake .#qat\n'
-    else
-      registration_hint "$name"
-    fi
+    hint_env "$name"
+    printf 'rebuild to deploy: sudo nixos-rebuild switch --flake .#qat\n'
     ;;
   edit)
     [ $# -eq 1 ] || die "usage: secrets edit <name>"
@@ -92,47 +133,46 @@ case "$cmd" in
     case "$new" in
       "" | .* | */*) die "invalid name: $new" ;;
     esac
-    if git -C "$REPO" ls-files --error-unmatch "secrets/$old" >/dev/null 2>&1; then
+    if is_tracked "$old"; then
       git -C "$REPO" mv "secrets/$old" "secrets/$new"
     else
       mv "$SECRETS/$old" "$SECRETS/$new"
     fi
     printf 'renamed secrets/%s -> secrets/%s (re-encryption not needed)\n' "$old" "$new"
-    if registered "$new"; then
-      printf 'rebuild to deploy: sudo nixos-rebuild switch --flake .#qat\n'
-    else
-      registration_hint "$new"
+    if [ -n "$(pinned_path "$old" || true)" ] || [ -n "$(env_var_for "$old" || true)" ]; then
+      printf 'note: update "%s" keys in setup.secrets (setup/default.nix)\n' "$old"
     fi
+    printf 'rebuild to deploy: sudo nixos-rebuild switch --flake .#qat\n'
     ;;
   rm)
     [ $# -eq 1 ] || die "usage: secrets rm <name>"
     name="$1"
     [ -f "$SECRETS/$name" ] || die "no such secret: $name"
-    if git -C "$REPO" ls-files --error-unmatch "secrets/$name" >/dev/null 2>&1; then
+    if is_tracked "$name"; then
       git -C "$REPO" rm -qf "secrets/$name"
     else
       rm -f "$SECRETS/$name"
     fi
     printf 'removed secrets/%s\n' "$name"
-    if registered "$name"; then
-      printf 'note: remove "%s" from userSecrets in sys/mods/core/secrets.nix\n' "$name"
+    if [ -n "$(pinned_path "$name" || true)" ] || [ -n "$(env_var_for "$name" || true)" ]; then
+      printf 'note: remove "%s" from setup.secrets (setup/default.nix)\n' "$name"
     fi
     ;;
   list)
+    printf '%-24s %-10s %-10s %s\n' 'PAYLOAD' 'ENCRYPTED' 'GIT' 'DEPLOY / ENV'
     for f in "$SECRETS"/*; do
       name="$(basename "$f")"
       [ "$name" = ".gitkeep" ] && continue
-      if encrypted "$f"; then
-        enc=yes
+      if encrypted "$f"; then enc=yes; else enc=NO; fi
+      if is_tracked "$name"; then git_=yes; else git_=NO; fi
+      if is_root_secret "$name"; then
+        dest='root (neededForUsers)'
       else
-        enc=NO
+        dest="$(deploy_dest "$name")"
       fi
-      if registered "$name"; then
-        reg=yes
-      else
-        reg=no
-      fi
-      printf '%-24s encrypted:%-4s registered:%s\n' "$name" "$enc" "$reg"
+      var="$(env_var_for "$name" || true)"
+      [ -n "$var" ] && dest="$dest [$var]"
+      printf '%-24s %-10s %-10s %s\n' "$name" "$enc" "$git_" "$dest"
     done
     ;;
   *)

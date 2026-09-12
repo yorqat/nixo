@@ -11,7 +11,13 @@
   ];
 
   programs = {
-    bash.enable = true;
+    bash = {
+      enable = true;
+      # env vars rendered by sops-nix (sys/mods/core/secrets.nix)
+      bashrcExtra = ''
+        [ -r "$HOME/.config/secrets/env" ] && . "$HOME/.config/secrets/env"
+      '';
+    };
 
     zoxide = {
       enable = true;
