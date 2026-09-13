@@ -67,7 +67,8 @@ in {
     };
   };
 
-  services.desktopManager.plasma6.enable = setup.includes.plasma6;
+  # services.desktopManager.plasma6.enable = setup.includes.plasma6;
+  services.desktopManager.plasma6.enable = false;
 
   # for virt-manager
   virtualisation.libvirtd = {

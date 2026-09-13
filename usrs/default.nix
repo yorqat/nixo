@@ -47,11 +47,10 @@ in {
         signal-desktop # messenger
         nautilus # file explorer
         pavucontrol # audio device volume
-        # helvum # media routing
         crosspipe
         sonixd # music player
-        blender
-        dolphin-emu
+        # blender
+        # dolphin-emu
       ]
       ++ includeLibreOffice ++ includePrismMinecraft;
   };

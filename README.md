@@ -28,7 +28,7 @@ Almost everything personal lives in [`setup/default.nix`](setup/default.nix):
   changing `hostName` changes what you pass to `--flake .#<hostName>`
 - `timeZone`, `defaultLocale`, `extraLocale`
 - `lite` — **start with `lite = true` on a fresh install.** It gates everything that
-  assumes this machine: the nvidia driver module, the on-demand ollama module, and the plasma6
+  assumes this machine: the nvidia driver module and the plasma6
   session. With `lite = true` you get niri + core apps on anything; flip it to `false`
   only on hardware that actually has those things (or flip individual
   `includes.<name>` flags for fine control)
@@ -51,11 +51,8 @@ This config expects btrfs subvolumes with an ephemeral root:
 ```
 
 Everything outside [`/persist`](sys/mods/core/persistence.nix) is blank at boot. The
-persistence module whitelists `/var/log`, `/var/lib/{bluetooth,nixos,NetworkManager,...}`,
-`/etc/machine-id`, the sops key, and per-app state under `$HOME` — the home list lives
-in `setup.persist` in [`setup/default.nix`](setup/default.nix). **Anything you create
-that should survive a reboot must be added to that list** — or live on `/dat`. Loose
-files dropped directly in `$HOME` do not survive a reboot.
+persistence module whitelists `/home` (all of it), `/var/log`, `/var/lib/{bluetooth,nixos,NetworkManager,...}`,
+`/etc/machine-id`, and the sops key.
 
 <br />
 
@@ -145,7 +142,7 @@ mount --mkdir -o compress=zstd,noatime /dev/<data-part> /mnt/dat   # optional
 
 Now make it yours:
 1. Edit [`setup/default.nix`](setup/default.nix) — at minimum `userName`, `hostName`,
-   `timeZone`, the locales, and **`lite = true`** (leaves out nvidia/ollama/plasma6;
+   `timeZone`, the locales, and **`lite = true`** (leaves out nvidia/plasma6;
    flip it later if your hardware wants them)
 2. Update the device UUIDs in [hardware-configuration.nix](hardware-configuration.nix)
    to match your disks (`lsblk -f`)
@@ -170,6 +167,13 @@ $ nixos-install --root /mnt --flake .#<hostName>
 > deploys nothing.
 
 Reboot, log in through sddm (niri session is in there alongside plasma6).
+
+> **Note:** make sure `/home/<userName>` is actually owned by your user
+> (`ls -ld /home/<userName>`). With impermanence + `users.mutableUsers = false`
+> nothing fixes it for you — NixOS only creates+chowns the home when it doesn't
+> exist yet, and with mutable users off a root-owned home stays root-owned (e.g.
+> if it was pre-created or copied over from a live environment). If needed, fix
+> it once: `sudo chown -R <userName>:users /home/<userName>`
 
 ## Rebuilding on changes
 ```sh
