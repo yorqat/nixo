@@ -46,6 +46,7 @@ in {
 
     envNames = {
       "openrouter-api-key" = "OPENROUTER_API_KEY";
+      "opencode-api-key" = "OPENCODE_API_KEY";
     };
 
     root = ["yor-password-hash"];
