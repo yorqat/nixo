@@ -1,89 +1,29 @@
-{pkgs, ...}: {
-  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
-    "$schema" = "https://opencode.ai/config.json";
-    provider = {
-      openrouter = {
-        models = {
-          "z-ai/glm-5.3-flash" = {};
-        };
-      };
-    };
-    model = "openrouter/z-ai/glm-5.3-flash";
-  };
+{
+  config,
+  pkgs,
+  ...
+}: {
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
 
-    # Actually start Themery
+    # Theme picker (no nixvim module exists for themery)
     extraConfigLua = ''
-          require("themery").setup({
-            themes = {
-              "catppuccin-latte",
-              "catppuccin-frappe",
-              "catppuccin-macchiato",
-              "catppuccin-mocha",
-              "gruvbox",
-              "kanagawa-wave",
-              "kanagawa-dragon",
-              "kanagawa-lotus",
-            },
-            livePreview = true,
-          })
-
-          require('claude-code').setup({
-              -- Terminal window settings
-      window = {
-        split_ratio = 0.3,      -- Percentage of screen for the terminal window (height for horizontal, width for vertical splits)
-        position = "botright",  -- Position of the window: "botright", "topleft", "vertical", "float", etc.
-        enter_insert = true,    -- Whether to enter insert mode when opening Claude Code
-        hide_numbers = true,    -- Hide line numbers in the terminal window
-        hide_signcolumn = true, -- Hide the sign column in the terminal window
-
-        -- Floating window configuration (only applies when position = "float")
-        float = {
-          width = "80%",        -- Width: number of columns or percentage string
-          height = "80%",       -- Height: number of rows or percentage string
-          row = "center",       -- Row position: number, "center", or percentage string
-          col = "center",       -- Column position: number, "center", or percentage string
-          relative = "editor",  -- Relative to: "editor" or "cursor"
-          border = "rounded",   -- Border style: "none", "single", "double", "rounded", "solid", "shadow"
+      require("themery").setup({
+        themes = {
+          "catppuccin-latte",
+          "catppuccin-frappe",
+          "catppuccin-macchiato",
+          "catppuccin-mocha",
+          "gruvbox",
+          "kanagawa-wave",
+          "kanagawa-dragon",
+          "kanagawa-lotus",
         },
-      },
-      -- File refresh settings
-      refresh = {
-        enable = true,           -- Enable file change detection
-        updatetime = 100,        -- updatetime when Claude Code is active (milliseconds)
-        timer_interval = 1000,   -- How often to check for file changes (milliseconds)
-        show_notifications = true, -- Show notification when files are reloaded
-      },
-      -- Git project settings
-      git = {
-        use_git_root = true,     -- Set CWD to git root when opening Claude Code (if in git project)
-      },
-      -- Shell-specific settings
-      shell = {
-        separator = '&&',        -- Command separator used in shell commands
-        pushd_cmd = 'pushd',     -- Command to push directory onto stack (e.g., 'pushd' for bash/zsh, 'enter' for nushell)
-        popd_cmd = 'popd',       -- Command to pop directory from stack (e.g., 'popd' for bash/zsh, 'exit' for nushell)
-      },
-      -- Command settings
-      command = "opencode",        -- Command used to launch Claude Code
-      -- Keymaps
-      keymaps = {
-        toggle = {
-          normal = "<C-,>",       -- Normal mode keymap for toggling Claude Code, false to disable
-          terminal = "<C-,>",     -- Terminal mode keymap for toggling Claude Code, false to disable
-          variants = {
-            continue = "<leader>cC", -- Normal mode keymap for Claude Code with continue flag
-            verbose = "<leader>cV",  -- Normal mode keymap for Claude Code with verbose flag
-          },
-        },
-        window_navigation = true, -- Enable window navigation keymaps (<C-h/j/k/l>)
-        scrolling = true,         -- Enable scrolling keymaps (<C-f/b>) for page up/down
-      }
-          })
+        livePreview = true,
+      })
     '';
 
     opts = {
@@ -101,7 +41,8 @@
       maplocalleader = " ";
     };
 
-    # System Packages (replaces extraPackages)
+    # Binaries exposed on neovim's PATH (ripgrep for in-editor search,
+    # opencode for opencode.nvim's `term://opencode` server launch)
     extraPackages = with pkgs; [
       ripgrep
       opencode
@@ -115,7 +56,6 @@
       bufferline = {
         enable = true;
         settings.options = {
-          mode = "buffers";
           separator_style = "slant";
           diagnostics = "nvim_lsp";
         };
@@ -134,34 +74,47 @@
       neo-tree.enable = true;
       web-devicons.enable = true;
 
-      # Treesitter (Nixvim handles the grammar installations)
+      # EWW filetype
+      yuck.enable = true;
+
+      # AI assistant (keymaps below; bare `opencode` binary via extraPackages)
+      opencode.enable = true;
+
+      # Treesitter (grammars installed purely via Nix)
       treesitter = {
         enable = true;
-        nixGrammars = true;
+
+        # Overrides nixvim's all-grammars default, so keep the parsers Neovim's
+        # own features and render-markdown rely on: query/regex/vim/vimdoc and
+        # markdown_inline (render-markdown).
+        grammarPackages = with config.programs.nixvim.plugins.treesitter.package.builtGrammars; [
+          bash
+          c
+          cpp
+          css
+          html
+          javascript
+          typescript
+          tsx
+          json
+          lua
+          nix
+          python
+          rust
+          go
+          svelte
+          markdown
+          markdown_inline
+          query
+          regex
+          vim
+          vimdoc
+          wgsl
+        ];
 
         highlight = {
           enable = true;
         };
-
-        settings.ensure_installed = [
-          "bash"
-          "c"
-          "cpp"
-          "css"
-          "html"
-          "javascript"
-          "typescript"
-          "tsx"
-          "json"
-          "lua"
-          "nix"
-          "python"
-          "rust"
-          "go"
-          "svelte"
-          "markdown"
-          "wgsl"
-        ];
       };
 
       # LSP Configuration
@@ -177,23 +130,24 @@
             K = "hover";
             "<leader>ca" = "code_action";
             "<leader>rn" = "rename";
-            "[d" = "goto_prev";
-            "]d" = "goto_next";
-            "<leader>e" = "open_float";
-            "<leader>q" = "setloclist";
           };
           diagnostic = {
+            "[d" = "goto_prev";
+            "]d" = "goto_next";
             "<leader>j" = "goto_next";
             "<leader>k" = "goto_prev";
+            "<leader>d" = "open_float";
+            "<leader>q" = "setloclist";
           };
         };
         servers = {
           nil_ls.enable = true; # Nix
           rust_analyzer = {
-            # Rust (Replacing coc-rust-analyzer)
+            # Rust (Replacing coc-rust-analyzer). No rustc/cargo in the system
+            # config, so let nixvim provide them or the LSP is incomplete.
             enable = true;
-            installCargo = false;
-            installRustc = false;
+            installCargo = true;
+            installRustc = true;
           };
           pyright.enable = true; # Python
           ts_ls.enable = true; # JS/TS
@@ -221,49 +175,51 @@
       };
     };
 
-    # Extra Plugins (for those without a dedicated Nixvim module yet)
+    # Theme plugins installed raw on purpose: nixvim's `colorschemes.*` modules
+    # each set `colorscheme` via mkDefault, so enabling several would conflict
+    # with each other and with Themery, which switches colorschemes at runtime.
+    # themery-nvim has no nixvim module.
     extraPlugins = with pkgs.vimPlugins; [
+      # unfree; nixvim's `plugins.vim-be-good` module trips nixpkgs'
+      # allowUnfree check during eval, so install the plugin raw instead.
       vim-be-good
-      yuck-vim
 
       themery-nvim
       catppuccin-nvim
       gruvbox-nvim
-      tokyonight-nvim
       kanagawa-nvim
-
-      claude-code-nvim
     ];
 
     # Keymaps (The clean Nix way)
     keymaps = [
-      # Buffers
+      # Buffers (S-h/S-l are just H/L, so this intentionally overrides those
+      # motions; Tab/S-Tab stay free for cmp, which maps them in insert only)
       {
         mode = "n";
-        key = "<Tab>";
-        action = ":BufferLineCycleNext<CR>";
+        key = "<S-l>";
+        action = "<cmd>BufferLineCycleNext<CR>";
       }
       {
         mode = "n";
-        key = "<S-Tab>";
-        action = ":BufferLineCyclePrev<CR>";
+        key = "<S-h>";
+        action = "<cmd>BufferLineCyclePrev<CR>";
       }
 
       # Toggles
       {
         mode = "n";
         key = "<leader>e";
-        action = ":Neotree toggle<CR>";
+        action = "<cmd>Neotree toggle<CR>";
       }
       {
         mode = "n";
         key = "<leader>te";
-        action = ":Themery<CR>";
+        action = "<cmd>Themery<CR>";
       }
       {
         mode = "n";
         key = "<C-s>";
-        action = ":w<CR>";
+        action = "<cmd>w<CR>";
       }
 
       # Navigation (Normal)
@@ -347,6 +303,43 @@
         mode = "n";
         key = "<A-Right>";
         action = "<cmd>vertical resize +2<CR>";
+      }
+
+      # OpenCode (opencode.nvim). Upstream's defaults, but note <C-,> and
+      # <S-C-u>/<S-C-d> need a terminal that sends them (kitty's keyboard
+      # protocol does); in others they collapse to <C-u>/<C-d> or never fire.
+      {
+        mode = ["n" "x"];
+        key = "<C-,>";
+        action.__raw = ''function() require("opencode").ask("@this: ") end'';
+        options.desc = "Ask OpenCode";
+      }
+      {
+        mode = ["n" "x"];
+        key = "<leader>os";
+        action.__raw = ''function() require("opencode").select() end'';
+        options.desc = "Select OpenCode";
+      }
+      {
+        mode = ["n" "x"];
+        key = "go";
+        action.__raw = ''require("opencode").operator("@this ")'';
+        options = {
+          expr = true;
+          desc = "Send to OpenCode";
+        };
+      }
+      {
+        mode = "n";
+        key = "<S-C-u>";
+        action.__raw = ''function() require("opencode").command("session.half.page.up") end'';
+        options.desc = "Scroll OpenCode up";
+      }
+      {
+        mode = "n";
+        key = "<S-C-d>";
+        action.__raw = ''function() require("opencode").command("session.half.page.down") end'';
+        options.desc = "Scroll OpenCode down";
       }
     ];
   };
