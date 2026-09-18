@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Focused niri workspace identifier, event-driven: its name when named, else
+# its positional index. Emits once, then re-emits on every niri event that can
+# change the focus. Names are the stable way to address workspaces (indices
+# shift around as workspaces are reordered or disappear).
+emit() {
+  niri msg --json workspaces | jq -r '
+    map(select(.is_focused))[0]
+    | if . == null then empty
+      elif .name != null then .name
+      else (.idx | tostring)
+      end
+  '
+}
+
+emit
+
+# One JSON object per line; react only to events that can change the focus.
+niri msg --json event-stream | while IFS= read -r ev; do
+  case "$ev" in
+    *WorkspaceActivated* | *WorkspacesChanged*) emit ;;
+  esac
+done

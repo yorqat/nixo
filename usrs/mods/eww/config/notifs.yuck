@@ -10,7 +10,7 @@
     :height "400px"
     :width "2px"
     :anchor "right center")
-  (eventbox :class "colored-prim rounded" :onhover "eww -c . open notify-bar; eww -c . close notify-mini;"))
+  (eventbox :class "colored-prim rounded" :onhover "eww open notify-bar; eww close notify-mini;"))
 
 ;; main bar
 (defwindow notify-bar
@@ -22,7 +22,7 @@
     :y "0%"
     :height "100%"
     :anchor "right center")
-  (eventbox :onhoverlost "eww -c . open notify-mini; eww -c . close notify-bar;" (notifications)))
+  (eventbox :onhoverlost "eww open notify-mini; eww close notify-bar;" (notifications)))
   
 ;; main bar layout
 (defwidget notifications []

@@ -14,7 +14,7 @@
     :width "400px"
     :anchor "top center")
   (eventbox :class "colored-prim rounded"
-    :onhover "eww -c . open mp; eww -c . close mp-mini;"))
+    :onhover "eww open mp; eww close mp-mini;"))
     
 (defwindow mp
   :class ""
@@ -30,7 +30,7 @@
 (music))
 
 (defwidget music []
-  (eventbox :onhoverlost "eww -c . close mp; eww -c . open mp-mini"
+  (eventbox :onhoverlost "eww close mp; eww open mp-mini"
     (box :class "music colored-prim"
       :orientation "v"
       (box :orientation "h"

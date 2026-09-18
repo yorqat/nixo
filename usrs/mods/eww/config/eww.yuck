@@ -7,10 +7,10 @@
 ;; volume/brightness OSD + powermenu
 (include "osc.yuck")
 
-(defvar clock_tick_show true)
-(defvar theme "dark")
+(deflisten active_ws :initial "chat" "scripts/workspace")
 
-(deflisten workspaces_widget :initial "(box)" "scripts/workspace-widget")
+;; theme reflects the wallpaper symlink; re-read on `eww reload` (scripts/theme)
+(defpoll theme_mode :interval "10m" "scripts/theme_mode")
 
 ;; main bar
 (defwindow bar
@@ -24,16 +24,30 @@
     :width "100%"
     :anchor "top center")
   (centerbox :orientation "h" :class "bar bordered"
-    (box :orientation "h" :spacing 8 (start_menu) (workspaces))
+    (box :orientation "h" :spacing 8 (start_menu) (workspaces) (win_controls))
     (time)
     (system)))
 
 (defwidget workspaces []
-  (literal :content workspaces_widget))
+  (eventbox :onscroll "scripts/switch_workspace --{}"
+    (box :class "workspaces" :orientation "h" :halign "start" :spacing 0
+      (button :class {active_ws == "chat" ? "active-workspace" : "inactive-workspace"} :tooltip "Chat (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace chat" :onrightclick "niri msg action move-window-to-workspace --focus=false chat" :onmiddleclick "niri msg action move-window-to-workspace --focus=true chat" "󰻞")
+      (button :class {active_ws == "browse" ? "active-workspace" : "inactive-workspace"} :tooltip "Browse (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace browse" :onrightclick "niri msg action move-window-to-workspace --focus=false browse" :onmiddleclick "niri msg action move-window-to-workspace --focus=true browse" "󰇧")
+      (button :class {active_ws == "editor" ? "active-workspace" : "inactive-workspace"} :tooltip "Editor (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace editor" :onrightclick "niri msg action move-window-to-workspace --focus=false editor" :onmiddleclick "niri msg action move-window-to-workspace --focus=true editor" "󰨞")
+      (button :class {active_ws == "music" ? "active-workspace" : "inactive-workspace"} :tooltip "Music (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace music" :onrightclick "niri msg action move-window-to-workspace --focus=false music" :onmiddleclick "niri msg action move-window-to-workspace --focus=true music" "󰂰")
+      (button :class {active_ws == "video" ? "active-workspace" : "inactive-workspace"} :tooltip "Video (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace video" :onrightclick "niri msg action move-window-to-workspace --focus=false video" :onmiddleclick "niri msg action move-window-to-workspace --focus=true video" "󰯜")
+      (button :class {active_ws == "home" ? "active-workspace" : "inactive-workspace"} :tooltip "Home (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace home" :onrightclick "niri msg action move-window-to-workspace --focus=false home" :onmiddleclick "niri msg action move-window-to-workspace --focus=true home" "󱄅"))))
 
-(defpoll time_hour :interval "1s" "date +\%H")
-(defpoll time_min :interval "1s" "date +\%M")
-(defpoll time_sec :interval "1s" "date +\%S")
+;; window/column rearranging + layout, driven straight from niri actions
+(defwidget win_controls []
+  (box :class "win-controls" :orientation "h" :halign "start" :spacing 0
+    (button :class "win-btn" :tooltip "Move column left (Mod+Shift+H)" :onclick "niri msg action move-column-left" "󰅁")
+    (button :class "win-btn" :tooltip "Move column right (Mod+Shift+L)" :onclick "niri msg action move-column-right" "󰅂")
+    (button :class "win-btn" :tooltip "Move window up (Mod+Shift+K)" :onclick "niri msg action move-window-up" "󰅃")
+    (button :class "win-btn" :tooltip "Move window down (Mod+Shift+J)" :onclick "niri msg action move-window-down" "󰅄")
+    (button :class "win-btn" :tooltip "Toggle tabs in column (Mod+T)" :onclick "niri msg action toggle-column-tabbed-display" "󰓩")))
+
+(defpoll clock :interval "1s" "date +\%H:%M:%S")
 (defpoll date :interval "30m" "date +\%D")
 
 (defwidget start_menu []
@@ -47,15 +61,7 @@
 (defwidget time []
   (button :class "time hovered-prim"
     :tooltip date
-    (box :orientation "h" :spacing 4 :halign "center"
-      (box :width 16 :height 32 time_hour)
-      (label :class "time-sep" :text ":")
-      (box :width 16 :height 32 time_min)
-      (label :class "time-sep" :text ":")
-      (box :width 16 :height 32 time_sec)
-    )
-  )
-)
+    (label :text clock)))
 
 (defwidget system []
   (box :orientation "h" :class "system padded"  :halign "end"
@@ -63,8 +69,8 @@
       :orientation "h"
       :spacing 16
       (systray :class "systray" :orientation "h" :spacing 8 :icon-size 20)
-      (button :class "" :timeout "2000ms" :tooltip "Swap Theme" :onclick "scripts/theme" '')
-      (button :class "" :tooltip "Reboot" :onclick "systemctl reboot" '')
+      (button :class "theme-toggle" :timeout "2000ms" :tooltip {theme_mode == "light" ? "Swap Theme → dark" : "Swap Theme → light"} :onclick "scripts/theme" {theme_mode == "light" ? "" : ""})
+      (button :class "" :tooltip "Reboot" :onclick "systemctl reboot" "")
       (button :class "" :tooltip "Shut Down" :onclick "systemctl poweroff" '󰤆')
     )
   )

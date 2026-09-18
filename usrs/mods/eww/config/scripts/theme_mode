@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Current theme, derived from the wallpaper symlink (the single source of truth
+# scripts/theme flips). Prints "light" or "dark".
+WALL_LIGHT="$HOME/.config/eww/images/wallpapers/stitch_wall.png"
+if [[ "$(readlink -f "$HOME/.config/niri/wallpaper.png" 2>/dev/null)" == "$(readlink -f "$WALL_LIGHT" 2>/dev/null)" ]]; then
+  echo light
+else
+  echo dark
+fi

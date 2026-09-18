@@ -50,6 +50,19 @@ tooltip {
   }
 }
 
+.win-controls {
+  button.win-btn {
+    font-size: large;
+    padding: 0.8em 0.6em;
+    color: $fg-dim;
+
+    &:hover {
+      background-color: $bg-alt;
+      color: $accent-alt;
+    }
+  }
+}
+
 .time {
   border-radius: 0px 100px 100px 0;
 

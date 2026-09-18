@@ -27,13 +27,21 @@
   ];
 
   programs.niri.settings = {
-    prefer-no-csd = true;
+    # Named workspaces always exist, even when empty. Dynamic (unnamed) ones
+    # disappear when you leave them and `focus-workspace <idx>` only clamps to
+    # the last existing workspace, which is why the bar's index buttons 3-6
+    # could never switch anywhere. Address them by name instead.
+    # Keys are sorted to fix on-screen order; `name` is what niri/bar/keybinds use.
+    workspaces = {
+      "01" = {name = "chat";};
+      "02" = {name = "browse";};
+      "03" = {name = "editor";};
+      "04" = {name = "music";};
+      "05" = {name = "video";};
+      "06" = {name = "home";};
+    };
 
-    spawn-at-startup = [
-      {
-        command = ["swaybg" "--image" "${config.stylix.image}" "--mode" "fill" "--output" "*"];
-      }
-    ];
+    prefer-no-csd = true;
 
     layout = {
       focus-ring = {
@@ -109,6 +117,27 @@
       "Mod+8".action.focus-workspace = 8;
       "Mod+9".action.focus-workspace = 9;
 
+      # Move the focused window to a named workspace (focus follows it).
+      "Mod+Shift+1".action.move-window-to-workspace = "chat";
+      "Mod+Shift+2".action.move-window-to-workspace = "browse";
+      "Mod+Shift+3".action.move-window-to-workspace = "editor";
+      "Mod+Shift+4".action.move-window-to-workspace = "music";
+      "Mod+Shift+5".action.move-window-to-workspace = "video";
+      "Mod+Shift+6".action.move-window-to-workspace = "home";
+
+      # Rearrange windows inside the workspace.
+      "Mod+Shift+H".action.move-column-left = {};
+      "Mod+Shift+L".action.move-column-right = {};
+      "Mod+Shift+J".action.move-window-down = {};
+      "Mod+Shift+K".action.move-window-up = {};
+
+      # Move the whole column to the previous/next workspace.
+      "Mod+Shift+BracketLeft".action.move-column-to-workspace-up = {};
+      "Mod+Shift+BracketRight".action.move-column-to-workspace-down = {};
+
+      # Column layout: stacked <-> tabs.
+      "Mod+T".action.toggle-column-tabbed-display = {};
+
       "Mod+F".action.fullscreen-window = {};
       "Mod+Q".action.close-window = {};
 
@@ -124,5 +153,27 @@
       "Mod+V".action.toggle-window-floating = {};
       "Mod+Shift+V".action.switch-focus-between-floating-and-tiling = {};
     };
+  };
+
+  # Wallpaper as a managed service (was: fire-and-forget `swaybg` in
+  # spawn-at-startup, which never restarted with niri and couldn't follow the
+  # theme). It reads a stable symlink that scripts/theme flips dark<->light;
+  # tmpfiles re-points it at the dark image on every session start, so a reboot
+  # always lands on the base theme consistently.
+  systemd.user.tmpfiles.rules = [
+    "L+ ${config.home.homeDirectory}/.config/niri/wallpaper.png - - - - ${config.home.homeDirectory}/.config/eww/images/wallpapers/stitch_wall_dark.png"
+  ];
+
+  systemd.user.services.swaybg = {
+    Unit = {
+      Description = "Wallpaper (swaybg)";
+      PartOf = ["niri.service"];
+      After = ["niri.service"];
+    };
+    Service = {
+      ExecStart = "${lib.getExe pkgs.swaybg} --image ${config.home.homeDirectory}/.config/niri/wallpaper.png --mode fill --output *";
+      Restart = "on-failure";
+    };
+    Install.WantedBy = ["niri.service"];
   };
 }

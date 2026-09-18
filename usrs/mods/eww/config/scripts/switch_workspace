@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
-
-ACTIVE_WORKSPACE=$(~/.config/eww/scripts/active_workspace)
-LIMIT=6
-
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --up)
-            if [[ $(($ACTIVE_WORKSPACE + 1)) -gt $LIMIT ]]; then
-                niri msg action focus-workspace "$LIMIT"
-            else
-                niri msg action focus-workspace $(($ACTIVE_WORKSPACE + 1))
-            fi
-            ;;
-        --down) niri msg action focus-workspace $(($ACTIVE_WORKSPACE - 1));;
-        *) niri msg action focus-workspace $(($ACTIVE_WORKSPACE + 1));;
-    esac
-    shift
-done
+# Scroll through niri workspaces. focus-workspace-down/up walk the live
+# workspace list, so no index math, limits, or clamping is needed (the old
+# version shelled out to active_workspace on every scroll step and could emit
+# focus-workspace 0 / beyond the last workspace).
+#
+# eww's :onscroll passes "up" or "down"; keep the old mapping (up = next).
+case "$1" in
+  --up) niri msg action focus-workspace-down ;;
+  --down) niri msg action focus-workspace-up ;;
+esac

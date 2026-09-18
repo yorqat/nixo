@@ -1,149 +1,80 @@
-#!/usr/bin/env  bash
+#!/usr/bin/env bash
+# Music metadata for eww, event-driven via `mpc idle` (was: 2 Hz polling that
+# spawned ~6 `mpc` calls per tick, forever). JSON is built with jq so titles with
+# quotes/newlines can't corrupt it.
+
 COVER="/tmp/eww_mp_thumbnail.png"
 MUSIC_DIR="$HOME/Music"
 
-# Just for too long labels
-add_newlines() {
-  string="$1"
-  n="$2"
-  count=0
-
-  for ((i = 0; i < ${#string}; i++)); do
-    echo -n "${string:i:1}"
-    ((count++))
-
-    if ((count == n)); then
-      echo
-      count=0
-    fi
-  done
-}
+cur_file() { mpc current -f '%file%' 2>/dev/null; }
 
 get_cover() {
-	ffmpeg -i "$MUSIC_DIR/$(mpc current -f %file%)" -map 0:v:0 -c copy "${COVER}" -y &> /dev/null
-	STATUS=$?
-
-	# Check if the file has a embbeded album art
-	if [ "$STATUS" -eq 0 ];then
-		echo "$COVER"
-	else
-		echo "images/icons/music.jpg"
-	fi
+  local f
+  f="$(cur_file)"
+  if [[ -n "$f" && -f "$MUSIC_DIR/$f" ]] &&
+    ffmpeg -i "$MUSIC_DIR/$f" -map 0:v:0 -c copy "$COVER" -y >/dev/null 2>&1; then
+    echo "$COVER"
+  else
+    echo "images/icons/music.jpg"
+  fi
 }
 
-get_artist() {
-	ARTIST=$(mpc current -f %artist%)
-	add_newlines "$ARTIST" 40
+emit_meta() {
+  jq -cn \
+    --arg title "$(mpc current -f '%title%' 2>/dev/null)" \
+    --arg artist "$(mpc current -f '%artist%' 2>/dev/null)" \
+    --arg cover "$(get_cover)" \
+    '{ title: $title, artist: $artist, cover: $cover }'
 }
 
-get_title() {
-	TITLE=$(mpc current -f %title%)
-	add_newlines "$TITLE" 40
+emit_state() {
+  local status playing repeat random percentile
+  status="$(mpc status 2>/dev/null)"
+  playing=false
+  repeat=false
+  random=false
+  grep -q "\[playing\]" <<<"$status" && playing=true
+  grep -q "repeat: on" <<<"$status" && repeat=true
+  grep -q "random: on" <<<"$status" && random=true
+  percentile="$(mpc status '%percenttime%' 2>/dev/null | tr -cd '0-9')"
+  jq -cn \
+    --arg time "$(mpc status '%currenttime% - %totaltime%' 2>/dev/null)" \
+    --argjson playing "$playing" \
+    --argjson repeat "$repeat" \
+    --argjson random "$random" \
+    --argjson percentile "${percentile:-0}" \
+    '{ time: $time, playing: $playing, repeat: $repeat, random: $random, percentile: $percentile }'
 }
 
-get_time() {
-  mpc status '%currenttime% - %totaltime%'
-}
-
-get_time_percentile() {
-  # string="10%"; echo "${string/\%/}"
-  TIME=$(mpc status '%percenttime%')
-  echo "${TIME/\%/}"  | tr -d '[:space:]'
-}
-
-is_mpc_status_on() {
-    option="$1"
-    if mpc status | grep -q "$option: on"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-is_mpc_playing() {
-    if mpc status | grep -q "\[playing\]"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-is_mpc_repeat_on() {
-    if mpc status | grep -q "repeat: on"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-is_mpc_random_on() {
-    if mpc status | grep -q "random: on"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
+# Track metadata: only re-emit when the playing file changes; block on idle
+# between changes (zero cost while paused/stopped).
 listen_meta() {
-  CURRENT_TITLE=""
-
+  local last="__init__" f
   while true; do
-      TITLE=$(get_title)
-
-      if [ "$CURRENT_TITLE" != "$TITLE" ] ; then
-        CURRENT_TITLE=$TITLE
-        ARTIST=$(get_artist)
-        COVER=$(get_cover)
-
-        LISTEN_META="{"
-        LISTEN_META+="\"title\": \"$TITLE\", "
-        LISTEN_META+="\"artist\": \"$ARTIST\", "
-        LISTEN_META+="\"cover\": \"$COVER\""
-        LISTEN_META+="}"
-
-        echo "$LISTEN_META"
-      fi
-
-      sleep 2
+    f="$(cur_file)"
+    if [[ "$f" != "$last" ]]; then
+      last="$f"
+      emit_meta
+    fi
+    mpc idle player >/dev/null 2>&1
   done
 }
 
+# Playback state: progress only advances while playing, so poll 1s then; when
+# paused/stopped, block on idle instead of spinning.
 listen_playing_meta() {
   while true; do
-    IS_PLAYING=$(is_mpc_playing && echo "true" || echo "false")
-    IS_REPEATING=$(is_mpc_repeat_on && echo "true" || echo "false")
-    IS_RANDOM=$(is_mpc_random_on && echo "true" || echo "false")
-    TIME=$(get_time)
-    PERCENTILE=$(get_time_percentile)
-
-    LISTEN_PLAYING_META="{"
-    LISTEN_PLAYING_META+="\"time\": \"$TIME\", "
-    LISTEN_PLAYING_META+="\"playing\": \"$IS_PLAYING\", "
-    LISTEN_PLAYING_META+="\"repeat\": \"$IS_REPEATING\", "
-    LISTEN_PLAYING_META+="\"random\": \"$IS_RANDOM\", "
-    LISTEN_PLAYING_META+="\"percentile\": \"$PERCENTILE\""
-    LISTEN_PLAYING_META+="}"
-
-
-    echo "$LISTEN_PLAYING_META"
-    sleep 0.5
+    emit_state
+    if mpc status 2>/dev/null | grep -q "\[playing\]"; then
+      sleep 1
+    else
+      mpc idle player >/dev/null 2>&1
+    fi
   done
 }
 
-
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-      --cover) get_cover;;
-      --artist) get_artist;;
-      --title) get_title;;
-      --time) get_time;;
-      --time_percent) get_time_percentile;;
-      --listen_meta) listen_meta;;
-      --listen_playing_meta) listen_playing_meta;;
-      --is_playing) is_mpc_playing && echo "true" || echo "false";;
-      --is_repeat) is_mpc_repeat_on && echo "true" || echo "false";;
-      --is_random) is_mpc_random_on && echo "true" || echo "false";;
-      *) return 1;;
-    esac
-    shift
-done
+case "${1:-}" in
+  --listen_meta) listen_meta ;;
+  --listen_playing_meta) listen_playing_meta ;;
+  *) exit 1 ;;
+esac

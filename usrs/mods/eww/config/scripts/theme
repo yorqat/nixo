@@ -1,50 +1,41 @@
 #!/usr/bin/env bash
+# Toggle dark/light.
+#   - colors: activate the matching Home Manager specialisation.
+#   - wallpaper: flip the stable symlink that the swaybg service reads.
+# The wallpaper symlink is the single source of truth for the current mode.
+#
+# The active generation is read from /etc/current-home-generation (written by
+# the system module): NixOS-managed Home Manager has no user profile symlink,
+# and baking the generation path into this file would recurse.
+set -euo pipefail
 
-# MIT License
+GEN="$(readlink -f /etc/current-home-generation)"
+WALL_LINK="$HOME/.config/niri/wallpaper.png"
+DARK="$HOME/.config/eww/images/wallpapers/stitch_wall_dark.png"
+LIGHT="$HOME/.config/eww/images/wallpapers/stitch_wall.png"
 
-# Copyright (c) 2023 YorQat
+mkdir -p "$(dirname "$WALL_LINK")"
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# Contact: YorQat <qarkdev+gh@gmail.com>
-
-# Toggle between the default (dark) Stylix scheme and the "light"
-# home-manager specialisation defined in usrs/default.nix. Both generations
-# are already built by the last `nixos-rebuild switch` - toggling just runs
-# the matching generation's activation script (relinks dotfiles, including
-# eww's generated theme.scss) and asks eww to reload. No rebuild involved.
-
-STATE_FILE="$HOME/.cache/eww-theme-state"
-PROFILE_DIR="$HOME/.local/state/nix/profiles/home-manager"
-
-CURRENT=$(cat "$STATE_FILE" 2>/dev/null || echo "dark")
-
-if [[ "$CURRENT" == "dark" ]]; then
-  NEW="light"
-  ACTIVATE="$PROFILE_DIR/specialisation/light/activate"
+if [[ "$(readlink -f "$WALL_LINK" 2>/dev/null)" == "$(readlink -f "$LIGHT")" ]]; then
+  target="$DARK"
+  spec="dark"
 else
-  NEW="dark"
-  ACTIVATE="$PROFILE_DIR/activate"
+  target="$LIGHT"
+  spec="light"
+fi
+ln -sfn "$target" "$WALL_LINK"
+
+if [[ "$spec" == "light" ]]; then
+  "$GEN/specialisation/light/activate"
+else
+  "$GEN/activate"
 fi
 
-"$ACTIVATE"
-echo "$NEW" >"$STATE_FILE"
+systemctl --user restart swaybg.service
 
-eww reload
-eww update theme="$NEW"
+# `eww reload` re-reads yuck but does NOT recompile the stylesheet, so the bar
+# would keep the old palette. Restart the daemon so it recompiles theme.scss.
+# Detached via systemd-run because this script runs as a child of eww.service:
+# restarting the service in-line would kill the script (and its systemctl call)
+# partway through.
+systemd-run --user --collect --quiet systemctl --user restart eww.service
