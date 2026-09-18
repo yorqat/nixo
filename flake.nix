@@ -13,15 +13,6 @@
       url = "github:nix-community/nixvim";
     };
 
-    nix4nvchad = {
-      url = "github:nix-community/nix4nvchad";
-    };
-
-    nur = {
-      url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     stylix = {
       url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";

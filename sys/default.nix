@@ -39,9 +39,6 @@ in {
         # persistence
         impermanenceModule
 
-        # firefox extensions
-        {nixpkgs.overlays = [inputs.nur.overlays.default];}
-
         niriModule
         stylixModule
 

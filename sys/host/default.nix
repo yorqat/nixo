@@ -43,25 +43,53 @@ in {
     enable = true;
   };
 
-  # ungoogled-chromium strips Google from the built-in search engine list;
-  # restore it via a managed policy (the home-manager chromium module has
-  # no policy support, so this must live at the system level).
+  # The system chromium module also emits managed policies for Brave
+  # (/etc/brave/policies/managed/*.json), so this drives Brave's defaults.
+  # (Home-manager has no Brave module, hence system-level.)
   programs.chromium = {
     enable = true;
     defaultSearchProviderEnabled = true;
     defaultSearchProviderSearchURL = "https://www.google.com/search?q={searchTerms}";
     defaultSearchProviderSuggestURL = "https://www.google.com/complete/search?output=chrome&q={searchTerms}";
+
+    # Basic, non-intrusive hardening. Google search is kept on purpose (dev
+    # tooling); Brave's own Shields + Safe Browsing stay on as the real defense.
+    extraOpts = {
+      MetricsReportingEnabled = false;
+      PersonalizationReportingEnabled = false;
+      BrowserSignin = 0;
+      SyncDisabled = true;
+      DNSOverHttpsMode = "automatic";
+    };
   };
 
   programs.firefox = {
     enable = true;
     package = pkgs.firefox-devedition;
+
+    # Basic privacy only, and left user-overridable ("default", not "locked")
+    # so about:config stays usable while developing. No RFP / arkenfox: those
+    # break local dev, logins and devtools.
+    preferencesStatus = "default";
+    preferences = {
+      "datareporting.healthreport.uploadEnabled" = false;
+      "datareporting.policy.dataSubmissionEnabled" = false;
+      "app.shield.optoutstudies.enabled" = false;
+      "app.normandy.enabled" = false;
+      "browser.urlbar.suggest.quicksuggest.sponsored" = false;
+      "browser.urlbar.suggest.quicksuggest.nonsponsored" = false;
+      "network.trr.mode" = 3; # DoH automatic (non-intrusive)
+      "privacy.trackingprotection.enabled" = true;
+    };
+
     policies = {
       ExtensionSettings = {
         # The key MUST match the extension's internal ID
-        "adnauseam@rednoise.org" = {
-          installation_mode = "force_installed";
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/adnauseam/latest.xpi";
+        "uBlock0@raymondhill.net" = {
+          # normal_installed (not force) so the blocker can be toggled off
+          # while developing against a site that needs the blocked origin.
+          installation_mode = "normal_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
         };
       };
     };

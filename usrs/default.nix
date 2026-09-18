@@ -24,11 +24,12 @@ in {
 
     # ./mods/apps/vscode
     ./mods/apps/neovim
+    ./mods/apps/opencode
     ./mods/apps/kitty
-    ./mods/apps/chromium
+    ./mods/apps/brave
+    ./mods/apps/chromium-guest
     ./mods/apps/mpv
 
-    inputs.nix4nvchad.homeManagerModules.default
     inputs.nixvim.homeModules.nixvim
   ];
 
