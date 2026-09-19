@@ -2,12 +2,19 @@
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     provider = {
-      openrouter = {
+      ollama = {
+        npm = "@ai-sdk/openai-compatible";
+        name = "Ollama (Local)";
+        options = {
+          baseURL = "http://localhost:11434/v1";
+        };
         models = {
-          "z-ai/glm-5.3-flash" = {};
+          "qwen3:1.7b" = {
+            tools = true;
+          };
         };
       };
     };
-    model = "openrouter/z-ai/glm-5.3-flash";
+    model = "ollama/qwen3:1.7b";
   };
 }
