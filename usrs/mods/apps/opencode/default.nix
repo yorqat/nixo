@@ -1,6 +1,11 @@
 {
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
+
+    # ─── DEFAULT ACTIVE MODEL ───
+    model = "ollama/qwen3:1.7b";
+
+    # ─── LOCAL PROVIDER DEFINITION ───
     provider = {
       ollama = {
         npm = "@ai-sdk/openai-compatible";
@@ -15,6 +20,12 @@
         };
       };
     };
-    model = "ollama/qwen3:1.7b";
+
+    # ─── EXPLICITLY ALLOW LOCAL DIRECTORY DISCOVERY ───
+    permission = {
+      edit = "allow";
+      bash = "ask";
+      webfetch = "allow";
+    };
   };
 }
