@@ -25,7 +25,7 @@
     "$schema" = "https://opencode.ai/config.json";
 
     # ─── DEFAULT ACTIVE MODEL ───
-    model = "ollama/qwen3:1.7b";
+    model = "ollama/gemma3:4b";
 
     # ─── LOCAL PROVIDER DEFINITION ───
     provider = {
