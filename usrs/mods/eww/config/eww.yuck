@@ -23,7 +23,7 @@
     :height "36px"
     :width "100%"
     :anchor "top center")
-  (centerbox :orientation "h" :class "bar bordered"
+  (centerbox :orientation "h" :class "bar"
     (box :orientation "h" :spacing 8 (start_menu) (workspaces) (win_controls))
     (time)
     (system)))
