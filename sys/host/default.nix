@@ -114,6 +114,8 @@ in {
     # enable powerprofilesctl
     power-profiles-daemon.enable = true;
 
+    resolved.enable = true;
+
     xserver = {
       enable = true;
 
@@ -156,7 +158,7 @@ in {
 
   environment.systemPackages = with pkgs;
     [
-      adwaita-icon-theme
+      # adwaita-icon-theme
       ifuse
       nfs-utils
     ]

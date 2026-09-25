@@ -9,22 +9,42 @@
     libnotify
     wf-recorder
     brightnessctl
-    pamixer
+    # pamixer
     jq
-    slurp
-    tesseract5
-    grim
+    # slurp
+    # tesseract5
+    # grim
     wl-clipboard
-    pngquant
-    qt5.qtwayland
+    # pngquant
+    # qt5.qtwayland
 
     xwayland-satellite
 
-    wofi
-    mako
-    swaybg
     imv
   ];
+
+  services.mako.enable = true;
+
+  programs.fuzzel = {
+    enable = true;
+    settings = {
+      main = {
+        terminal = "kitty";
+        prompt = "'  '";
+        width = 50; # in characters
+        lines = 24;
+        horizontal-pad = 24;
+        vertical-pad = 16;
+        inner-pad = 8; # gap between the prompt and the list
+        line-height = 36;
+        letter-spacing = 1;
+      };
+      border = {
+        width = 4;
+        radius = 8;
+      };
+    };
+  };
 
   programs.niri.settings = {
     # Named workspaces always exist, even when empty. Dynamic (unnamed) ones
@@ -42,6 +62,8 @@
     };
 
     prefer-no-csd = true;
+
+    screenshot-path = "~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png";
 
     layout = {
       focus-ring = {
@@ -71,15 +93,20 @@
       {
         clip-to-geometry = true;
         geometry-corner-radius = {
-          top-left = 16.0;
-          top-right = 16.0;
-          bottom-left = 16.0;
-          bottom-right = 16.0;
+          top-left = 4.0;
+          top-right = 2.0;
+          bottom-left = 2.0;
+          bottom-right = 4.0;
         };
       }
     ];
 
     binds = {
+      # screenshots
+      "Print".action.screenshot = {};
+      "Ctrl+Print".action.screenshot-screen = {};
+      "Alt+Print".action.screenshot-window = {};
+
       # spawn now expects a list for multiple arguments
       "XF86AudioRaiseVolume".action.spawn = ["sh" "-c" "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ && eww open osc-volume --duration 2s"];
       "XF86AudioLowerVolume".action.spawn = ["sh" "-c" "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1- && eww open osc-volume --duration 2s"];
@@ -91,7 +118,7 @@
       # Actions with no arguments MUST be empty sets
       "Mod+M".action.power-off-monitors = {};
 
-      "Mod+D".action.spawn = ["wofi" "--show" "drun" "--columns" "3" "--gtk-dark" "--allow-images" "--fork"];
+      "Mod+D".action.spawn-sh = "pkill -x fuzzel || fuzzel";
       "Mod+0".action.spawn = ["kitty"];
 
       "Mod+Up".action.focus-window-up = {};
@@ -163,6 +190,21 @@
   systemd.user.tmpfiles.rules = [
     "L+ ${config.home.homeDirectory}/.config/niri/wallpaper.png - - - - ${config.home.homeDirectory}/.config/eww/images/wallpapers/stitch_wall_dark.png"
   ];
+
+  programs.swaylock.enable = true;
+  services.swayidle = {
+    enable = true;
+    timeouts = [
+      {
+        timeout = 300;
+        command = "${lib.getExe pkgs.swaylock} -f";
+      }
+      {
+        timeout = 600;
+        command = "niri msg action power-off-monitors";
+      }
+    ];
+  };
 
   systemd.user.services.swaybg = {
     Unit = {

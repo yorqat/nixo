@@ -9,8 +9,9 @@
 
 (deflisten active_ws :initial "chat" "scripts/workspace")
 
-;; theme reflects the wallpaper symlink; re-read on `eww reload` (scripts/theme)
-(defpoll theme_mode :interval "10m" "scripts/theme_mode")
+;; theme reflects the wallpaper symlink; the in-band toggle restarts eww, so
+;; this poll only covers out-of-band changes (terminal toggle, reboot reset)
+(defpoll theme_mode :interval "1m" "scripts/theme_mode")
 
 ;; main bar
 (defwindow bar

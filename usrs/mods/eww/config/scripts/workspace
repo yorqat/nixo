@@ -16,8 +16,16 @@ emit() {
 emit
 
 # One JSON object per line; react only to events that can change the focus.
-niri msg --json event-stream | while IFS= read -r ev; do
-  case "$ev" in
-    *WorkspaceActivated* | *WorkspacesChanged*) emit ;;
-  esac
+# Reconnect if the stream breaks: eww never respawns a dead deflisten, so
+# without this active_ws would go stale silently. (A full niri restart kills
+# eww via PartOf=niri.service, so this only covers stream hiccups.)
+while true; do
+  niri msg --json event-stream | while IFS= read -r ev; do
+    case "$ev" in
+      *WorkspaceActivated* | *WorkspacesChanged*) emit ;;
+    esac
+  done
+  # Stream broke: focus may have changed while disconnected, so refresh.
+  emit
+  sleep 1
 done

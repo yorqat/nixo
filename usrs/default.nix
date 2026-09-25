@@ -69,4 +69,11 @@ in {
     stylix.polarity = lib.mkForce "light";
     stylix.base16Scheme = lib.mkForce "${pkgs.base16-schemes}/share/themes/catppuccin-latte.yaml";
   };
+
+  stylix.icons = {
+    enable = true;
+    package = pkgs.papirus-icon-theme;
+    dark = "Papirus-Dark";
+    light = "Papirus-Light";
+  };
 }

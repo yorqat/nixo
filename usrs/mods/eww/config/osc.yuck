@@ -1,6 +1,9 @@
 ;; on-screen controls: volume/brightness OSD popups and the powermenu,
 ;; opened by niri keybinds (see usrs/mods/niri/default.nix)
 
+;; polled, not event-driven: brightnessctl has no event mode and the wpctl on
+;; PATH is WirePlumber's (no `monitor` command), so there is no event source;
+;; the OSDs are only visible for 2s at a time, so 1s is the right trade-off
 (defpoll volume_level :interval "1s" :initial "0" "scripts/volume_level")
 (defpoll brightness_level :interval "1s" :initial "0" "scripts/brightness_level")
 

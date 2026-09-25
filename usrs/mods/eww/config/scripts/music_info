@@ -8,6 +8,14 @@ MUSIC_DIR="$HOME/Music"
 
 cur_file() { mpc current -f '%file%' 2>/dev/null; }
 
+# Block on mpd idle; when mpd is down `mpc idle` returns instantly with an
+# error, so back off instead of busy-looping at 100% CPU until it comes back.
+mpd_idle() {
+  if ! mpc idle player >/dev/null 2>&1; then
+    sleep 5
+  fi
+}
+
 get_cover() {
   local f
   f="$(cur_file)"
@@ -56,7 +64,7 @@ listen_meta() {
       last="$f"
       emit_meta
     fi
-    mpc idle player >/dev/null 2>&1
+    mpd_idle
   done
 }
 
@@ -68,7 +76,7 @@ listen_playing_meta() {
     if mpc status 2>/dev/null | grep -q "\[playing\]"; then
       sleep 1
     else
-      mpc idle player >/dev/null 2>&1
+      mpd_idle
     fi
   done
 }
