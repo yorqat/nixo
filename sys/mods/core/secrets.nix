@@ -63,17 +63,28 @@ in {
         })
         rootSecrets));
 
-    templates = lib.optionalAttrs (envAvailable != []) {
-      # rendered at activation from decrypted values; sourced by the shell
-      "secrets-env" = {
-        content = lib.concatStrings (map
-          (name: "export ${envNames.${name}}=${config.sops.placeholder."${name}"}\n")
-          envAvailable);
-        path = "${setup.homeDir}/.config/secrets/env";
-        owner = setup.userName;
-        group = "users";
-        mode = "0600";
+    templates =
+      lib.optionalAttrs (envAvailable != []) {
+        # rendered at activation from decrypted values; sourced by the shell
+        "secrets-env" = {
+          content = lib.concatStrings (map
+            (name: "export ${envNames.${name}}=${config.sops.placeholder."${name}"}\n")
+            envAvailable);
+          path = "${setup.homeDir}/.config/secrets/env";
+          owner = setup.userName;
+          group = "users";
+          mode = "0600";
+        };
+      }
+      // {
+        # setup default public key as an authorized key login
+        "authorized_keys" = {
+          content = config.sops.placeholder."id_ed25519.pub" + "\n";
+          path = "${setup.homeDir}/.ssh/authorized_keys";
+          owner = setup.userName;
+          group = "users";
+          mode = "0600";
+        };
       };
-    };
   };
 }
