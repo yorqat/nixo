@@ -26,7 +26,7 @@ in {
     ["${homeDir}/Pictures" "/dat/Pictures"]
     ["${homeDir}/Music" "/dat/Music"]
 
-    ["${homeDir}/my-nixos" "/dat/Documents/my-nixos"]
+    ["${homeDir}/.system-config" "/dat/Documents/nixo"]
   ];
 
   # every git-tracked file in secrets/ deploys to ~/.config/secrets/<name>.
