@@ -12,7 +12,24 @@ nix eval .#nixosConfigurations.qat.config.system.build.toplevel.drvPath
 nix develop -c alejandra --check .
 ```
 
+Progress so far: §3.3–§3.6 (the wayland/session pass, 2026-09-30), §2.3/§2.3b,
+§2.5–§2.7 and §3.10.
+The wayland items were verified against a realised `system-path` (what actually
+lands in `/run/current-system/sw`), not just eval — several of the claims in §3
+only show up in the built profile or in nixpkgs' source, not in the config:
+```sh
+nix-store --realise "$(nix-store --query --graph "$DRV" | grep -o '[^ ]*-system-path' | head -1)"
+```
+
 Legend: `[ ]` open · `[~]` in progress · `[x]` done. Work top-down; §1 first.
+
+**This file is the progress tracker — keep it true.** Every change to the tree
+that touches a finding here must come with an AUDIT.md edit in the same commit:
+flip the box, replace the claim with what was actually done, and correct the
+finding if the fix contradicted it (several already were). "Done" means the
+claim was re-verified against the new eval, not that a line was deleted. When
+something breaks at runtime, add a new finding here before debugging it — the
+box that lied is usually the cause.
 
 ---
 
@@ -129,37 +146,102 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done. Work top-down; §1 first.
   Flip `lite = true` and ollama starts with NVIDIA offload env against no
   driver.
 
-- [ ] **2.5 `flake.nix:52-55` — dead `allowUnfree`.**
+- [x] **2.5 `flake.nix:52-55` — "dead `allowUnfree`".** — fixed by deleting the
+  cause, not the flag (2026-09-30)
 
-  `config.allowUnfree = true` on a locally `import`ed nixpkgs is dead: that
-  `pkgs` is only used for `devshell`. The system pkgs come from `nixosSystem`,
-  where `sys/mods/core/nix.nix:9` already sets it.
-
-- [ ] **2.6 `nix.nix` sets three defaults to their default values.**
-
-  `environment.defaultPackages = []` (verified `[]` is already the default),
-  `allowBroken = false`, `allowInsecure = false`.
-
-- [ ] **2.7 `nix.settings` unions with module defaults instead of replacing.**
-
-  Generated `/etc/nix/nix.conf` actually contains:
+  The claim was half right for the wrong reason. That `pkgs` is a *separate*
+  `import`ed nixpkgs used only for `devshell`, so it never set the system
+  `allowUnfree` — that comes from `nixosSystem` via `sys/mods/core/nix.nix`. But
+  it was not dead: `devshell/default.nix` pulled `pkgs.claude-code`, whose
+  `meta.license.free` is `false`, and without `config.allowUnfree` the shell
+  refused to even instantiate:
 
   ```
-  trusted-users = root root yor
-  substituters = https://niri.cachix.org https://cache.nixos.org?priority=10 ... https://hyprland.cachix.org ... https://cache.nixos.org/
-  trusted-public-keys = ... niri.cachix.org-1:... niri.cachix.org-1:...
-  experimental-features =          <- empty, from the store default
-  experimental-features = nix-command flakes
+  error: Refusing to evaluate package 'claude-code-2.1.283' in
+  .../pkgs/by-name/cl/claude-code/package.nix:94 because it has an unfree license ('unfree')
   ```
 
-  - `trusted-users = ["root" setup.userName]` unions with the default
-    `["root"]` → `root root yor`. Use `lib.mkForce` or just `[ setup.userName ]`.
-  - `niri.cachix.org` is already injected by the niri-flake module
-    (`niri-flake.cache.enable` defaults to `true`) — your hand-written copy is a
-    duplicate.
-  - `hyprland.cachix.org` is trusted with a key for a flake you don't have.
-  - `experimental-features` via `extraOptions` emits a duplicate empty line
-    first. Use `nix.settings.experimental-features = [ "nix-command" "flakes" ]`.
+  (Reproduce with `nix build --impure --expr '… import f.inputs.nixpkgs { system = …; } in p.claude-code' --dry-run`.
+  Worth knowing: it *evaluates* fine and only throws on instantiation —
+  `check-meta.nix` asserts inside `drvPath`, so `nix eval p.claude-code.version`
+  is not a test for this and will tell you it is fine.)
+
+  So `claude-code` went first — it was the only unfree thing in the devshell
+  (`opencode` is separate and MIT) and had no other reference in the tree — and
+  `config.allowUnfree = true` went with it. `pkgs` is now a bare
+  `import inputs.nixpkgs { inherit system; }`, which also retired the
+  commented-out `legacyPackages` line above it.
+
+  `nix develop -c …` instantiates the whole devshell closure, and the unfree
+  check throws at instantiation, so that command succeeding *is* the proof the
+  closure is now free — no need to audit licenses one by one. A comment on the
+  `pkgs` binding records that a future unfree addition needs the flag back.
+
+  The system-side `nixpkgs.config.allowUnfree` in `sys/mods/core/nix.nix` is
+  unrelated and still required (nvidia, plasma-era leftovers, unfree fonts).
+
+- [x] **2.6 `nix.nix` sets defaults to their default values.** — fixed
+  (2026-09-30), with one correction
+
+  `allowBroken = false` and `allowInsecure = false` were no-ops — both are the
+  upstream default (`pkgs/top-level/config.nix:279`, and `allowInsecure` below
+  it) — and are gone. `nixpkgs.config` is now just `allowUnfree = true`.
+
+  **Correction: "`environment.defaultPackages = []` is already the default" is
+  wrong.** The option default is `[ perl rsync strace ]`
+  (`nixos/modules/config/system-path.nix:53-64`, wired at `:113`); the audit
+  read back the *merged* value from this config, which of course is `[]`. So
+  that line is load-bearing: it strips all three from `/run/current-system/sw`
+  (confirmed — none of them is in the live `/run/current-system/sw/bin`, and
+  `environment.systemPackages = corePackages ++ defaultPackages`,
+  `system-path.nix:186`).
+
+  Kept as-is with a comment recording that it is a deliberate strip, not a
+  no-op. Restoring `[ perl rsync strace ]` is a behaviour change, not a cleanup
+  — `strace` in particular is commonly wanted for debugging a config like this
+  one, so it is a separate decision.
+
+- [x] **2.7 `nix.settings` unions with module defaults instead of replacing.**
+  — fixed (2026-09-30)
+
+  Before / after, from the built `nix.conf`
+  (`nix build '.#nixosConfigurations.qat.config.environment.etc."nix/nix.conf".source'`):
+
+  ```
+  - trusted-users       = root root yor
+  + trusted-users       = root yor
+  - substituters        = … https://hyprland.cachix.org …
+  + substituters        = … (no hyprland)
+  - trusted-public-keys = … niri.cachix.org-1:… … cache.nixos.org-1:… cache.nixos.org-1:… …
+  + trusted-public-keys = … niri.cachix.org-1:… (one each)
+  - experimental-features =            <- empty, from the option default
+  - experimental-features = nix-command flakes
+  + experimental-features = nix-command flakes
+  ```
+
+  - `trusted-users` now `lib.mkForce [ "root" setup.userName ]`. The default is
+    `[ "root" ]` at normal priority (`nixos/modules/config/nix.nix:443`), so the
+    old plain list unioned into `root root yor`. Kept `"root"` explicitly
+    rather than relying on the default, since `mkForce` is exactly what drops
+    the default.
+  - Hand-written `niri.cachix.org` substituter + key deleted. niri-flake
+    already injects both at normal priority (`niri-flake/flake.nix:480-481`),
+    toggled by `niri-flake.cache.enable` (default `true`) — so this also makes
+    the cache switchable, which the hand copy made impossible.
+  - `hyprland.cachix.org` deleted from both lists. Verified it appears nowhere
+    in the tree but these two lines and that no flake input pulls it.
+  - `cache.nixos.org-1` deleted from `trusted-public-keys`: the module already
+    sets it (`nixos/modules/config/nix.nix:442`). The `?priority=10`
+    substituter stays — that is not a duplicate of the `mkAfter` bare
+    `https://cache.nixos.org/` (`nix.nix:444`) and the priority is load-bearing.
+  - `extraOptions` deleted entirely; `nix.settings.experimental-features` is
+    the option now. The option default is `[ ]`
+    (`nixos/modules/config/nix.nix:257`) and the `nixConf` formatter renders an
+    empty list as a bare `experimental-features =`, which is the stray line —
+    setting the option non-empty removes both lines and `extraOptions`.
+
+  The generated file passes its own `checkPhase` (`nix config show` over
+  `NIX_CONF_DIR`), so it is a valid `nix.conf`, not just a plausible one.
 
 - [ ] **2.8 `usrs/default.nix:57 programs.home-manager.enable = true` is a no-op.**
 
@@ -187,26 +269,127 @@ Security / correctness first.
   docker/qemu is installed. `docker` is root-equivalent.
 
 - [ ] **3.3 `sys/host:121-128` — `services.xserver.enable = true` on a
-  niri-only box.** Verified bloat in the profile: `xorg-server xterm xrandr
-  xrdb setxkbmap iceauth xlsclients xset xsetroot xinput xprop xauth`.
-  `programs.xwayland.enable` alone suffices.
+  niri-only box.**
 
-- [ ] **3.4 `sys/mods/wayland:13,20-23` — compositor env for a different
-  compositor.** `WLR_BACKEND`, `WLR_NO_HARDWARE_CURSORS`,
-  `WLR_DRM_NO_ATOMIC`, `NIXOS_OZONE_WL` and `CLUTTER_BACKEND` are
-  wlroots/Hyprland/mutter only — no-ops under niri. `ANKI_WAYLAND` and
-  `DIRENV_LOG_FORMAT` are unrelated leftovers.
+  Fix is `services.xserver.enable = false` plus
+  `services.displayManager.sddm.wayland.enable = true`. The X server goes and
+  the greeter keeps working, because nixpkgs' sddm module has a first-class
+  wayland mode: it sets `DisplayServer = "wayland"`, adds `qt6.qtwayland`, and
+  runs a kiosk compositor (`weston --shell=kiosk` by default, `kwin` if
+  selected) — `services/display-managers/sddm.nix:67,18,131-146`. Its only
+  precondition assertion is `xcfg.enable || cfg.wayland.enable` (sddm.nix:350),
+  so X11-off with sddm-wayland is a supported pairing, and the `[X11]` section
+  sddm's X path needs is simply not emitted (`optionalAttrs xcfg.enable`).
 
-- [ ] **3.5 `sys/mods/wayland:15` — `QT_QPA_PLATFORM = "wayland"`
-  system-wide** forces every Qt app onto Wayland, breaking xcb-only tools.
-  Belongs in the session, not `environment.variables`.
+  Not hypothetical on this machine: the generation logged into on 2026-09-30
+  (20:10:52 and 21:54:48) ran `DisplayServer=wayland` with
+  `weston-16.0.0 --shell=kiosk` and drew a working login screen on this GPU.
 
-- [ ] **3.6 `sys/mods/nvidia:16-21` — the textbook NVIDIA env anti-pattern.**
-  `GBM_BACKEND = "nvidia-drm"` and `__GLX_VENDOR_LIBRARY_NAME = "nvidia"`
-  globally: niri picks its own backend, and the global
-  `__GLX_VENDOR_LIBRARY_NAME` hijacks every GL app on the system.
-  `__GL_GSYNC_ALLOWED` / `__GL_VRR_ALLOWED` are AMD-only. `nvidia-x11` is in the
-  profile for no reason.
+  Unverified: no boot of the rebuilt closure yet, and no closure check that
+  `xorg-server`, `xterm`, `xrandr`, `xsetroot`, `xinput`, `xauth` and friends
+  are gone from `/run/current-system/sw/bin`.
+
+  **Correction: "programs.xwayland.enable alone suffices" was wrong** — the fix
+  needs a greeter that can still draw. The answer is sddm's own wayland mode,
+  not a different display manager: nixpkgs refuses to evaluate sddm unless
+  `xserver.enable` or `sddm.wayland.enable` is set, and only emits the `[X11]`
+  section sddm's X path needs under `optionalAttrs xcfg.enable`.
+
+  #### Correction: the greetd + tuigreet detour (2026-09-30), closed out
+
+  An earlier pass also replaced sddm with `services.greetd` + `tuigreet`,
+  reasoning that any greeter which brings a DRM compositor up on proprietary
+  nvidia at boot is a risk worth removing. Wrong trade: it built, but the only
+  boot of that generation (2026-09-30 21:53) hung during early boot before
+  `greetd.service` ever started, so no greeter was drawn and tuigreet has never
+  been observed working on this machine. The reasoning is recoverable from
+  `git stash list` (entry `greetd+tuigreet experiment`) if it is ever wanted
+  again; do not retry it before sddm's wayland mode has booted and been
+  confirmed.
+
+  `services.xserver.xkb` dies with the module, so the layout moves to where it
+  is actually read: `usrs/mods/niri` sets
+  `input.keyboard.xkb = { layout = "us"; variant = ""; }` and the generated
+  `config.kdl` carries it. niri never consulted `/etc/X11/xkb`, and xkbcommon is
+  compiled with `-Dxkb-config-root=${xkeyboardconfig}/etc/X11/xkb`, so dropping
+  the module cannot break keymap data. Nothing reads the system xkb layout
+  afterwards: niri takes it from `config.kdl`.
+
+- [x] **3.4 `sys/mods/wayland:13,20-23` — compositor env for a different
+  compositor.** — fixed (2026-09-30)
+
+  All of `WLR_BACKEND`, `WLR_NO_HARDWARE_CURSORS`, `WLR_DRM_NO_ATOMIC`,
+  `NIXOS_OZONE_WL`, `CLUTTER_BACKEND` are gone, plus the two leftovers the
+  finding only mentioned in passing: `ANKI_WAYLAND` (no anki anywhere) and
+  `DIRENV_LOG_FORMAT = ""`. `environment.variables` is now two entries.
+
+  Three more went with them, all verified redundant rather than assumed:
+
+  - `XDG_SESSION_TYPE = "wayland"` — set by niri itself (`src/main.rs:96`) *and*
+    by sddm for every session it used to start (`Display.cpp:440`,
+    `session.xdgSessionType()` from the session dir). System-wide it was a lie in
+    the other direction too: `environment.variables` lands in
+    `/etc/set-environment`, which systemd-logind imports for **tty and SSH
+    logins too**, and logind derives a session's `Type` from exactly that
+    variable. (Verified: the var is in `/etc/set-environment` and the running
+    graphical session reports `Type=wayland`.)
+  - `DISABLE_QT5_COMPAT = "0"` — a no-op by construction; Qt only reads it to
+    *disable* the wayland platform, and "0" is the default.
+  - (`pkgs` is now an unused module arg in that file, like it already was.)
+
+  Kept: `MOZ_ENABLE_WAYLAND` (firefox would otherwise run under Xwayland) and
+  `QT_WAYLAND_DISABLE_WINDOWDECORATION` (matches `prefer-no-csd` in the niri
+  config).
+
+- [x] **3.5 `sys/mods/wayland:15` — `QT_QPA_PLATFORM = "wayland"`
+  system-wide.** — fixed (2026-09-30)
+
+  Deleted outright, not moved to the session: Qt 6 picks the wayland platform
+  from `WAYLAND_DISPLAY` on its own, and the way to override a single app is its
+  own wrapper, not a global. Nothing in the tree is a Qt app that needs forcing
+  (kitty, swaybg, swaylock, mako, fuzzel, eww, nautilus, pavucontrol, brave and
+  signal are all native-Wayland or GTK; `libreoffice-fresh` is opt-in and off).
+  The xcb-only-tool breakage the finding warned about is gone with it.
+
+  Consequence to know: a Qt**5** app (or one still asking for xcb) now runs under
+  Xwayland rather than failing. Xwayland is still enabled, so that is a
+  regression in rendering path, not in function. The greeter is not affected:
+  `sddm-greeter-qt6` already runs inside weston under `sddm.wayland.enable`, so
+  Qt6 picks its wayland platform plugin without the env var.
+
+- [x] **3.6 `sys/mods/nvidia:16-21` — the textbook NVIDIA env anti-pattern.**
+  — fixed (2026-09-30)
+
+  `environment.variables` is gone from the module; the per-process
+  `nvidia-offload` wrapper (which still sets `__GLX_VENDOR_LIBRARY_NAME` etc. for
+  the one process that wants them) is the only place those names appear now.
+
+  - `GBM_BACKEND = "nvidia-drm"` — a **Mesa** knob (which backend Mesa's GBM
+    should load). niri goes through libgbm + EGL directly and never reads it, and
+    apps that want NVIDIA go through the wrapper. Removed. Same for weston: it
+    also talks to EGL/GLVND directly, so the `GBM_BACKEND=nvidia-drm` advice you
+    find in sddm bug reports (sddm#1819) is not what made those greeters work.
+  - `__GLX_VENDOR_LIBRARY_NAME = "nvidia"` — GLX-only, so under Wayland it never
+    touched the EGL clients every app here actually uses; it only forced X11/GLX
+    clients onto NVIDIA. Removed per §3.5's reasoning. **Effect:** an X11 GL app
+    now gets Mesa instead of the dGPU unless offloaded (`nvidia-offload`).
+    Nothing in the tree is one; revisit if Steam games come back on.
+  - `__GL_GSYNC_ALLOWED` / `__GL_VRR_ALLOWED` — amdgpu knobs, inert on a
+    glvnd/NVIDIA GLX path. Removed.
+
+  **Correction: "`nvidia-x11` is in the profile for no reason" is wrong.** It
+  arrives through `hardware.graphics.extraPackages` when `hardware.nvidia.open =
+  true` (`hardware/video/nvidia.nix:503`) and is what installs the GLVND/EGL
+  vendor files niri's clients need. Verified still in the new closure
+  (`nvidia-x11-595.104.02`), independent of §3.3.
+
+  **And `services.xserver.videoDrivers = ["nvidia"]` must stay.** It looks dead
+  now that the X server is gone, but `hardware.nvidia.enabled` is `readOnly` and
+  defaults to `"nvidia" ∈ services.xserver.videoDrivers`
+  (`hardware/video/nvidia.nix:8`) — that list *is* the switch. Commented it out
+  and the whole driver module silently evaluates off
+  (`hardware.nvidia.enabled` → `false`: no modesetting, no ld paths, no ICDs),
+  with no assertion and no warning. It is now commented in the module.
 
 - [ ] **3.7 `nix.nix:18` — `auto-optimise-store = true`** on btrfs
   `compress=zstd`. Silent hardlink cloning, near-useless on btrfs and a known
@@ -221,10 +404,62 @@ Security / correctness first.
   `/etc` symlink keeps the HM generation alive. It doesn't: the **system
   closure** roots it. The mechanism works; the comment is wrong.
 
-- [ ] **3.10 `sys/host:13-25` — two locale intents fighting.**
-  `defaultLocale = "en_PH.UTF-8"` (US conventions, Tagalog language) *and* every
-  `LC_*` = `fil_PH`, including `LC_MONETARY` / `LC_TIME` / `LC_NUMERIC`. Shell
-  dates and numbers come out in Filipino formats. Pick one.
+- [x] **3.10 `sys/host:13-25` — two locale intents fighting.** — fixed
+  (2026-09-30), settled on `en_PH.UTF-8`
+
+  The `i18n.extraLocaleSettings` block and `setup.extraLocale` are gone; one
+  locale now. `setup.defaultLocale` stays `en_PH.UTF-8` and the generated
+  `/etc/locale.conf` is one line:
+
+  ```
+  LANG=en_PH.UTF-8
+  ```
+
+  All nine `LC_*` were the same string, so they only ever restated `LANG` for
+  those categories while overriding it for the language.
+
+  **Correction: the finding's gloss on both locales was wrong, and backwards.**
+  Measured on this machine:
+
+  |                        | `en_PH.UTF-8`                    | `fil_PH.UTF-8`              |
+  | ---------------------- | ------------------------------- | --------------------------- |
+  | `date +%c`             | `Wednesday, 30 September, 2026 10:55:00 PM` | `Miy 30 Set 2026 10:55:00 N.H.` |
+  | `date +%x`             | `Wednesday, 30 September, 2026` | `09/30/26` (**US order**)    |
+  | AM/PM                  | `PM`                            | `N.H.`                      |
+  | `currency_symbol`      | `₱`                             | `₱`                         |
+  | `printf "%'d" 1234567` | `1,234,567`                     | `1,234,567`                 |
+
+  So `en_PH` is *not* "US conventions" — it is day-first with long month names
+  and PHP, i.e. the PH convention you actually want. And `fil_PH` is the one
+  with US-order numeric dates. They disagree on date order, which is why this
+  was worth fixing rather than shrugging at: the old config gave you
+  `en_PH`'s language with `fil_PH`'s date formats.
+
+  The pre-fix state was the worst of both, confirmed from the live system
+  (`localectl status`): `LANG=en_PH.UTF-8` with all nine `LC_*=fil_PH`, and
+  since `LC_TIME`/`LC_NUMERIC` win over `LANG`, `date +%c` printed
+  `Miy 30 Set 2026 10:55:00 N.H.`.
+
+  **Not a pure no-op — two things change on rebuild.** `i18n.supportedLocales`
+  is derived from `defaultLocale` + `extraLocaleSettings`
+  (`nixos/modules/config/i18n.nix:20-30`), so `fil_PH/*` leaves it and
+  `glibcLocales` rebuilds: `["C.UTF-8/UTF-8" "en_US.UTF-8/UTF-8" "en_PH.UTF-8/UTF-8"]`,
+  archive contains `en_PH.utf8` + `en_US.utf8` and no `fil_PH` (verified with
+  `strings` on the new `locale-archive`). And the formats change as tabled
+  above. Nothing else in the tree references `fil_PH`.
+
+  Verified the surviving locale against the new archive directly — note the
+  mechanism is `systemd.globalEnvironment.LOCALE_ARCHIVE`
+  (`i18n.nix:212`), not `LOCPATH`; setting `LOCPATH` makes glibc fall back to
+  `C` and silently looks like the locale is broken:
+
+  ```sh
+  LOCALE_ARCHIVE="$(nix eval --raw .#nixosConfigurations.qat.config.i18n.glibcLocales \
+    --apply 'p: p + "/lib/locale/locale-archive"')"
+  LOC_ALL=en_PH.UTF-8 date +"%c | %x | %r"
+  # Wednesday, 30 September, 2026 11:02:12 PM | Wednesday, 30 September, 2026 | 11:02:12 PM PST
+  LOC_ALL=en_PH.UTF-8 locale -k LC_MONETARY | grep currency_symbol   # ₱
+  ```
 
 - [ ] **3.11 `network.nix:18` — dead nameservers.** `["1.1.1.1" "1.0.0.1"]` is
   overridden by `services.resolved.enable = true`, which puts the stub resolver
@@ -329,8 +564,12 @@ Security / correctness first.
 - [ ] **4.12 `devshell` carries tools with no users:** `fnlfmt` (no fennel in
   the tree) and `yaml-language-server` (no yaml).
 
-- [ ] **4.13 Hardcoded `trusted-public-keys` / `substituters` will rot.** The
-  niri key in particular tracks a flake you may drop (§5).
+- [ ] **4.13 Hardcoded `trusted-public-keys` / `substituters` will rot.**
+  `nixpkgs-wayland.cachix.org` and `nix-community.cachix.org` are pinned here
+  for flake inputs that may not survive §5. (The niri key and
+  `hyprland.cachix.org` used to be in this list too; §2.7 dropped the first as
+  a duplicate of what niri-flake injects, and the second as a flake that is not
+  in the tree.)
 
 ---
 
@@ -390,8 +629,11 @@ Recorded so they don't get re-audited:
   against the binary that actually runs.
 - `services.fstrim.enable` is `true` (NixOS default) — TRIM does run.
 - `programs.ente-auth` is a real nixpkgs module, not a typo.
-- The niri wayland session does reach SDDM, via
-  `services.displayManager.sessionPackages` (not `/etc/wayland-sessions`).
+- The niri wayland session reaches the display manager via the generated
+  `niri.desktop` (`Exec=niri-session`) in
+  `${services.displayManager.sessionData.desktops}/share/wayland-sessions`, which
+  is where sddm's `Wayland.SessionDir` points (`sddm.nix:92`) and keeps pointing
+  under `sddm.wayland.enable`. The session itself is unchanged by §3.3.
 - `programs.chromium.enable` genuinely does emit
   `/etc/{chromium,brave,opt/chrome}/policies/managed/*` — the comment in
   `sys/host:51-53` is accurate, and Brave does pick the policies up.

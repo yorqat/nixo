@@ -12,18 +12,6 @@ in {
   # Select internationalisation properties.
   i18n.defaultLocale = "${setup.defaultLocale}";
 
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "${setup.extraLocale}";
-    LC_IDENTIFICATION = "${setup.extraLocale}";
-    LC_MEASUREMENT = "${setup.extraLocale}";
-    LC_MONETARY = "${setup.extraLocale}";
-    LC_NAME = "${setup.extraLocale}";
-    LC_NUMERIC = "${setup.extraLocale}";
-    LC_PAPER = "${setup.extraLocale}";
-    LC_TELEPHONE = "${setup.extraLocale}";
-    LC_TIME = "${setup.extraLocale}";
-  };
-
   zramSwap.enable = true;
 
   users.mutableUsers = false;

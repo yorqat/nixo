@@ -48,11 +48,10 @@
 
   outputs = {self, ...} @ inputs: let
     system = "x86_64-linux";
-    # pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-    pkgs = import inputs.nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    };
+    # devshell-only nixpkgs: the system gets its own from nixosSystem.
+    # Free-only, so that `nix develop` works without touching ~/.config/nixpkgs.
+    # Adding an unfree package here needs `config.allowUnfree = true` back.
+    pkgs = import inputs.nixpkgs {inherit system;};
   in {
     nixosConfigurations = import ./sys inputs;
 

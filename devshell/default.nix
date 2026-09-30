@@ -10,6 +10,5 @@ in
       pkgs.alejandra # uncomprimising nix formatter
       pkgs.fnlfmt # fennel formatter
       pkgs.stylua # lua formatter
-      pkgs.claude-code
     ];
   }

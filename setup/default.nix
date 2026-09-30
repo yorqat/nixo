@@ -13,8 +13,10 @@ in {
   inherit userName hostName homeDir;
 
   timeZone = "Asia/Manila";
+  # english messages, PH conventions: PHP/₱, day-first dates, long month names.
+  # fil_PH would give Tagalog messages but US-order dates (09/30/26) and "N.H."
+  # for AM/PM.
   defaultLocale = "en_PH.UTF-8";
-  extraLocale = "fil_PH";
 
   # /dat is a mountpoint for media and documents.
   # secrets are managed by sops-nix, not symlinks (see migrate-cred.sh)
