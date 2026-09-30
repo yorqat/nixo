@@ -17,7 +17,7 @@ in {
     # niri works alongside the nixos module
     ./mods/niri
     ./mods/eww
-    ./mods/neofetch
+    ./mods/fastfetch
     ./mods/git
     ./mods/shell
     ./mods/mpd
@@ -50,8 +50,6 @@ in {
         pavucontrol # audio device volume
         crosspipe
         sonixd # music player
-        # blender
-        # dolphin-emu
       ]
       ++ includeLibreOffice ++ includePrismMinecraft;
   };

@@ -10,25 +10,6 @@
     viAlias = true;
     vimAlias = true;
 
-    # Theme picker (no nixvim module exists for themery)
-    /*
-    extraConfigLua = ''
-      require("themery").setup({
-        themes = {
-          "catppuccin-latte",
-          "catppuccin-frappe",
-          "catppuccin-macchiato",
-          "catppuccin-mocha",
-          "gruvbox",
-          "kanagawa-wave",
-          "kanagawa-dragon",
-          "kanagawa-lotus",
-        },
-        livePreview = true,
-      })
-    '';
-    */
-
     # cmp's mappings are deliberately absent from `plugins.cmp.settings` and set
     # per buffer here: nixvim emits a single global cmp.setup(), and a `mapping`
     # entry in it is an insert-mode map in *every* buffer, so <Tab>/<CR> would be
@@ -212,13 +193,6 @@
       # unfree; nixvim's `plugins.vim-be-good` module trips nixpkgs'
       # allowUnfree check during eval, so install the plugin raw instead.
       vim-be-good
-
-      /*
-      themery-nvim
-      catppuccin-nvim
-      gruvbox-nvim
-      kanagawa-nvim
-      */
     ];
 
     # Keymaps (The clean Nix way)

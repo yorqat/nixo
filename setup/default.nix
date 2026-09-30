@@ -55,7 +55,6 @@ in {
   includes = {
     # heavyweight / machine-specific — these are what lite mode gates
     nvidia = !lite;
-    plasma6 = !lite;
 
     # opt-in extras, off on any profile
     steam = false;

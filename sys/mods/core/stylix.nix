@@ -34,21 +34,6 @@
       cp Fonts/OTF/*.otf $out/share/fonts/opentype/
     '';
   };
-
-  azeret-mono = pkgs.stdenvNoCC.mkDerivation {
-    pname = "azeret-mono-font";
-    version = "1.0";
-    src = pkgs.fetchzip {
-      url = "https://api.fontshare.com/v2/fonts/download/azeret-mono";
-      sha256 = "sha256-iwuOg9D7BJV03IG+vk1RM70fPPpARy0eAYF0z1oMvgw=";
-      extension = "zip";
-    };
-    dontBuild = true;
-    installPhase = ''
-      mkdir -p $out/share/fonts/opentype
-      cp Fonts/OTF/*.otf $out/share/fonts/opentype/
-    '';
-  };
 in {
   stylix = {
     enable = true;
@@ -72,9 +57,6 @@ in {
         name = "Satoshi";
       };
       monospace = {
-        # package = azeret-mono;
-        # name = "Azeret Mono";
-
         package = pkgs.comic-mono;
         name = "Comic Mono";
       };
