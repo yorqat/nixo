@@ -11,7 +11,6 @@
   lbtModule = inputs.lanzaboote.nixosModules.lanzaboote;
   sopsModule = inputs.sops-nix.nixosModules.sops;
   impermanenceModule = inputs.impermanence.nixosModules.impermanence;
-  niriModule = inputs.niri.nixosModules.niri;
   stylixModule = inputs.stylix.nixosModules.stylix;
 
   userDefault = ../usrs;
@@ -39,7 +38,10 @@ in {
         # persistence
         impermanenceModule
 
-        niriModule
+        # niri: nixpkgs' own module, no third-party compositor flake
+        # (programs.niri in sys/host; the session's wayland.windowManager.niri
+        # in usrs/mods/niri, both first-class since nixpkgs/HM 2025)
+
         stylixModule
 
         hmModule

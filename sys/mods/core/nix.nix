@@ -23,9 +23,9 @@
         setup.userName
       ];
       auto-optimise-store = true;
-      # cache.nixos.org's key is set by nixos/modules/config/nix.nix:442;
-      # niri.cachix.org by the niri-flake cache module (flake.nix:480-481 of
-      # niri-flake), toggleable with niri-flake.cache.enable.
+      # cache.nixos.org's key is set by nixos/modules/config/nix.nix:442.
+      # niri.cachix.org used to be here because the niri-flake cache module
+      # injected it; with niri-flake gone (§2.2) there is nothing to pin.
       trusted-public-keys = [
         "fortuneteller2k.cachix.org-1:kXXNkMV5yheEQwT0I4XYh1MaCSz+qg72k8XAi2PthJI="
         "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA="

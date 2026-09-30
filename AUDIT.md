@@ -13,7 +13,8 @@ nix develop -c alejandra --check .
 ```
 
 Progress so far: §3.3–§3.6 (the wayland/session pass, 2026-09-30), §2.3/§2.3b,
-§2.5–§2.7 and §3.10.
+§2.5–§2.7 and §3.10, then §2.1 + §2.2 + §5 (the `niri-flake` removal,
+2026-10-01).
 The wayland items were verified against a realised `system-path` (what actually
 lands in `/run/current-system/sw`), not just eval — several of the claims in §3
 only show up in the built profile or in nixpkgs' source, not in the config:
@@ -60,7 +61,8 @@ box that lied is usually the cause.
 
 ## 2. Contradictions inside the config
 
-- [ ] **2.1 The uncommitted working-tree change is self-defeating.**
+- [x] **2.1 The uncommitted working-tree change is self-defeating.** — fixed
+  (2026-10-01), but by deleting the thing rather than restoring `follows`
 
   ```diff
   -      inputs.nixpkgs.follows = "nixpkgs";
@@ -68,28 +70,114 @@ box that lied is usually the cause.
   +    package = pkgs.niri;      # sys/host/default.nix:48
   ```
 
-  `package = pkgs.niri` already pins the binary. Commenting out `follows` does
-  nothing for that and only *adds* a second nixpkgs to the lock. Result: root is
-  `7a0f122f`, but `niri` resolves its nixpkgs to a stale `b4fd65b1`.
+  The diagnosis was right (`package = pkgs.niri` already pinned the binary, and
+  commenting out `follows` only added a second nixpkgs to the lock), but the
+  prescribed fix — keep `follows` — was about to become moot. The `niri` input
+  is now **gone entirely**, so there is no `follows` to keep: the diff above no
+  longer exists in any form.
 
-  **Fix:** keep `follows`, drop the comment.
+  The stale nixpkgs is gone from the lock as a side effect. `b4fd65b1` (the
+  niri-flake-flavoured nixpkgs) appears **nowhere** in `flake.lock`, and the lock
+  went from 4 nixpkgs nodes to 3. The nodes were renumbered by the regeneration
+  (`nixpkgs_2` → `nixpkgs`), but no root nixpkgs rev moved: root is still
+  `7a0f122f`, and so is the second node.
 
-- [ ] **2.2 `niri-flake` earns almost nothing and costs a lot.**
+  See §2.2 for what replaced the flake and §5 for the follow-up this retired.
 
-  You now take `pkgs.niri` (26.04) and `xwayland-satellite` from pkgs, so the
-  flake's `niri-stable`/`niri-unstable`/`xwayland-satellite-*` packages and its
-  binary cache are unused. What it *does* still do:
+- [x] **2.2 `niri-flake` earns almost nothing and costs a lot.** — fixed
+  (2026-10-01), by deleting the input
 
-  - forces `xdg-desktop-portal-gnome`
-  - runs a **KDE polkit agent** (`niri-flake-polkit` →
-    `polkit-kde-authentication-agent-1`)
-  - disables nixpkgs' own niri module via `disabledModules`
-  - inflates `home-manager.sharedModules` to **30 entries for 3 distinct files**
-    (stylix's HM integration imported ~28×, because stylix is injected both
-    directly and via niri-flake)
+  Every bullet in the original finding held up. Each was re-checked against the
+  build *after* removal, not against the new config's source:
 
-  nixpkgs ships both a NixOS and an HM niri module that cover this without the
-  KDE baggage. See also the follow-up in §5.
+  - **KDE polkit agent: gone.** Closure diff against `/run/current-system`
+    removed `polkit-kde-agent-1-6.7.5`, `polkit-qt-1`, `kwidgetsaddons`,
+    `kcoreaddons`, `kcrash`, `kdbusaddons`, `karchive`, `kconfig`,
+    `kcolorscheme`, `kirigami`, `kiconthemes`, `ki18n`, `knotifications`,
+    `qqc2-desktop-style`, `sonnet`, plus `qt5compat`, `qtshadertools`,
+    `aspell` and `hunspell` — the agent was dragging a Qt5 stack in behind it.
+    Replaced with `polkit-gnome-0.105`, one package.
+  - **Forces `xdg-desktop-portal-gnome`: still true, just from someone else.**
+    niri-flake did this; nixpkgs' module does too, and *recommends* it
+    (`nixpkgs/nixos/modules/programs/wayland/niri.nix:77-79`, citing niri's own
+    wiki) — so it stays in `xdg.portal.extraPortals` and this is not a saving.
+    **Correction to the finding:** it framed the forced portal as something the
+    removal would win back. It doesn't; the GNOME portal is upstream's intended
+    niri setup. What the removal *did* add is `xdg-desktop-portal-gtk-1.15.3`:
+    `wayland-session.nix:23` appends it when `enableGtkPortal` is on (default
+    `true`), and `niri.nix:83-86` imports `wayland-session.nix` passing only
+    `enableWlrPortal = false; enableXWayland = false`. That is net **+1** package,
+    and it backs a config file that is byte-identical to the one niri-flake
+    installed via `configPackages = [ cfg.package ]`
+    (`niri-flake/flake.nix:563`): both say
+    `default=gnome;gtk`, `Access=gtk`, `Notification=gtk`, `Secret=gnome-keyring`.
+    Nixpkgs writes it to `/etc/xdg/xdg-desktop-portal/niri-portals.conf`
+    instead of taking it from niri's `share/`, so behaviour is unchanged and the
+    `gtk` side now actually has a package behind it.
+  - **Disables nixpkgs' niri module: no longer true, and that's the point.**
+    `niri-flake/flake.nix:462` had `disabledModules = [
+    "programs/wayland/niri.nix" ]`. With the flake gone the module is active,
+    which is visible in the build: `/etc/systemd/user/niri.service.d/overrides.conf`
+    (`X-RestartIfChanged=false`, `enableDefaultPath=false`) and
+    `/etc/xdg/xdg-desktop-portal/niri-portals.conf` now exist, and neither did
+    before. Both are `mkDefault`-level upstream, so the config did not need
+    changing — but this is the concrete proof the module is now doing the work.
+  - **`home-manager.sharedModules` 30 → 27**, i.e. the ~28 duplicate stylix
+    injections are gone, leaving one per distinct HM file.
+  - **The binary cache is gone and so is the hand-copied key.** The built
+    `/etc/nix/nix.conf` no longer lists `niri.cachix.org` in either
+    `substituters` or `trusted-public-keys`.
+
+  What was *not* free, and had to be done by hand:
+
+  - **stylix has no niri target** (`stylix-module = call ./stylix.nix` in
+    niri-flake, `flake.nix:44`, `533`). The cursor, focus-ring and border
+    colours are now written out explicitly in `usrs/mods/niri/default.nix`
+    against `config.stylix`/`config.lib.stylix`. The generated `config.kdl` was
+    diffed against the old one line by line and against niri 26.04's own
+    `resources/default-config.kdl` to confirm nothing silently reverted to a
+    default the flake had been setting.
+  - **HM's KDL renderer is stricter than KDL.** Three configs evaluated fine but
+    produced a file `niri` rejected, all now fixed and covered by
+    `checkConfig`: `binds."Mod+Q".close-window = {}` emits the bare
+    `Mod+Q close-window` (KDL v2 forbids an identifier as an argument — niri
+    wanted `Mod+Q { close-window }`), `on = true` emits `on true`, and
+    `quit."skip-confirmation" = true` emits a nested `quit { … }` node. `on` has
+    to be an empty attrset and the skip-confirmation flag needs `_props`.
+  - **`xwayland-satellite` came back out of `home.packages`.** The HM module
+    adds it itself (`xwaylandSatellitePackage` default) — verified in the built
+    `home-path`: `xwayland-satellite` is on `PATH` without the explicit entry.
+  - **Two `polkit.service`-ish units would have collided.** nixpkgs'
+    `wayland-session.nix:11` sets `security.polkit.enable = true`, so the
+    polkit *system* unit is still there — only the *agent* was niri-flake's.
+    `niri-flake-polkit.service` is gone; `polkit-gnome-authentication-agent.service`
+    is a **user** unit, installed into
+    `~/.config/systemd/user/` and symlinked into
+    `graphical-session.target.wants/`, so it cannot shadow it.
+  - **One new unit appeared that nothing predicted:**
+    `xdg-autostart-if-no-desktop-manager.target`, from
+    `wayland-session.nix:27-29` (`runXdgAutostartIfNone = mkDefault true`,
+    described in `services/x11/desktop-managers/none.nix:17-26` as what
+    window-manager-only sessions need). Benign here — niri's own unit already
+    carries `Wants=xdg-desktop-autostart.target` and `Before=
+    xdg-desktop-autostart.target`, so autostart ran before too — but it is a
+    behaviour delta the §5 prediction did not mention, recorded so nobody
+    re-discovers it in a future diff.
+
+  The full system builds. `nix build
+  .#nixosConfigurations.qat.config.system.build.toplevel` → 40 derivations,
+  2 fetches (218 KiB), and `home.programs.niri.package` is still `pkgs.niri`
+  (26.04) so `config.kdl` is validated by `checkConfig` against the binary that
+  actually runs. Both `sys` and HM sides resolve to the same
+  `/nix/store/14fnag7q2i1q18nqi56ggqgbd1cl0c3g-niri-26.04`.
+
+  **Behaviour change, deliberate:** the empty `input.keyboard.xkb` block is gone
+  from the generated config (verified absent), so niri now reads the locale
+  (`us`, `pc104`, `terminate:ctrl_alt_bksp` from `localectl`) instead of
+  overriding all three with empty strings. That is the right direction — the
+  block was the flake writing out *niri's own defaults*, not configuration — but
+  it does mean the first session after the switch picks up `localectl` settings
+  that were previously masked. Worth one manual login check.
 
 - [x] **2.3 Plasma6 is gone but its fingerprints remain.** — fixed
 
@@ -134,9 +222,21 @@ box that lied is usually the cause.
     took `libgweather`, `gweather-locations`, `geocode-glib`, `libgphoto2`,
     `sane`/`net-snmp`, `colord`, `argyllcms` and `gnome-session-ctl` with it.
 
-  Not orphans, deliberately left alone: niri-flake forces
-  `xdg-desktop-portal-gnome` and `ente-auth` needs gnome-keyring. Both are
-  §2.2 fallout, fixed by dropping niri-flake, not by editing this file.
+  Not orphans, deliberately left alone: the GNOME portal and `ente-auth`'s
+  gnome-keyring. The original note said both were "§2.2 fallout, fixed by
+  dropping niri-flake" — that was half right and has been corrected after the
+  drop (§2.2). niri-flake did not set either of these; nixpkgs' own niri module
+  does, at `mkDefault`:
+  - `xdg.portal.extraPortals = [ xdg-desktop-portal-gnome ]` —
+    `nixpkgs/nixos/modules/programs/wayland/niri.nix:77-79`
+  - `gnome.gnome-keyring.enable = mkDefault true` — `niri.nix:46`, "recommended
+    by upstream", and genuinely load-bearing here because `Secret` is routed to
+    gnome-keyring in the portal config the same module writes
+
+  So the lines stay gone from `sys/host` (redundant), but the dependencies they
+  were keeping alive are now kept alive by the module instead. Verified live:
+  `services.gnome.gnome-keyring.enable = true` and `xdg.portal.extraPortals = [
+  gnome-keyring xdg-desktop-portal-gnome xdg-desktop-portal-gtk ]`.
 
 - [ ] **2.4 `lite` doesn't gate the machine-specific stuff it claims to.**
 
@@ -228,6 +328,11 @@ box that lied is usually the cause.
     already injects both at normal priority (`niri-flake/flake.nix:480-481`),
     toggled by `niri-flake.cache.enable` (default `true`) — so this also makes
     the cache switchable, which the hand copy made impossible.
+    **Updated by §2.2 (2026-10-01):** the flake is gone, so the injected key
+    went with it and there is nothing left to be switchable. The
+    `niri.cachix.org` entry is absent from both lists in the built `nix.conf`,
+    and the comment in `sys/mods/core/nix.nix` that credited niri-flake for it
+    has been replaced with a note saying there is nothing to pin.
   - `hyprland.cachix.org` deleted from both lists. Verified it appears nowhere
     in the tree but these two lines and that no flake input pulls it.
   - `cache.nixos.org-1` deleted from `trusted-public-keys`: the module already
@@ -522,12 +627,35 @@ Security / correctness first.
   `stitch_wall.png` likewise. `stitch_wall_hd.png` (2.6 MB) and all three
   `.webp` files are referenced by nothing. Only `wall.png` is live (README).
 
-- [ ] **4.3 `sys/host` re-states what niri-flake already sets with `mkDefault`:**
+- [~] **4.3 `sys/host` re-states what niri-flake already sets with `mkDefault`:**
   `hardware.graphics.enable`, `programs.dconf.enable`,
   `services.gnome.gnome-keyring.enable`, and the `xdg.*` set.
+  — **half wrong; corrected 2026-10-01, one line now load-bearing**
 
-- [ ] **4.4 `niri` is in `environment.systemPackages` twice** (from
-  `programs.niri.package` and `hardware.graphics.enable`).
+  Two of the four were already gone from `sys/host` before §2.2 (the
+  gnome-keyring line in §2.3b, the `xdg.*` set earlier), so only two lines were
+  ever left to check: `sys/host/default.nix:100-101`.
+
+  - `programs.dconf.enable = true` — **still redundant**, but not by
+    niri-flake's hand: nixpkgs' `wayland-session.nix:17` sets it
+    `mkDefault true`, and `niri.nix:83-86` imports that module. Delete freely.
+  - `hardware.graphics.enable = true` — **no longer a duplicate.** niri-flake
+    did set it `mkDefault` (`niri-flake/flake.nix:497`), but nixpkgs'
+    `niri.nix`/`wayland-session.nix` do not mention `hardware.graphics` at all
+    (grepped both). With the flake gone this line is the *only* thing enabling
+    it, so removing it is a real behaviour change for GL apps in the session,
+    not a cleanup. Left in place deliberately; not pursued further here.
+
+- [x] **4.4 `niri` is in `environment.systemPackages` twice** (from
+  `programs.niri.package` and `hardware.graphics.enable`). — false; closed
+  (2026-10-01)
+
+  `hardware.graphics.enable` never put `niri` in `systemPackages`, so the
+  premise was wrong. With niri-flake gone it is now measurably **once**:
+  `nix eval --json` over
+  `config.environment.systemPackages` filtered by `pname == "niri"` returns
+  length 1. The single entry is `cfg.package` from
+  `nixpkgs/nixos/modules/programs/wayland/niri.nix:25-27`.
 
 - [ ] **4.5 Personal data outside `setup/`** — the whole premise of the layout.
   Git name/emails, the `qarkdev+*` addresses and the
@@ -564,24 +692,55 @@ Security / correctness first.
 - [ ] **4.12 `devshell` carries tools with no users:** `fnlfmt` (no fennel in
   the tree) and `yaml-language-server` (no yaml).
 
-- [ ] **4.13 Hardcoded `trusted-public-keys` / `substituters` will rot.**
+- [~] **4.13 Hardcoded `trusted-public-keys` / `substituters` will rot.**
   `nixpkgs-wayland.cachix.org` and `nix-community.cachix.org` are pinned here
-  for flake inputs that may not survive §5. (The niri key and
-  `hyprland.cachix.org` used to be in this list too; §2.7 dropped the first as
-  a duplicate of what niri-flake injects, and the second as a flake that is not
-  in the tree.)
+  for flake inputs that may not survive §5.
+  ~~(The niri key and `hyprland.cachix.org` used to be in this list too; §2.7
+  dropped the first as a duplicate of what niri-flake injects, and the second as
+  a flake that is not in the tree.)~~ — **updated by §2.2 (2026-10-01):** the
+  niri key is now gone for a *different* reason. It was never a duplicate to
+  begin with — niri-flake injected `niri.cachix.org` while §2.7 had also
+  hand-listed it, so it was listed twice and the flake had to be disabled to
+  make it once. With the flake deleted the entry is simply absent (verified in
+  the built `nix.conf`). `hyprland.cachix.org` remains gone as §2.7 found it.
+  `nixpkgs-wayland` and `nix-community` are still live inputs and still pinned,
+  so this finding stays open for them.
 
 ---
 
 ## 5. Follow-up worth considering
 
-- [ ] **Delete the `niri` input** and use nixpkgs' NixOS + HM niri modules.
+- [x] **Delete the `niri` input** and use nixpkgs' NixOS + HM niri modules. —
+  done (2026-10-01)
 
-  You'd lose the KDE polkit agent, the forced GNOME portal, the duplicate
-  nixpkgs, the duplicate stylix injection, and the unused binary cache — and get
-  back a clean `nix.conf`. This is the single biggest simplification available,
-  and it is what makes §2.2, §4.3 and half of §2.3 go away at once. Do it
-  *after* §2.1, not before.
+  The predicted wins, checked one by one:
+
+  - **KDE polkit agent** — lost, as intended. Replaced deliberately with
+    `polkit-gnome` (`systemd.user.services` in `usrs/mods/niri`, wanted by
+    `graphical-session.target`).
+  - **Forced GNOME portal** — *not* lost, and this part of the prediction was
+    wrong. nixpkgs recommends the same portal upstream
+    (`niri.nix:77-79`). It also *gains* `xdg-desktop-portal-gtk` via
+    `wayland-session.nix:23`. See §2.2 for the correction.
+  - **Duplicate nixpkgs** — lost. 4 lock nodes → 3, stale `b4fd65b1` gone.
+  - **Duplicate stylix injection** — lost. `sharedModules` 30 → 27.
+  - **Unused binary cache** — lost, and `niri.cachix.org` with it.
+  - **Clean `nix.conf`** — not quite: `nix.settings.substituters` still pins
+    `fortuneteller2k`, `nixpkgs-wayland` and `nix-community` (§4.13).
+
+  Two things the follow-up did not mention, and both needed work:
+
+  - **stylix has no niri target**, so the cursor/focus-ring/border colours are
+    now hand-written in `usrs/mods/niri/default.nix`. This is the one piece of
+    niri-flake that was not simply removable.
+  - **HM's KDL renderer emits configs niri rejects** for three specific shapes
+    (`_children` for actions, `on = {}`, `_props` for scalar key/values). All
+    three are now in the config with comments explaining why, and `checkConfig`
+    catches regressions at build time.
+
+  Verified with `nix eval …toplevel.drvPath` (clean), a full
+  `nix build …toplevel`, `alejandra --check`, a realised `system-path` /
+  HM-generation diff against the running system, and a whole-closure diff.
 
 ---
 
@@ -627,6 +786,12 @@ Recorded so they don't get re-audited:
   works, and `home.programs.niri.package` is correctly `mkForce`d to
   `pkgs.niri` (26.04) by the niri-flake module, so `config.kdl` is validated
   against the binary that actually runs.
+  **Updated by §2.2 (2026-10-01):** niri-flake is gone, so that `mkForce` came
+  from niri-flake, not from HM. The `mkForce` is now written by hand in
+  `usrs/mods/niri/default.nix`; the guarantee itself is unchanged and was
+  re-verified — the HM-side and system-side `niri` resolve to the same
+  `/nix/store/14fnag7q2i1q18nqi56ggqgbd1cl0c3g-niri-26.04`, so `checkConfig`
+  validates against the binary that actually runs.
 - `services.fstrim.enable` is `true` (NixOS default) — TRIM does run.
 - `programs.ente-auth` is a real nixpkgs module, not a typo.
 - The niri wayland session reaches the display manager via the generated

@@ -31,6 +31,10 @@ in {
     enable = true;
   };
 
+  # nixpkgs' module (auto-imported): it brings the sddm session file, niri's
+  # systemd units, the gnome portal, polkit and the swaylock pam service.
+  # The session's own settings live in usrs/mods/niri, under
+  # wayland.windowManager.niri.
   programs.niri = {
     enable = true;
     package = pkgs.niri;
