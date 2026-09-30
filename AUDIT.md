@@ -14,7 +14,7 @@ nix develop -c alejandra --check .
 
 Progress so far: §3.3–§3.6 (the wayland/session pass, 2026-09-30), §2.3/§2.3b,
 §2.5–§2.7 and §3.10, then §2.1 + §2.2 + §5 (the `niri-flake` removal,
-2026-10-01).
+2026-10-01), then §3.3 (X server off / sddm wayland, 2026-10-01).
 The wayland items were verified against a realised `system-path` (what actually
 lands in `/run/current-system/sw`), not just eval — several of the claims in §3
 only show up in the built profile or in nixpkgs' source, not in the config:
@@ -373,63 +373,108 @@ Security / correctness first.
   `libvirtd` are added while `virtualisation.libvirtd.enable = false` and no
   docker/qemu is installed. `docker` is root-equivalent.
 
-- [ ] **3.3 `sys/host:113-114` — `services.xserver.enable = true` on a
-  niri-only box.**
+- [x] **3.3 `sys/host:113-120` — `services.xserver.enable = true` on a
+  niri-only box.** — fixed (2026-10-01)
 
-  Fix is `services.xserver.enable = false` plus
-  `services.displayManager.sddm.wayland.enable = true`. The X server goes and
-  the greeter keeps working, because nixpkgs' sddm module has a first-class
-  wayland mode: it sets `DisplayServer = "wayland"`, adds `qt6.qtwayland`, and
-  runs a kiosk compositor (`weston --shell=kiosk` by default, `kwin` if
-  selected) — `services/display-managers/sddm.nix:67,18,131-146`. Its only
-  precondition assertion is `xcfg.enable || cfg.wayland.enable` (sddm.nix:350),
-  so X11-off with sddm-wayland is a supported pairing, and the `[X11]` section
-  sddm's X path needs is simply not emitted (`optionalAttrs xcfg.enable`).
+  ```nix
+  xserver.enable = false;
+  displayManager = { sddm.enable = true; sddm.wayland.enable = true; };
+  ```
 
-  Not hypothetical on this machine: the generation logged into on 2026-09-30
-  (20:10:52 and 21:54:48) ran `DisplayServer=wayland` with
-  `weston-16.0.0 --shell=kiosk` and drew a working login screen on this GPU.
+  **The greeter half of this was decided and validated months before the
+  finding was written, then lost.** Boot `-5` (2026-09-30 21:54:43) journal has
+  `sddm-helper-start-wayland` starting `weston 16.0.0 --shell=kiosk` on the
+  `drm-backend` with `gl-renderer`, and a successful login at 21:54:48 — so sddm
+  wayland mode was not a proposal, it was observed working on this GPU.
 
-  **Still open as of 2026-10-01.** Re-checked against the tree at `6cbbf8f`:
-  `sys/host/default.nix:113-114` still has `xserver.enable = true`, and
-  `services.displayManager.sddm.wayland.enable` evaluates to `false` (never
-  set). The closure check the original finding listed as unverified is now done
-  and it **fails**: `/run/current-system/sw/bin` still contains `Xorg`,
-  `Xephyr`, `xterm`, `xrandr`, `xsetroot`, `xinput` and `xauth`.
+  It then went missing without anyone noticing, and the cause is worth
+  recording because it is the same failure mode as the `flake.lock` gotcha in
+  `AGENTS.md`: **the change was never committed.**
+  `git log -S "wayland.enable" --all -- sys/host/default.nix` returns only
+  `24f053b initial`, and that match is `programs.xwayland.enable`, a different
+  option. `0193a0b` (23:03, two hours after that boot) did cut 12 lines from
+  `sys/host`, but they were `i18n.extraLocaleSettings`, not the sddm line —
+  so nothing deleted it either. It lived only in the working tree across the
+  greetd revert and was cleaned away. The working tree was clean by the next
+  session, so there was no diff to notice.
 
-  Don't be misled by runtime: `systemctl is-active Xorg X` reports `inactive`,
-  but so it always would under niri, which never starts an X server. That says
-  nothing about whether the X binaries are in the profile.
+  **These two lines are one atomic change, not two options.** `sddm.nix:349-352`
+  asserts `xcfg.enable || cfg.wayland.enable` with the message "SDDM requires
+  either services.xserver.enable or services.displayManager.sddm.wayland.enable
+  to be true", so dropping the X server without the wayland greeter does not
+  evaluate. There are only two valid end states — X11 + sddm-x11, or X-off +
+  sddm-wayland — and the second was already the intent.
 
-  **Correction: "programs.xwayland.enable alone suffices" was wrong** — the fix
-  needs a greeter that can still draw. The answer is sddm's own wayland mode,
-  not a different display manager: nixpkgs refuses to evaluate sddm unless
-  `xserver.enable` or `sddm.wayland.enable` is set, and only emits the `[X11]`
-  section sddm's X path needs under `optionalAttrs xcfg.enable`.
+  Verified against a full build of the new generation
+  (`/nix/store/khkmzhzxxa18axkkykbaask2hp3ay7bv-…`):
+
+  - All seven binaries this finding listed are **gone** from
+    `/run/current-system/sw/bin`: `Xorg`, `Xephyr`, `xterm`, `xrandr`,
+    `xsetroot`, `xinput`, `xauth`. This closes the "unverified" sub-item the
+    original finding left open — and it is the only reason to do the change.
+  - Built `/etc/sddm.conf.d/00-nixos.conf` now carries `DisplayServer=wayland`
+    and the entire `[X11]` section is gone (`ServerPath`, `XauthPath`,
+    `XephyrPath`, `SessionCommand` all absent — `sddm.nix` gates them on
+    `optionalAttrs xcfg.enable`). `[Wayland] CompositorCommand` is
+    **byte-identical** to the string that worked in boot `-5`, same weston and
+    same `weston.ini` store paths.
+  - `niri.desktop` is unchanged: the `desktops` derivation is still
+    `972s3nx1yf9vnx7c048z7xic4pv03jif`, the same store path as before, and
+    `SessionDir` still points into it.
+  - `programs.xwayland.enable = true` is unaffected (`xwayland.nix:44-49` only
+    adds `cfg.package`; there is no coupling to `services.xserver`), and
+    `xwayland-satellite` is still in the closure. **X apps still work** — this
+    removes the X *server*, not Xwayland.
+  - `services.xserver.videoDrivers = [ "nvidia" ]`
+    (`sys/mods/nvidia/default.nix:33`) still evaluates and is now **inert**:
+    nothing reads it without an X server. NVIDIA's Wayland support comes from
+    the kernel module and `hardware.nvidia`, not from this option. Left in
+    place; see §4.15.
+  - The HM side is untouched: the generated `config.kdl` still carries
+    `Qogir-Light` at size 24 and the `base0D`/`base03` border plus the
+    `base0D`-family focus-ring gradients, so stylix theming did not regress.
+  - `services.xserver.xkb` still evaluates with the module disabled and still
+    writes nothing — unchanged, see §4.14.
+
+  **Cost, for the record:** weston's dependency tree is not small. Closure went
+  2119 → 2105 paths (**-14 net**), but that is ~26 X11 paths out and ~20 in,
+  including `freerdp`, `neatvnc`, `sdl3`, `ffmpeg` and `lua` (weston's RDP/VNC
+  clients and DRM-backend video decoders). The win is dropping the X server, not
+  the path count.
+
+  **Correction to the finding's framing:** it presented the wayland greeter as an
+  open prerequisite — "the fix needs a greeter that can still draw". That
+  prerequisite was already satisfied and demonstrated. What was actually
+  outstanding was re-applying an edit that had been lost, which is why this read
+  as untouched work rather than a forgotten decision.
+
+  **Correction: "programs.xwayland.enable alone suffices" was wrong** — see the
+  assertion above; it is not sufficient and does not evaluate.
 
   #### Correction: the greetd + tuigreet detour (2026-09-30), closed out
 
   An earlier pass also replaced sddm with `services.greetd` + `tuigreet`,
   reasoning that any greeter which brings a DRM compositor up on proprietary
-  nvidia at boot is a risk worth removing. Wrong trade: it built, but the only
-  boot of that generation (2026-09-30 21:53) hung during early boot before
+  nvidia at boot is a risk worth removing. Wrong trade: boot `-6`
+  (2026-09-30 21:53:37) lasted **6 seconds** and hung during early boot before
   `greetd.service` ever started, so no greeter was drawn and tuigreet has never
-  been observed working on this machine.
+  been observed working on this machine. Boot `-5`, 90 seconds later, was sddm
+  in wayland mode working — which is the better answer and is now what the tree
+  says.
 
-  **The stash holding that experiment was dropped on 2026-10-01**, so the old
-  "recoverable from `git stash list`" pointer here is dead. The commit is still
-  reachable in the reflog for a while as `112a750` (it touched `sys/host`,
-  `sys/mods/nvidia`, `sys/mods/wayland`, `usrs/mods/niri`; +67/−29), but treat
-  it as gone. Do not retry it before sddm's wayland mode has booted and been
-  confirmed.
+  **The stash holding the greetd experiment was dropped on 2026-10-01**, so any
+  pointer to `git stash list` for it is dead. The commit is still reachable in
+  the reflog for a while as `112a750` (touched `sys/host`, `sys/mods/nvidia`,
+  `sys/mods/wayland`, `usrs/mods/niri`; +67/−29), but treat it as gone. The
+  question it raised is now answered: sddm's wayland mode does bring up a DRM
+  compositor on proprietary nvidia here, so there was no need to replace sddm.
 
   #### Correction: the xkb reasoning here was invalidated by §2.2 (2026-10-01)
 
   This finding used to end by claiming `services.xserver.xkb` "dies with the
   module", so the layout had to move into `usrs/mods/niri`. Half of that was
-  never true.
-  `services.xserver.xkb` does **not** die with the module — and in this config it
-  writes nothing at all, module or not:
+  never true. `services.xserver.xkb` does **not** die with the module, and in
+  this config it writes nothing at all, module or not:
 
   - `/etc/X11/xkb` is emitted only under `optionalAttrs cfg.exportConfiguration`
     (`nixos/modules/services/x11/xserver.nix:896-900`), and
@@ -769,6 +814,21 @@ Security / correctness first.
   `exportConfiguration = true` alongside it — which is also what puts the
   `xkeyboard-config` symlink where X11 clients would look. Deciding that is
   part of §3.3, not a cleanup.
+
+- [ ] **4.15 `services.xserver.videoDrivers = [ "nvidia" ]` is inert** — a
+  consequence of §3.3, recorded 2026-10-01
+
+  `sys/mods/nvidia/default.nix:33` sets it unconditionally in the nvidia module.
+  With no X server (§3.3) nothing reads it: `videoDrivers` is consumed only by
+  `xserver.nix` when building the X server's driver arguments, and niri gets its
+  NVIDIA support from the kernel module plus `hardware.nvidia`. It still
+  evaluates fine, so it is misleading rather than broken.
+
+  Left in place rather than removed, because the option is the conventional
+  place to record "this box runs NVIDIA" and would become live again if X11 ever
+  comes back. But it should not be read as load-bearing, and it should move
+  behind whatever gates the rest of `sys/mods/nvidia` if that module ever gains a
+  `setup.lite` guard.
 
 ---
 

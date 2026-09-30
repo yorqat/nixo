@@ -110,16 +110,22 @@ in {
 
     resolved.enable = true;
 
-    xserver = {
-      enable = true;
+    # Wayland-only box, no X server: X apps go through programs.xwayland
+    # (xwayland-satellite) and the greeter through sddm's own wayland mode.
+    # Those two are one change, not two options to pick between — sddm.nix
+    # asserts `xcfg.enable || cfg.wayland.enable`, so dropping the X server
+    # without the wayland greeter does not even evaluate.
+    # The greeter is not a maybe: weston 16.0.0 --shell=kiosk (drm-backend,
+    # gl-renderer) booted a working login screen on this GPU on 2026-09-30.
+    # services.xserver.xkb is left alone deliberately — see AUDIT.md 4.14, it
+    # writes nothing, because /etc/X11/xkb is gated on
+    # services.xserver.exportConfiguration (default false), not on enable.
+    xserver.enable = false;
 
-      xkb = {
-        layout = "us";
-        variant = "";
-      };
+    displayManager = {
+      sddm.enable = true;
+      sddm.wayland.enable = true;
     };
-
-    displayManager.sddm.enable = true;
 
     usbmuxd.enable = true;
 
