@@ -129,13 +129,6 @@ in {
 
     displayManager.sddm.enable = true;
 
-    gnome = {
-      glib-networking.enable = true;
-      gnome-keyring.enable = true;
-    };
-
-    udev.packages = with pkgs; [gnome-settings-daemon];
-
     usbmuxd.enable = true;
 
     avahi.enable = true;

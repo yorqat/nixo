@@ -6,7 +6,7 @@ let
   homeDir = "/home/${userName}";
 
   # lite = fresh-install-safe profile: niri + core apps only, nothing that
-  # assumes this machine (nvidia gpu, plasma6). flip to false
+  # assumes this machine (nvidia gpu). flip to false
   # on hardware that actually has those things.
   lite = false;
 in {

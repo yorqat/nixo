@@ -74,18 +74,52 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done. Work top-down; §1 first.
   nixpkgs ships both a NixOS and an HM niri module that cover this without the
   KDE baggage. See also the follow-up in §5.
 
-- [ ] **2.3 Plasma6 is gone but its fingerprints remain.**
+- [x] **2.3 Plasma6 is gone but its fingerprints remain.** — fixed
 
   Commit `4d08de3` purged plasma6, yet:
 
-  - `usrs/default.nix:59-62` still justifies
-    `stylix.targets.qt.platform = lib.mkForce "qtct"` by a plasma6 argument
-  - `setup/default.nix:8-11` still says `lite` gates "nvidia gpu, plasma6"
-  - `README.md:12,169` and the `AGENTS.md` roadmap still list plasma6
-  - the stylix **kde target is still on**, and it emits
-    `QT_STYLE_OVERRIDE=kvantum` — but `kvantum` is **not in the profile**
-    (verified). Qt apps get "cannot load style plugin" and fall back.
-    `XDG_CONFIG_DIRS` also picks up a `stylix-kde-config` entry.
+  - ~~`usrs/default.nix:59-62` still justifies
+    `stylix.targets.qt.platform = lib.mkForce "qtct"` by a plasma6 argument~~
+    → removed. Verified a **no-op**: stylix computes `qtct` anyway when no
+    `gnome`/`plasma6`/`lxqt` desktopManager is enabled (`modules/qt/nixos.nix:39`
+    — all three confirmed `false`), and `"qtct"` is already the option default.
+  - ~~`setup/default.nix:8-11` still says `lite` gates "nvidia gpu, plasma6"~~
+    → comment now reads "nvidia gpu" only.
+  - `README.md:12,169` and the `AGENTS.md` roadmap still list plasma6 — **not
+    done**, docs only.
+  - ~~the stylix **kde target is still on**~~ → `stylix.targets.kde.enable` and
+    `stylix.targets.gnome.enable` are now `false` in `usrs/default.nix`. Both
+    default to `true` upstream; dropping them removed `stylix-kde-theme` from
+    `home.packages`, both `stylix-activate-*` autostart entries and every
+    `xdg.systemDirs.config` entry. `qt`/`gtk` theming is untouched
+    (`qt.style.name = "kvantum"`, `qt.platformTheme.name = "qtct"`).
+
+  **Correction to the original finding:** the claim that `kvantum` is not in the
+  profile was wrong. It checked only `environment.systemPackages` (the *system*
+  profile); the plugin ships via *home-manager* — `qtstyleplugin-kvantum5` and
+  `qtstyleplugin-kvantum` are both in `home.packages`, pulled in by stylix's qt
+  target setting `qt.kvantum.enable = true`. `QT_STYLE_OVERRIDE=kvantum` is
+  therefore valid, and no Qt app is falling back.
+
+- [x] **2.3b Orphan GNOME settings in `sys/host/default.nix`.** — fixed
+
+  All three lines were dead weight, proven by closure diff:
+
+  - `services.gnome.gnome-keyring.enable` — **redundant**: niri-flake sets it
+    unconditionally (`flake.nix:509`). Removing it changes nothing; gnome-keyring
+    stays reachable via `system-path`/`pam.d`/`dbus-1`.
+  - `services.gnome.glib-networking.enable` — **redundant**: `nautilus` and
+    `geoclue` pull glib-networking in regardless.
+  - `services.udev.packages = [ gnome-settings-daemon ]` — the brightness-OSD
+    hack. Dead: `usrs/mods/niri/default.nix:113-114` drives brightness with
+    `brightnessctl` and draws the OSD with `eww open osc-brightness`. Nothing
+    calls `org.gnome.SettingsDaemon`. This one was real, and removing it also
+    took `libgweather`, `gweather-locations`, `geocode-glib`, `libgphoto2`,
+    `sane`/`net-snmp`, `colord`, `argyllcms` and `gnome-session-ctl` with it.
+
+  Not orphans, deliberately left alone: niri-flake forces
+  `xdg-desktop-portal-gnome` and `ente-auth` needs gnome-keyring. Both are
+  §2.2 fallout, fixed by dropping niri-flake, not by editing this file.
 
 - [ ] **2.4 `lite` doesn't gate the machine-specific stuff it claims to.**
 
