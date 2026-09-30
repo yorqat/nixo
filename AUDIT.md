@@ -373,7 +373,7 @@ Security / correctness first.
   `libvirtd` are added while `virtualisation.libvirtd.enable = false` and no
   docker/qemu is installed. `docker` is root-equivalent.
 
-- [ ] **3.3 `sys/host:121-128` — `services.xserver.enable = true` on a
+- [ ] **3.3 `sys/host:113-114` — `services.xserver.enable = true` on a
   niri-only box.**
 
   Fix is `services.xserver.enable = false` plus
@@ -390,9 +390,16 @@ Security / correctness first.
   (20:10:52 and 21:54:48) ran `DisplayServer=wayland` with
   `weston-16.0.0 --shell=kiosk` and drew a working login screen on this GPU.
 
-  Unverified: no boot of the rebuilt closure yet, and no closure check that
-  `xorg-server`, `xterm`, `xrandr`, `xsetroot`, `xinput`, `xauth` and friends
-  are gone from `/run/current-system/sw/bin`.
+  **Still open as of 2026-10-01.** Re-checked against the tree at `6cbbf8f`:
+  `sys/host/default.nix:113-114` still has `xserver.enable = true`, and
+  `services.displayManager.sddm.wayland.enable` evaluates to `false` (never
+  set). The closure check the original finding listed as unverified is now done
+  and it **fails**: `/run/current-system/sw/bin` still contains `Xorg`,
+  `Xephyr`, `xterm`, `xrandr`, `xsetroot`, `xinput` and `xauth`.
+
+  Don't be misled by runtime: `systemctl is-active Xorg X` reports `inactive`,
+  but so it always would under niri, which never starts an X server. That says
+  nothing about whether the X binaries are in the profile.
 
   **Correction: "programs.xwayland.enable alone suffices" was wrong** — the fix
   needs a greeter that can still draw. The answer is sddm's own wayland mode,
@@ -407,18 +414,42 @@ Security / correctness first.
   nvidia at boot is a risk worth removing. Wrong trade: it built, but the only
   boot of that generation (2026-09-30 21:53) hung during early boot before
   `greetd.service` ever started, so no greeter was drawn and tuigreet has never
-  been observed working on this machine. The reasoning is recoverable from
-  `git stash list` (entry `greetd+tuigreet experiment`) if it is ever wanted
-  again; do not retry it before sddm's wayland mode has booted and been
+  been observed working on this machine.
+
+  **The stash holding that experiment was dropped on 2026-10-01**, so the old
+  "recoverable from `git stash list`" pointer here is dead. The commit is still
+  reachable in the reflog for a while as `112a750` (it touched `sys/host`,
+  `sys/mods/nvidia`, `sys/mods/wayland`, `usrs/mods/niri`; +67/−29), but treat
+  it as gone. Do not retry it before sddm's wayland mode has booted and been
   confirmed.
 
-  `services.xserver.xkb` dies with the module, so the layout moves to where it
-  is actually read: `usrs/mods/niri` sets
-  `input.keyboard.xkb = { layout = "us"; variant = ""; }` and the generated
-  `config.kdl` carries it. niri never consulted `/etc/X11/xkb`, and xkbcommon is
-  compiled with `-Dxkb-config-root=${xkeyboardconfig}/etc/X11/xkb`, so dropping
-  the module cannot break keymap data. Nothing reads the system xkb layout
-  afterwards: niri takes it from `config.kdl`.
+  #### Correction: the xkb reasoning here was invalidated by §2.2 (2026-10-01)
+
+  This finding used to end by claiming `services.xserver.xkb` "dies with the
+  module", so the layout had to move into `usrs/mods/niri`. Half of that was
+  never true.
+  `services.xserver.xkb` does **not** die with the module — and in this config it
+  writes nothing at all, module or not:
+
+  - `/etc/X11/xkb` is emitted only under `optionalAttrs cfg.exportConfiguration`
+    (`nixos/modules/services/x11/xserver.nix:896-900`), and
+    `services.xserver.exportConfiguration` defaults to **`false`**
+    (`xserver.nix:383-385`) and is never set here. Verified: the built `etc`
+    derivation has `X11/xorg.conf.d/` but no `X11/xkb`, and there is no
+    `/etc/X11/xkb` on the running system.
+  - So the layout niri actually used was the one niri-flake wrote into
+    `config.kdl`, and `services.xserver.xkb` was dead weight. Tracked on its own
+    in §4.14.
+  - §2.2 then removed that `config.kdl` block too (it was niri's own default,
+    not configuration). niri now resolves its layout from the locale chain —
+    `/etc/locale.conf` (`LANG=en_PH.UTF-8`) → `systemd-localed` → `us`.
+    Verified live: `niri msg -j keyboard-layouts` →
+    `{"names":["English (US)"],"current_idx":0}`.
+
+  The X11 argument still holds and is worth keeping in the fix: niri never
+  consulted `/etc/X11/xkb`, and xkbcommon is compiled with
+  `-Dxkb-config-root=${xkeyboardconfig}/etc/X11/xkb`, so dropping the module
+  cannot break keymap data.
 
 - [x] **3.4 `sys/mods/wayland:13,20-23` — compositor env for a different
   compositor.** — fixed (2026-09-30)
@@ -705,6 +736,39 @@ Security / correctness first.
   the built `nix.conf`). `hyprland.cachix.org` remains gone as §2.7 found it.
   `nixpkgs-wayland` and `nix-community` are still live inputs and still pinned,
   so this finding stays open for them.
+
+- [ ] **4.14 `services.xserver.xkb` in `sys/host` writes nothing.** — found
+  2026-10-01, while checking §3.3
+
+  ```nix
+  xserver = {
+    enable = true;
+    xkb = { layout = "us"; variant = ""; };   # sys/host/default.nix:116-119
+  };
+  ```
+
+  `/etc/X11/xkb` is emitted only under `optionalAttrs cfg.exportConfiguration`
+  (`nixos/modules/services/x11/xserver.nix:896-900`), and
+  `services.xserver.exportConfiguration` defaults to `false`
+  (`xserver.nix:383-385`). This config never sets it, so the option is inert —
+  proven three ways: `environment.etc` has no `X11/xkb` key, the built `etc`
+  derivation contains `X11/xorg.conf.d/` but no `X11/xkb`, and the running
+  system has no `/etc/X11/xkb`.
+
+  It was never what set the layout either. niri was reading
+  `input.keyboard.xkb` out of `config.kdl`, and §2.2 removed that block as
+  niri-flake's own default. niri now derives `us` from
+  `LANG=en_PH.UTF-8` via `systemd-localed` — verified live with
+  `niri msg -j keyboard-layouts` → `{"names":["English (US)"],"current_idx":0}`.
+
+  So this is dead config, and deleting it is a no-op. The part that matters:
+  **§3.3's fix interacts with it.** Setting `xserver.enable = false` does not
+  resurrect the file (the gate is `exportConfiguration`, not `!enable`), so the
+  layout keeps riding on the locale either way. If the intent is for
+  `services.xserver.xkb` to be the source of truth, the honest fix is to set
+  `exportConfiguration = true` alongside it — which is also what puts the
+  `xkeyboard-config` symlink where X11 clients would look. Deciding that is
+  part of §3.3, not a cleanup.
 
 ---
 
