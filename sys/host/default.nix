@@ -45,6 +45,7 @@ in {
 
   programs.niri = {
     enable = true;
+    package = pkgs.niri;
   };
 
   # The system chromium module also emits managed policies for Brave
