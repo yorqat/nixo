@@ -682,6 +682,104 @@ Security / correctness first.
 - [ ] **3.19 `sys/host:10,13-25` — needless string interpolation.**
   `"${setup.timeZone}"` etc. in 12 places; `setup` values are already strings.
 
+- [ ] **3.20 `/boot` is world-readable, so the boot loader's entropy seed is.**
+  — found 2026-10-01, blocks phase 4
+
+  ```
+  Oct 01 07:16:27 qat bootctl[977]:  Mount point '/boot' which backs the random
+        seed file is world accessible, which is a security hole!
+  Oct 01 07:16:27 qat bootctl[977]: Random seed file '/boot/loader/random-seed'
+        is world accessible, which is a security hole!
+  ```
+
+  Pre-existing, not from §3.3 — it is in boots `-6`, `-5` and `-1` too — but it
+  matters more now that LUKS is on the roadmap, so it is recorded before phase 4
+  rather than during it.
+
+  **What the file is.** `systemd-boot-random-seed.service` runs
+  `bootctl --graceful random-seed` with `SYSTEMD_ESP_PATH=/boot` before
+  `sysinit.target` (nixpkgs wires the path in
+  `nixos/modules/system/boot/loader/efi.nix:19-20`; the unit is systemd's, and
+  `systemd.nix:109-112` pulls it in). Per
+  `systemd-boot-random-seed.service(8)`: systemd-boot reads the seed from the ESP,
+  hashes it with a 'system token' held in an EFI variable, and passes the result
+  to the kernel as **initial entropy pool seed** — that is the whole point, an
+  entropy pool that is already full before any disk is readable. `bootctl(1)`
+  refreshes the on-disk seed every boot so consecutive boots differ; the token is
+  generated once and stored in NVRAM, which is what stops a cloned disk image
+  from producing the same seed series across machines.
+
+  So a readable seed means an attacker knows the kernel's early RNG state.
+
+  **Why it is 0755.** Not a stray `chmod` — `/boot` is **vfat**, where POSIX
+  modes are synthesised from mount options and `chmod` does not stick:
+
+  ```
+  $ findmnt -no SOURCE,FSTYPE,OPTIONS /boot
+  /dev/nvme0n1p5 vfat rw,relatime,fmask=0022,dmask=0022,…,errors=remount-ro
+  $ stat -c '%a' /boot/loader/random-seed
+  755
+  ```
+
+  `0777 & ~0022 = 0755` for the file, `0777 & ~0022 = 0755` for the directory.
+  The mask is the default the installer wrote into `hardware-configuration.nix`:
+
+  ```nix
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/A7A2-930C";
+    fsType = "vfat";
+    options = ["fmask=0022" "dmask=0022"];   # hardware-configuration.nix:41-42
+  };
+  ```
+
+  and it reaches the mount unit by the ordinary route —
+  `boot.mount` is `SourcePath=/etc/fstab`, and line 10 of the generated fstab is
+  exactly that entry. `sys/mods/core/boot/default.nix:16` only sets
+  `efiSysMountPoint = "/boot"`.
+
+  **Fix applied.** `sys/mods/core/boot/default.nix:42`:
+
+  ```nix
+  fileSystems."/boot".options = lib.mkForce ["fmask=0077" "dmask=0077"];
+  ```
+
+  `0077` is what Debian/Ubuntu use for `/boot/efi`. Safe here: nothing in the
+  chain reads the ESP as non-root — `bootctl`, `systemd-bless-boot` and
+  `kernel-install` all run as root, and the systemd-boot/lanzaboote EFI binaries
+  read it in firmware context where POSIX modes do not apply at all. The only
+  casualty is a non-root user running `cat /boot/loader/loader.conf` by hand.
+
+  **Why `mkForce` in `sys`, not an edit to `hardware-configuration.nix`.** §3.17
+  already flags that file as hand-edited despite its "Do not modify" header, and
+  the mask is a durable bit: `nixos-generate-config` would write `0022` straight
+  back over a local edit on the next re-generation. `mkForce` overrides the
+  generated `fileSystems` entry whichever file it lands in, and survives it.
+
+  Verified: `fileSystems."/boot"` evaluates to
+  `{device = "/dev/disk/by-uuid/A7A2-930C"; fsType = "vfat"; options = ["fmask=0077" "dmask=0077"];}`
+  and the toplevel builds.
+
+  **Confirmed on disk after rebuild + reboot.** `/boot` is mounted
+  `fmask=0077,dmask=0077` and is `drwx------`; `stat /boot/loader/random-seed`
+  as the `yor` user now returns `Permission denied`, which is the fix being
+  live rather than the warning being intermittent. `bootctl` dropped from three
+  lines to one, and the one that remains is the good one:
+
+  ```
+  - boot -1: bootctl[977]:  Mount point '/boot' … is world accessible …
+  - boot -1: bootctl[977]: Random seed file '/boot/loader/random-seed' … world accessible …
+  - boot -1: bootctl[977]: Random seed file /boot/loader/random-seed successfully refreshed (32 bytes).
+  + boot  0: bootctl[972]: Random seed file /boot/loader/random-seed successfully refreshed (32 bytes).
+  ```
+
+  **Severity, honestly:** low today. Only `root` can read it —
+  `trusted-users = root yor`, `users.mutableUsers = false`, and the only other
+  accounts are `sddm` and `nixbld*` — and `yor` reading their own seed is not a
+  threat. It becomes a real one if an unprivileged service is ever compromised,
+  and it is worth closing before LUKS lands because a predictable early entropy
+  pool is a modest aid to offline key search, and because the disk image is the
+  thing that gets cloned and shared.
+
 ---
 
 ## 4. Duplication & dead weight

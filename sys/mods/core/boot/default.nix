@@ -37,4 +37,7 @@ in {
       "console=tty6"
     ];
   };
+
+  # Make /boot (vfat ESP) not world-readable; matches systemd-boot warning
+  fileSystems."/boot".options = lib.mkForce ["fmask=0077" "dmask=0077"];
 }
