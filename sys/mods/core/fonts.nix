@@ -1,40 +1,15 @@
-{pkgs, ...}: let
-  satoshi = pkgs.stdenvNoCC.mkDerivation {
-    pname = "satoshi";
-    version = "2.000";
-
-    src = pkgs.fetchzip {
-      url = "https://api.fontshare.com/v2/fonts/download/satoshi";
-      hash = "sha256-z5KM+IH4234HCzkE/nZn9fg+vADXUlcddCoHsO06t0w=";
-      extension = "zip";
-      stripRoot = false;
-    };
-
-    dontBuild = true;
-
-    installPhase = ''
-      runHook preInstall
-      install -Dm644 -t $out/share/fonts/opentype/satoshi Satoshi_Complete/Fonts/OTF/*.otf
-      runHook postInstall
-    '';
-
-    meta = with pkgs.lib; {
-      description = "Satoshi font family, fetched from Fontshare at build time";
-      homepage = "https://www.fontshare.com/fonts/satoshi";
-      license = licenses.unfree; # Fontshare license, not OFL/redistributable
-      platforms = platforms.all;
-    };
-  };
-in {
+{pkgs, ...}: {
   fonts = {
     enableDefaultPackages = true;
+    # Satoshi is not listed here: stylix.fonts.sansSerif already registers it,
+    # and listing it twice only duplicated the store path. The nerd font below
+    # is what actually renders eww's MDI glyphs -- Comic Mono has none of them.
     packages = with pkgs; [
       nerd-fonts.droid-sans-mono
       inter
       comic-mono
       comic-neue
       fira-code
-      satoshi
     ];
 
     fontconfig = {

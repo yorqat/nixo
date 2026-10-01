@@ -784,16 +784,45 @@ Security / correctness first.
 
 ## 4. Duplication & dead weight
 
-- [ ] **4.1 Satoshi is defined twice.**
+- [x] **4.1 Satoshi is defined twice.** — fixed (2026-10-01)
   - `sys/mods/core/fonts.nix:2-27` — `pname = "satoshi"`, version `2.000`, has
     `meta.license = licenses.unfree`
   - `sys/mods/core/stylix.nix:8-21` — `pname = "satoshi-font"`, version `1.0`,
     **no `meta`**, no `runHook`, different install path
 
-  Both hashes are valid (verified) only because `stripRoot` differs, so
-  `fetchzip`'s *output* hash differs. Two store paths, two downloads, and the
-  stylix copy has no license metadata on an unfree font. `sentient`
-  (`stylix.nix:23-36`) is also license-less. Extract one shared derivation.
+  Both hashes were valid (verified) only because `stripRoot` differed, so
+  `fetchzip`'s *output* hash differed. Two store paths, two downloads, and the
+  stylix copy had no license metadata on an unfree font. `sentient`
+  (`stylix.nix:23-36`) was also license-less.
+
+  Extracted both into `sys/mods/core/fonts-share.nix` (a plain derivation file,
+  not a module — imported by both consumers as `import ./fonts-share.nix
+  {inherit pkgs;}`; there are no custom options anywhere else in this config, so
+  a NixOS option was not worth the machinery). The `fonts.nix` version survived
+  as the single definition: it is the one with the honest version (`2.000`, not
+  the invented `1.0`), `runHook preInstall/postInstall`, and full `meta`. One
+  store path now serves both consumers, so the same ~1 MB zip is fetched and
+  unpacked once instead of twice.
+
+  `sentient` got the same treatment (`runHook`, `description`, `homepage`,
+  `license = licenses.unfree`), so both unfree Fontshare fonts are now
+  correctly marked.
+
+  **`fonts.nix` was kept**, not deleted: it still owns the nerd font and the
+  `fontconfig.defaultFonts` block. Worth recording *why* the nerd font matters,
+  because it is load-bearing in a non-obvious way — eww's bar icons are Material
+  Design glyphs (󰻞 󰇧 󰨞 󰯜 󰓩 󰅁-󰅄󰤆) rendered at
+  `font-family: $mono-font`, i.e. **Comic Mono, which contains none of them**.
+  Queried per-codepoint against fontconfig, every one resolves only via
+  `DroidSansM Nerd Font`, the second entry in `defaultFonts.monospace`. Satoshi
+  is never consulted for icon rendering.
+
+  Satoshi was then dropped from `fonts.nix`'s `packages` entirely, since
+  `stylix.fonts.sansSerif` already registers it — it was listed twice pointing
+  at one path. `fonts.packages` is now 17 entries over 15 unique store paths;
+  the remaining two dupes (`comic-mono`, `noto-fonts-color-emoji`) are
+  pre-existing, same-path, and unrelated. No font rebuild is needed for either
+  change (`nix build --dry-run` shows only fontconfig/HM regeneration).
 
 - [ ] **4.2 ~7 MB of dead binaries in git.** `stitch_wall_dark.png` at the repo
   root is **md5-identical** to
