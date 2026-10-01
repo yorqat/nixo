@@ -130,6 +130,13 @@ in {
     usbmuxd.enable = true;
 
     avahi.enable = true;
+    # Both, not just 6: nixpkgs picks the nss database name from these two
+    # (avahi-daemon.nix:334-339), so nssmdns6 alone yields `mdns6_minimal`,
+    # which answers AAAA only. `ssh qat.local` resolves AF_UNSPEC, tries A
+    # first, gets NOTFOUND, and `[NOTFOUND=return]` ends the chain before
+    # `resolve` -- so .local worked in getent but not in ssh or ping. Both set
+    # gives `mdns_minimal`, which handles A and AAAA.
+    avahi.nssmdns4 = true;
     avahi.nssmdns6 = true;
     # flatpak.enable = true;
     openssh = {

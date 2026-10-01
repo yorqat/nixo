@@ -42,7 +42,16 @@
       enable = true;
     };
 
-    # Cloudflare servers
+    # Cloudflare servers. Anycast, so a PH client gets a nearby POP rather than
+    # a SEA resolver that blocks sites.
     nameservers = ["1.1.1.1" "1.0.0.1"];
   };
+
+  # `networking.nameservers` above only sets systemd-resolved's *global* scope,
+  # and the router hands out 192.168.254.254 over DHCP, which resolved treats as
+  # link-scoped DNS for eno1. Left alone it may answer from the router's
+  # resolver and defeat the point. Negative DNSPriority makes the global
+  # Cloudflare pair win while keeping the router as a fallback, so losing
+  # Cloudflare degrades to ISP DNS rather than to no DNS at all.
+  services.resolved.settings.Resolve.DNSPriority = -50;
 }

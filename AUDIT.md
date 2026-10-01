@@ -426,10 +426,10 @@ Security / correctness first.
   the rule:
 
   - `22` global — ssh, the only remotely used service.
-  - `5353/udp` global — mDNS. `services.avahi.nssmdns6 = true` (`sys/host/
-    default.nix:133`) buys `ssh qat.local`; the IP is DHCP-assigned and can
-    move. Note this is the **IPv6-only** variant: `nssmdns4` stays off, so
-    `.local` resolution works over IPv6 but not IPv4.
+  - `5353/udp` global — mDNS. `services.avahi.nssmdns4`/`nssmdns6`
+    (`sys/host/default.nix:132-140`) buy `.local` resolution. The IP is
+    DHCP-assigned and can move. Note it was **only half working** before
+    3.11's fix — see the correction below.
   - `6600` (mpd) and `4173-4180` / `5173-5180` (vite/svelte dev + preview)
     scoped to `eno1` only. Vite dev servers have a history of
     arbitrary-file-read CVEs, so `iifname` keeps them off wifi/USB-tether even
@@ -448,6 +448,24 @@ Security / correctness first.
   Loopback-only listeners (ollama 11434, opencode 4096, systemd-resolved 53)
   are unaffected either way; mpd was the one that genuinely needed an explicit
   rule to become reachable from a phone.
+
+  **Correction to an earlier version of this entry: `ssh qat.local` did not
+  work.** It was claimed here as the payoff for keeping 5353 open, and that was
+  not true. The cause was `nssmdns6 = true` without `nssmdns4`: nixpkgs derives
+  the nss database name from those two booleans (`avahi-daemon.nix:334-339`),
+  so IPv6-only yields `mdns6_minimal`, which answers AAAA only. `ssh` resolves
+  `AF_UNSPEC` and tries A first, gets NOTFOUND, and the `[NOTFOUND=return]`
+  guard terminates the chain *before* `resolve` — so the stub never gets asked:
+
+  ```
+  hosts:  mymachines mdns6_minimal [NOTFOUND=return] resolve [!UNAVAIL=return] files myhostname dns
+  ```
+
+  `getent hosts qat.local` worked, which is what made it look fine; `ssh` and
+  `ping` both failed with `Name or service not known`. Fixed in 3.11 by also
+  setting `nssmdns4 = true`, which yields `mdns_minimal` (handles A and AAAA).
+  Verified in the built `nsswitch.conf`. Worth remembering that a resolvable
+  name in one tool and not another is an nss-ordering symptom, not flakiness.
 
   **Residual risk, unrelated to the firewall:** remote access depends on
   `/run/secrets/rendered/authorized_keys`, i.e. on age decryption succeeding at
@@ -727,10 +745,63 @@ Security / correctness first.
   LOC_ALL=en_PH.UTF-8 locale -k LC_MONETARY | grep currency_symbol   # ₱
   ```
 
-- [ ] **3.11 `network.nix:46` — dead nameservers.** `["1.1.1.1" "1.0.0.1"]` is
-  overridden by `services.resolved.enable = true`, which puts the stub resolver
-  at `127.0.0.53` in `/etc/resolv.conf`. (Line ref updated from `network.nix:18`
-  by 3.1's fix, which added 28 lines above it.)
+- [x] **3.11 `sys/mods/core/network.nix:47,56` — "dead nameservers".** — finding
+  was WRONG; fixed anyway (2026-10-01)
+
+  **The original claim was false.** It said `["1.1.1.1" "1.0.0.1"]` is
+  "overridden by `services.resolved.enable = true`". It is not. The chain is
+  real and the option works as intended:
+
+  ```
+  networking.nameservers                                    ← the config line
+    → services.resolved.settings.Resolve.DNS                ← resolved.nix:95-102,
+                                                               default = config.networking.nameservers
+      → /etc/systemd/resolved.conf   [Resolve]  DNS=1.1.1.1 1.0.0.1
+  ```
+
+  `/etc/resolv.conf` containing `nameserver 127.0.0.53` is the **stub** resolver
+  and is the intended design, not an override: everything local talks to the
+  stub, the stub forwards to your upstreams. `resolvectl` on the running system
+  showed `Global / Current DNS Server: 1.1.1.1`, i.e. it was live all along.
+
+  **The real defect was one level down, and it did matter.** `nameservers` only
+  sets the *global* scope, while the router hands out `192.168.254.254` over
+  DHCP, which NetworkManager puts on the link and resolved treats as
+  link-scoped DNS for `eno1`:
+
+  ```
+  Link 2 (eno1)
+    DNS Servers: 192.168.254.254 1.0.0.1
+  ```
+
+  With both scopes present and equal priority, resolved may answer from the
+  router's resolver — so the SEA-blocking risk the setting was added to avoid
+  was only partly closed.
+
+  **Fix:** `services.resolved.settings.Resolve.DNSPriority = -50`
+  (`sys/mods/core/network.nix:56`), which makes the global Cloudflare pair win
+  while *keeping* the router as a fallback — so if Cloudflare is unreachable you
+  degrade to ISP DNS rather than losing DNS entirely. Chosen over
+  NetworkManager's `ipv4.ignore-auto-dns`, which would have removed the
+  fallback entirely. Verified in the built `resolved.conf`:
+
+  ```
+  [Resolve]
+  DNS=1.1.1.1 1.0.0.1
+  DNSPriority=-50
+  ```
+
+  Note `DNSPriority` belongs to `services.resolved`, **not**
+  `networking.resolved` — `services.resolved.settings.Resolve` is a freeform
+  submodule, and there is no `networking.resolved.dnsPriority` option.
+
+  Untouched: mDNS (`services.resolved.domains` is empty, so `~.` is not routed
+  through the stub and avahi keeps handling `.local`), and LLMNR.
+
+  **This also turned up a second, unrelated bug, fixed in the same commit.**
+  `services.avahi.nssmdns6 = true` without `nssmdns4` meant `ssh qat.local` did
+  not resolve at all — see 3.1's correction note for the nss-ordering detail.
+  The `nameservers` line was fine; the `.local` half of the story was not.
 
   **Methodology note from 3.1, learned the hard way.** Do not conclude that a
   rebuild "didn't pick up the config" from an artifact being absent at a
@@ -739,7 +810,10 @@ Security / correctness first.
   and hash differently from the git flake you actually build, so a mismatch
   proves nothing. Read what the build genuinely emits (`nftables.service`'s
   `ExecStart`, the module's `content`), and remember that a `--flake` rebuild of
-  unchanged inputs legitimately reports the *same* store path.
+  unchanged inputs legitimately reports the *same* store path. The corollary
+  applies to *findings* too: 3.11 asserted a config line was inert on the basis
+  of a plausible-sounding mechanism that was never checked against
+  `services.resolved`'s actual defaults.
 
 - [ ] **3.12 `boot:25-28` + `sys/host:165` — dead NFS support.**
   `initrd.kernelModules = ["nfs"]`, `supportedFilesystems = ["nfs"]` and
