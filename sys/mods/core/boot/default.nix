@@ -26,18 +26,19 @@ in {
       supportedFilesystems = ["nfs"];
       kernelModules = ["nfs"];
     };
-
-    # Enable TTYs
-    kernelParams = [
-      "console=tty1"
-      "console=tty2"
-      "console=tty3"
-      "console=tty4"
-      "console=tty5"
-      "console=tty6"
-    ];
   };
 
   # Make /boot (vfat ESP) not world-readable; matches systemd-boot warning
   fileSystems."/boot".options = lib.mkForce ["fmask=0077" "dmask=0077"];
+
+  # Text-mode fallback if niri/sddm fail. Log in on tty2..tty6 with Ctrl+Alt+F*.
+  # These are wanted at boot rather than spawned by logind's autovt@ on VT
+  # switch, so a login prompt exists even if logind is the thing that broke.
+  # tty1 is left to sddm's greeter.
+  systemd.services =
+    lib.genAttrs (
+      map (vt: "getty@${vt}") ["tty2" "tty3" "tty4" "tty5" "tty6"]
+    ) (_: {
+      wantedBy = ["multi-user.target"];
+    });
 }
