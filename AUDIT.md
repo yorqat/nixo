@@ -348,11 +348,22 @@ box that lied is usually the cause.
   The generated file passes its own `checkPhase` (`nix config show` over
   `NIX_CONF_DIR`), so it is a valid `nix.conf`, not just a plausible one.
 
-- [ ] **2.8 `usrs/default.nix:57 programs.home-manager.enable = true` is a no-op.**
+- [x] **2.8 `usrs/default.nix:57 programs.home-manager.enable = true` is a no-op.** — fixed (2026-10-01)
 
-  HM's own module gates its body on `!config.submoduleSupport.enable`, which is
-  true here — and it would only install a stray `home-manager` binary if that
-  ever flipped. Footgun, not a feature.
+  HM's own module gates its body on `!config.submoduleSupport.enable` (HM
+  `modules/programs/home-manager.nix:41`). When running HM as a NixOS submodule,
+  NixOS sets `submoduleSupport.enable = true` and `externalPackageInstall =
+  useUserPackages` (HM `nixos/common.nix:50-53`); that makes the guard false, so
+  the option never installs the `home-manager` package. Verified empirically: in
+  this config `submoduleSupport.enable` is true, and `home.packages` contains
+  no `home-manager` binary even while `programs.home-manager.enable = true` was
+  present.
+
+  The line was not just a no-op but actively misleading: it reads as if it
+  bootstraps HM, when in reality HM is wired up via `home-manager.users."${setup.userName}"`
+  in `sys/default.nix:47-60`. Removed it and added an explicit comment there
+  explaining why. No behaviour change (the toplevel derivation hash remained
+  identical).
 
 - [ ] **2.9 `setup/default.nix:20` points at `migrate-cred.sh`,** which no
   longer exists.
@@ -363,11 +374,59 @@ box that lied is usually the cause.
 
 Security / correctness first.
 
-- [ ] **3.1 `network.nix:3` + `sys/host:144-151` — sshd on all interfaces with
-  no firewall.** `firewall.enable = false` and no `AllowUsers`/`ListenAddress`.
-  `services.openssh.openFirewall = true` is the default but does nothing here.
-  Re-enable the firewall (or at minimum scope sshd) and consider `AllowUsers`,
-  `MaxAuthTries`, `X11Forwarding no`.
+- [x] **3.1 `network.nix:3` + `sys/host:144-151` — sshd on all interfaces with
+  no firewall.** — fixed (2026-10-01)
+
+  `firewall.enable` is now `true`, plus `nftables.enable = true` — without that
+  second line nixpkgs keeps using the legacy iptables backend
+  (`firewall.nix:89-95`), and the nftables `inet`-family ruleset never gets
+  built. Verified by reading the *generated* rules rather than the options:
+
+  ```
+  chain input {
+    type filter hook input priority filter; policy drop;
+    iifname { "lo" } accept
+    ct state vmap { established: accept, related: accept, new: jump input-allow }
+  }
+  chain input-allow {
+     tcp dport { 22 } accept
+   udp dport { 5353 } accept
+  iifname eno1 tcp dport { 6600, 4173-4180, 5173-5180 } accept
+  }
+  ```
+
+  **`AllowUsers` and `MaxAuthTries` were considered and deliberately not added.**
+  sshd is already key-only — `PasswordAuthentication no`,
+  `KbdInteractiveAuthentication no`, `PermitRootLogin no`, `X11Forwarding no`
+  — and the one path in is the sops-deployed `authorized_keys`
+  (`SHA256:sUpHbK/mpkTsEn6Th7ExrU2GCLCp9ggBhwjxjdDLTUY`), confirmed working.
+  `AllowUsers yor` would also be a mild footgun, since a future service account
+  would need adding to the list.
+
+  **Ports, and why each is open.** Enumerated from `ss -tulpn` before writing
+  the rule:
+
+  - `22` global — ssh, the only remotely used service.
+  - `5353/udp` global — mDNS. `services.avahi.nssmdns6 = true` buys
+    `ssh qat.local`; the IP is DHCP-assigned and can move.
+  - `6600` (mpd) and `4173-4180` / `5173-5180` (vite/svelte dev + preview)
+    scoped to `eno1` only. Vite dev servers have a history of
+    arbitrary-file-read CVEs, so `iifname` keeps them off wifi/USB-tether even
+    while open. nft collapses all three to one rule.
+
+  **`5355` (avahi's LLMNR) is now closed**, which is a free win: it was
+  listening on tcp+udp on `0.0.0.0` and is legacy name resolution nothing on
+  the LAN uses. Only `openFirewall`'s 5353 was ever contributed, so the
+  default-drop simply excludes it.
+
+  Loopback-only listeners (ollama 11434, opencode 4096, systemd-resolved 53)
+  are unaffected either way; mpd was the one that genuinely needed an explicit
+  rule to become reachable from a phone.
+
+  **Residual risk, unrelated to the firewall:** remote access depends on
+  `/run/secrets/rendered/authorized_keys`, i.e. on age decryption succeeding at
+  boot. If it fails, `authorized_keys` dangles, pubkey auth dies, and there is
+  no password fallback. Worth a second key as a backstop.
 
 - [ ] **3.2 `sys/host:33` — privilege groups for nothing.** `docker`, `kvm` and
   `libvirtd` are added while `virtualisation.libvirtd.enable = false` and no

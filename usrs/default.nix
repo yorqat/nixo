@@ -54,7 +54,12 @@ in {
       ++ includeLibreOffice ++ includePrismMinecraft;
   };
 
-  programs.home-manager.enable = true;
+  # NOTE: deliberately no `programs.home-manager.enable` here. This file is HM's
+  # own module list (sys/default.nix:58), so that option would be *HM's*
+  # namesake, not the NixOS one -- and it gates on `!submoduleSupport.enable`,
+  # which NixOS sets to true precisely by running HM as a submodule (hm
+  # nixos/common.nix:50-53). So it was a no-op here and read as if it
+  # bootstrapped HM. HM is wired up in sys/default.nix:47-60 instead.
 
   # both default to true upstream and emit config dirs, autostart entries and
   # (for kde) an activation step hunting for plasma-apply-*. we run niri only;
