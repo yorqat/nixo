@@ -374,31 +374,50 @@ box that lied is usually the cause.
 
 Security / correctness first.
 
-- [x] **3.1 `network.nix:3` + `sys/host:144-151` — sshd on all interfaces with
-  no firewall.** — fixed (2026-10-01)
+- [x] **3.1 `network.nix:5-31` + `sys/host/default.nix:135-142` — sshd on all
+  interfaces with no firewall.** — fixed (2026-10-01, verified live 11:25)
+
+  (Line refs point at the fix as it now stands: `firewall.enable = false` used
+  to be `network.nix:3`, and the sshd block is
+  `services.openssh.settings` at `sys/host/default.nix:135-142`.)
 
   `firewall.enable` is now `true`, plus `nftables.enable = true` — without that
   second line nixpkgs keeps using the legacy iptables backend
-  (`firewall.nix:89-95`), and the nftables `inet`-family ruleset never gets
-  built. Verified by reading the *generated* rules rather than the options:
+  (`firewall.nix:89-95`: the `default` for `security.backend` is `nftables`
+  only `if config.networking.nftables.enable`, else `iptables`), and the
+  `inet`-family ruleset never gets built.
+
+  Verified two ways — first the generated rules, then the **live** ones via
+  `sudo nft list ruleset`. The input chain, verbatim from the running system:
 
   ```
-  chain input {
-    type filter hook input priority filter; policy drop;
-    iifname { "lo" } accept
-    ct state vmap { established: accept, related: accept, new: jump input-allow }
-  }
-  chain input-allow {
-     tcp dport { 22 } accept
-   udp dport { 5353 } accept
-  iifname eno1 tcp dport { 6600, 4173-4180, 5173-5180 } accept
-  }
+  type filter hook input priority filter; policy drop;
+  tcp dport 22 accept
+  udp dport 5353 accept
+  iifname "eno1" tcp dport { 4173-4180, 5173-5180, 6600 } accept
+  meta l4proto . th dport @temp-ports accept
+  ip6 daddr fe80::/64 udp dport 546 accept comment "DHCPv6 client"
   ```
+
+  Alongside those: `iifname { "lo" } accept`, a conntrack
+  `established/related` fast path, ping/ICMPv6 accepts, and DHCPv4. There is
+  also a separate `rpfilter` chain (prerouting, mangle priority) that
+  `nftables` always emits.
+
+  **Where the ruleset actually lives.** `networking.nftables.rulesetFile` is
+  `null` here, so there is **no `/etc/nftables.rules`**. The ruleset is a store
+  script that `nftables.service` pipes to `nft -f`, referenced from its
+  `ExecStart=` — read the unit's `ExecStart` path and `cat` it. (Getting this
+  wrong is what made an already-live firewall look absent for several rebuild
+  cycles; see 3.11's note below about trusting the artifact over a guess.)
 
   **`AllowUsers` and `MaxAuthTries` were considered and deliberately not added.**
-  sshd is already key-only — `PasswordAuthentication no`,
-  `KbdInteractiveAuthentication no`, `PermitRootLogin no`, `X11Forwarding no`
-  — and the one path in is the sops-deployed `authorized_keys`
+  sshd is already key-only — the explicit settings are only
+  `PasswordAuthentication false`, `KbdInteractiveAuthentication false`,
+  `PermitRootLogin "no"` (`sys/host/default.nix:138-140`), and
+  `X11Forwarding false` comes from the nixpkgs default rather than this config
+  (all four confirmed by evaluating `services.openssh.settings`). The one path
+  in is the sops-deployed `authorized_keys`
   (`SHA256:sUpHbK/mpkTsEn6Th7ExrU2GCLCp9ggBhwjxjdDLTUY`), confirmed working.
   `AllowUsers yor` would also be a mild footgun, since a future service account
   would need adding to the list.
@@ -407,12 +426,19 @@ Security / correctness first.
   the rule:
 
   - `22` global — ssh, the only remotely used service.
-  - `5353/udp` global — mDNS. `services.avahi.nssmdns6 = true` buys
-    `ssh qat.local`; the IP is DHCP-assigned and can move.
+  - `5353/udp` global — mDNS. `services.avahi.nssmdns6 = true` (`sys/host/
+    default.nix:133`) buys `ssh qat.local`; the IP is DHCP-assigned and can
+    move. Note this is the **IPv6-only** variant: `nssmdns4` stays off, so
+    `.local` resolution works over IPv6 but not IPv4.
   - `6600` (mpd) and `4173-4180` / `5173-5180` (vite/svelte dev + preview)
     scoped to `eno1` only. Vite dev servers have a history of
     arbitrary-file-read CVEs, so `iifname` keeps them off wifi/USB-tether even
-    while open. nft collapses all three to one rule.
+    while open. nft collapses all three into one rule.
+
+  These are static: they are open whenever the system is up, not when a dev
+  server happens to bind. NixOS has no "open this port when a process listens"
+  hook; the alternatives are `nix run nixos-firewall` or a manual `nft add
+  rule` wrapper, neither of which is worth it for a LAN-scoped dev port.
 
   **`5355` (avahi's LLMNR) is now closed**, which is a free win: it was
   listening on tcp+udp on `0.0.0.0` and is legacy name resolution nothing on
@@ -701,9 +727,19 @@ Security / correctness first.
   LOC_ALL=en_PH.UTF-8 locale -k LC_MONETARY | grep currency_symbol   # ₱
   ```
 
-- [ ] **3.11 `network.nix:18` — dead nameservers.** `["1.1.1.1" "1.0.0.1"]` is
+- [ ] **3.11 `network.nix:46` — dead nameservers.** `["1.1.1.1" "1.0.0.1"]` is
   overridden by `services.resolved.enable = true`, which puts the stub resolver
-  at `127.0.0.53` in `/etc/resolv.conf`.
+  at `127.0.0.53` in `/etc/resolv.conf`. (Line ref updated from `network.nix:18`
+  by 3.1's fix, which added 28 lines above it.)
+
+  **Methodology note from 3.1, learned the hard way.** Do not conclude that a
+  rebuild "didn't pick up the config" from an artifact being absent at a
+  guessed path, and do not compare an activated store path against
+  `git archive`-extracted copies to date it — those evaluate as *path* flakes
+  and hash differently from the git flake you actually build, so a mismatch
+  proves nothing. Read what the build genuinely emits (`nftables.service`'s
+  `ExecStart`, the module's `content`), and remember that a `--flake` rebuild of
+  unchanged inputs legitimately reports the *same* store path.
 
 - [ ] **3.12 `boot:25-28` + `sys/host:165` — dead NFS support.**
   `initrd.kernelModules = ["nfs"]`, `supportedFilesystems = ["nfs"]` and
