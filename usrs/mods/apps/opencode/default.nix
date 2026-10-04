@@ -1,8 +1,9 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
+  programs.opencode = {
+    enable = true;
+    package = pkgs.opencode;
+  };
+
   services.ollama = {
     enable = true;
     # packages = pkgs.ollama-cuda;

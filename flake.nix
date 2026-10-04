@@ -39,6 +39,9 @@
       url = "github:nix-community/impermanence";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # opencode fresh off the tree
+    opencode-nix.url = "github:dominicnunez/opencode-nix";
   };
 
   outputs = {self, ...} @ inputs: let

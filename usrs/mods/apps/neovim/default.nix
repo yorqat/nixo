@@ -54,7 +54,6 @@
     # opencode for opencode.nvim's `term://opencode` server launch)
     extraPackages = with pkgs; [
       ripgrep
-      opencode
     ];
 
     # Plugins (Declarative equivalents)

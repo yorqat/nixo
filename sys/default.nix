@@ -1,5 +1,6 @@
 {
   nixpkgs,
+  opencode-nix,
   self,
   ...
 }: let
@@ -41,6 +42,12 @@ in {
         # niri: nixpkgs' own module, no third-party compositor flake
         # (programs.niri in sys/host; the session's wayland.windowManager.niri
         # in usrs/mods/niri, both first-class since nixpkgs/HM 2025)
+
+        ({pkgs, ...}: {
+          nixpkgs.overlays = [
+            opencode-nix.overlays.default
+          ];
+        })
 
         stylixModule
 
