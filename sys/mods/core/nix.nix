@@ -22,7 +22,7 @@
         "root"
         setup.userName
       ];
-      auto-optimise-store = true;
+      # auto-optimise-store disabled on btrfs (see AUDIT.md 3.7)
       # cache.nixos.org's key is set by nixos/modules/config/nix.nix:442.
       # niri.cachix.org used to be here because the niri-flake cache module
       # injected it; with niri-flake gone (§2.2) there is nothing to pin.
@@ -48,7 +48,8 @@
     gc = {
       automatic = true;
       dates = "weekly";
-      options = "--delete-older-than 4d";
+      # Extended rollback window (widened per AUDIT.md 3.8)
+      options = "--delete-older-than 30d";
     };
   };
 

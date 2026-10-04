@@ -149,10 +149,11 @@ in {
     };
   };
 
-  # Pin the current Home Manager generation to a stable, GC-rooted path (a symlink
-  # in /etc keeps the base generation alive) so the eww dark/light toggle can run
-  # its `activate` scripts. Done at the system level because referencing the
-  # generation from inside the HM config recurses.
+  # Pin the current Home Manager generation to a stable, GC-rooted path
+  # (the system closure roots it; /etc symlink is just the stable path)
+  # so the eww dark/light toggle can run its `activate` scripts.
+  # Done at the system level because referencing the generation from inside
+  # the HM config recurses (see AUDIT.md 3.9).
   environment.etc."current-home-generation".source =
     config.home-manager.users."${setup.userName}".home.activationPackage;
 

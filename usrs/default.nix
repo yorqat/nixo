@@ -29,6 +29,7 @@ in {
     ./mods/apps/brave
     ./mods/apps/chromium-guest
     ./mods/apps/mpv
+    ./mods/apps/obs-studio
 
     inputs.nixvim.homeModules.nixvim
   ];

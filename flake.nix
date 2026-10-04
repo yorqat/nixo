@@ -13,9 +13,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixpkgs-wayland = {
-      url = "github:nix-community/nixpkgs-wayland";
-    };
+    # nixpkgs-wayland = {
+    # url = "github:nix-community/nixpkgs-wayland";
+    # };
 
     home-manager = {
       url = "github:nix-community/home-manager";

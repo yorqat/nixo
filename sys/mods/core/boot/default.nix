@@ -26,6 +26,9 @@ in {
       supportedFilesystems = ["nfs"];
       kernelModules = ["nfs"];
     };
+
+    # TEMP: so i can build for these targets
+    binfmt.emulatedSystems = ["aarch64-linux"];
   };
 
   # Make /boot (vfat ESP) not world-readable; matches systemd-boot warning
