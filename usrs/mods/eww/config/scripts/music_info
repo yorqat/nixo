@@ -5,13 +5,16 @@
 
 COVER="/tmp/eww_mp_thumbnail.png"
 MUSIC_DIR="$HOME/Music"
+FFMPEG="${FFMPEG:-$(command -v ffmpeg)}"
+MPC="${MPC:-$(command -v mpc)}"
+JQ="${JQ:-$(command -v jq)}"
 
-cur_file() { mpc current -f '%file%' 2>/dev/null; }
+cur_file() { "$MPC" current -f '%file%' 2>/dev/null; }
 
 # Block on mpd idle; when mpd is down `mpc idle` returns instantly with an
 # error, so back off instead of busy-looping at 100% CPU until it comes back.
 mpd_idle() {
-  if ! mpc idle player >/dev/null 2>&1; then
+  if ! "$MPC" idle player >/dev/null 2>&1; then
     sleep 5
   fi
 }
@@ -20,7 +23,7 @@ get_cover() {
   local f
   f="$(cur_file)"
   if [[ -n "$f" && -f "$MUSIC_DIR/$f" ]] &&
-    ffmpeg -i "$MUSIC_DIR/$f" -map 0:v:0 -c copy "$COVER" -y >/dev/null 2>&1; then
+    if "$FFMPEG" -i "$MUSIC_DIR/$f" -map 0:v:0 -c copy "$COVER" -y >/dev/null 2>&1; then
     echo "$COVER"
   else
     echo "images/icons/music.jpg"
@@ -29,24 +32,24 @@ get_cover() {
 
 emit_meta() {
   jq -cn \
-    --arg title "$(mpc current -f '%title%' 2>/dev/null)" \
-    --arg artist "$(mpc current -f '%artist%' 2>/dev/null)" \
+    --arg title "$("$MPC" current -f '%title%' 2>/dev/null)" \
+    --arg artist "$("$MPC" current -f '%artist%' 2>/dev/null)" \
     --arg cover "$(get_cover)" \
     '{ title: $title, artist: $artist, cover: $cover }'
 }
 
 emit_state() {
   local status playing repeat random percentile
-  status="$(mpc status 2>/dev/null)"
+  status="$("$MPC" status 2>/dev/null)"
   playing=false
   repeat=false
   random=false
   grep -q "\[playing\]" <<<"$status" && playing=true
   grep -q "repeat: on" <<<"$status" && repeat=true
   grep -q "random: on" <<<"$status" && random=true
-  percentile="$(mpc status '%percenttime%' 2>/dev/null | tr -cd '0-9')"
+  percentile="$("$MPC" status '%percenttime%' 2>/dev/null | tr -cd '0-9')"
   jq -cn \
-    --arg time "$(mpc status '%currenttime% - %totaltime%' 2>/dev/null)" \
+    --arg time "$("$MPC" status '%currenttime% - %totaltime%' 2>/dev/null)" \
     --argjson playing "$playing" \
     --argjson repeat "$repeat" \
     --argjson random "$random" \
@@ -73,7 +76,7 @@ listen_meta() {
 listen_playing_meta() {
   while true; do
     emit_state
-    if mpc status 2>/dev/null | grep -q "\[playing\]"; then
+    if "$MPC" status 2>/dev/null | grep -q "\[playing\]"; then
       sleep 1
     else
       mpd_idle

@@ -51,7 +51,7 @@ in {
       # Bounded retry: the daemon's IPC socket may not be ready the instant
       # ExecStartPost runs. If it still fails after ~10s, fail the start so
       # Restart=always gives a supervised retry instead of a stuck unit.
-      ExecStartPost = "${lib.getExe pkgs.dash} -c 'i=0; while [ $i -lt 100 ]; do if ${pkgs.eww}/bin/eww open-many bar mp-mini notify-mini; then exit 0; fi; i=$((i+1)); sleep 0.1; done; exit 1'";
+      ExecStartPost = "${lib.getExe pkgs.dash} -c 'PATH=\"/run/current-system/sw/bin:$PATH\"; i=0; while [ $i -lt 100 ]; do if ${pkgs.eww}/bin/eww open-many bar mp-mini notify-mini; then exit 0; fi; i=$((i+1)); sleep 0.1; done; exit 1'";
       Restart = "always";
       RestartSec = "1s";
     };

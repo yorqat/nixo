@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+NIRI="${NIRI:-$(command -v niri)}"
+if [ -z "$NIRI" ]; then
+  exit 0
+fi
 # Scroll through niri workspaces. focus-workspace-down/up walk the live
 # workspace list, so no index math, limits, or clamping is needed (the old
 # version shelled out to active_workspace on every scroll step and could emit
@@ -6,6 +10,6 @@
 #
 # eww's :onscroll passes "up" or "down"; keep the old mapping (up = next).
 case "$1" in
-  --up) niri msg action focus-workspace-down ;;
-  --down) niri msg action focus-workspace-up ;;
+  --up) "$NIRI" msg action focus-workspace-down ;;
+  --down) "$NIRI" msg action focus-workspace-up ;;
 esac

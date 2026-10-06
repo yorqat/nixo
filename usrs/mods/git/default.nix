@@ -1,6 +1,6 @@
 {
   pkgs,
-  config,
+  setup,
   ...
 }: {
   home.packages = with pkgs; [pinentry-qt gitui ghq];
@@ -17,23 +17,20 @@
       format = null;
     };
 
-    # Conditional routing for GitLab
+    # Conditional routing for GitLab: repos under setup.git.work.dir commit as a
+    # different address than the global one. ~/ is kept in the pattern because
+    # that is the form git matches `gitdir:` against.
     includes = [
       {
-        condition = "gitdir:~/Documents/A-Work/1-Fling/gitlab/**";
-        contents = {
-          user = {
-            email = "qarkdev+gl@gmail.com"; # Put your GitLab email here
-            # signingKey = "~/.ssh/id_gitlab.pub";  # Optional: if you use a different SSH key for GitLab signing
-          };
-        };
+        condition = "gitdir:~/${setup.git.work.dir}/**";
+        contents.user.email = setup.git.work.email;
       }
     ];
 
     settings = {
       user = {
-        name = "YorQat";
-        email = "qarkdev+gh@gmail.com";
+        name = setup.git.name;
+        email = setup.git.email;
       };
 
       init = {

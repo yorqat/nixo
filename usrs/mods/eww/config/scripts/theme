@@ -9,6 +9,11 @@
 # and baking the generation path into this file would recurse.
 set -euo pipefail
 
+SYSTEMCTL="${SYSTEMCTL:-$(command -v systemctl)}"
+PKILL="${PKILL:-$(command -v pkill)}"
+SD_BUS="${SD_BUS:-$(command -v busctl)}"
+SDBUS2="${SDBUS2:-$(command -v dbus-send)}"
+
 GEN="$(readlink -f /etc/current-home-generation)"
 WALL_LINK="$HOME/.config/niri/wallpaper.png"
 DARK="$HOME/.config/eww/images/wallpapers/stitch_wall_dark.png"
@@ -31,11 +36,11 @@ else
   "$GEN/activate"
 fi
 
-systemctl --user restart swaybg.service
+"$SYSTEMCTL" --user restart swaybg.service
 
 # `eww reload` re-reads yuck but does NOT recompile the stylesheet, so the bar
 # would keep the old palette. Restart the daemon so it recompiles theme.scss.
 # Detached via systemd-run because this script runs as a child of eww.service:
 # restarting the service in-line would kill the script (and its systemctl call)
 # partway through.
-systemd-run --user --collect --quiet systemctl --user restart eww.service
+systemd-run --user --collect --quiet "$SYSTEMCTL" --user restart eww.service

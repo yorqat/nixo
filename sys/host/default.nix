@@ -117,10 +117,37 @@ in {
     # without the wayland greeter does not even evaluate.
     # The greeter is not a maybe: weston 16.0.0 --shell=kiosk (drm-backend,
     # gl-renderer) booted a working login screen on this GPU on 2026-09-30.
-    # services.xserver.xkb is left alone deliberately — see AUDIT.md 4.14, it
-    # writes nothing, because /etc/X11/xkb is gated on
-    # services.xserver.exportConfiguration (default false), not on enable.
-    xserver.enable = false;
+    xserver = {
+      enable = false;
+
+      # Load-bearing without the X server, with two live consumers, neither of
+      # which is /etc/X11/xkb — that is gated on
+      # services.xserver.exportConfiguration, which is false (AUDIT.md 4.14):
+      #
+      #   - services.displayManager.sddm.wayland generates weston.ini with a
+      #     [keyboard] section from xcfg.xkb.* (sddm.nix:135-142), and that is
+      #     the greeter's actual keymap. Not gated on xserver.enable.
+      #   - services.graphical-desktop renders
+      #     /etc/X11/xorg.conf.d/00-keyboard.conf from xcfg.xkb.*
+      #     (graphical-desktop.nix:27), systemd-localed parses it and
+      #     republishes it on org.freedesktop.locale1, and niri reads it from
+      #     there because its own `xkb {}` block is empty — niri's docs: "If
+      #     the xkb section is empty ... niri will fetch xkb settings from
+      #     systemd-localed" (since 25.08).
+      #
+      # Stated rather than inherited: nothing else in the tree names a layout,
+      # and if both consumers ever stopped finding it, niri would silently fall
+      # back to libxkbcommon's built-in default (layout "English (US)", no
+      # model, no options) with nothing in the logs.
+      #
+      # Only layout is pinned. model ("pc104") and options
+      # ("terminate:ctrl_alt_bksp") stay on the nixpkgs defaults, which is what
+      # weston.ini and localectl report today; terminate:ctrl_alt_bksp kills
+      # the *X server*, which this box does not run, so pinning it would
+      # enshrine an inert X-ism. The TTY keymap is a separate option and does
+      # not read this (console.useXkbConfig = false).
+      xkb.layout = "us";
+    };
 
     displayManager = {
       sddm.enable = true;

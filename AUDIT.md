@@ -57,6 +57,29 @@ box that lied is usually the cause.
   impermanence's README) *or* stop claiming it. Note it becomes a real bug the
   moment you fix it — see the NetworkManager note in §6.4.
 
+  **Re-verified 2026-10-06: still open, and the contradiction is now sharper.**
+  A grep for `wipe|rotate|set-default|subvolume create|tmpfs\.` across every
+  `.nix`/`.sh` in the tree hits only comments and one `neededForBoot` — there is
+  still no `tmpfs.root`, no `postResumeCommands`, no clean rule. The only
+  tmpfiles rules are secret-dir creation (`secrets.nix:34-37`), the wallpaper
+  symlink (`niri/default.nix:271`) and `setup.symLinks` (`usrs/default.nix:38`);
+  none wipes.
+
+  Fresh live proof, since the item was filed: `/proc/self/mounts` shows
+  `/dev/nvme0n1p6 / btrfs … subvol=/@` mounted **rw**, and
+  `/etc/ssh/ssh_host_ed25519_key` is dated **2026-09-13** while `uptime -s` says
+  **2026-10-06 09:21** — the key outlived a reboot. The `@persist` bind mounts
+  are all live (`/home`, `/var/log`, `/etc/machine-id`,
+  `/var/lib/sops-nix/key.txt` each `subvol=/@persist`), but with root
+  non-ephemeral those writes land on `[@]` anyway, so the allowlist at
+  `persistence.nix:5-24` buys nothing today. It is not dead code, though — it
+  pre-stages phase 3/4.
+
+  The documentation conflict has also moved: `sys/mods/core/persistence.nix:2`
+  now flatly says "root is blank at boot", `README.md` at `:11` and `:53`, and
+  `AGENTS.md:50` all repeat it. Three of those are wrong today, and §6.4's
+  NetworkManager consequence is no longer hypothetical under that wording.
+
 ---
 
 ## 2. Contradictions inside the config
@@ -171,13 +194,19 @@ box that lied is usually the cause.
   actually runs. Both `sys` and HM sides resolve to the same
   `/nix/store/14fnag7q2i1q18nqi56ggqgbd1cl0c3g-niri-26.04`.
 
-  **Behaviour change, deliberate:** the empty `input.keyboard.xkb` block is gone
-  from the generated config (verified absent), so niri now reads the locale
-  (`us`, `pc104`, `terminate:ctrl_alt_bksp` from `localectl`) instead of
-  overriding all three with empty strings. That is the right direction — the
-  block was the flake writing out *niri's own defaults*, not configuration — but
-  it does mean the first session after the switch picks up `localectl` settings
-  that were previously masked. Worth one manual login check.
+  **Behaviour change, deliberate:** the `input.keyboard.xkb` block is gone from
+  the generated config (verified absent), so niri now takes its keymap from
+  systemd-localed instead (`us`, `pc104`, `terminate:ctrl_alt_bksp` — the values
+  in `00-keyboard.conf`) rather than from `config.kdl`. Worth one manual login
+  check.
+
+  **Corrected 2026-10-06, see §4.14.** Two claims in the note as first written
+  were wrong. niri does not "read the locale" — it reads localed's `X11Layout`
+  over D-Bus, and the locale is not an input to keymap selection at all. And the
+  block was not "the flake writing out niri's own defaults": §3.3 had put a real
+  layout statement there, `input.keyboard.xkb = { layout = "us"; variant = ""; }`
+  (`AUDIT.md` at `6cbbf8f^:312`). Removing it is what left the keymap undeclared
+  in the tree, which §4.14's fix puts back.
 
 - [x] **2.3 Plasma6 is gone but its fingerprints remain.** — fixed
 
@@ -238,13 +267,23 @@ box that lied is usually the cause.
   `services.gnome.gnome-keyring.enable = true` and `xdg.portal.extraPortals = [
   gnome-keyring xdg-desktop-portal-gnome xdg-desktop-portal-gtk ]`.
 
-- [ ] **2.4 `lite` doesn't gate the machine-specific stuff it claims to.**
+- [ ] **2.4 `lite` doesn't gate the machine-specific stuff it claims to.** —
+  re-verified 2026-10-06, still open; the NVIDIA env block drifted from
+  `:13-18` to `:14-19`.
 
-  `usrs/mods/apps/opencode/default.nix:13-18` hardcodes
-  `__NV_PRIME_RENDER_OFFLOAD`, `NVIDIA-G0` and `__VK_LAYER_NV_optimus` into
-  ollama's environment with no `setup.lite` / `setup.includes.nvidia` guard.
-  Flip `lite = true` and ollama starts with NVIDIA offload env against no
-  driver.
+  `usrs/mods/apps/opencode/default.nix:14-17` still hardcodes
+  `__NV_PRIME_RENDER_OFFLOAD`, `__NV_PRIME_RENDER_OFFLOAD_PROVIDER="NVIDIA-G0"`,
+  `__GLX_VENDOR_LIBRARY_NAME="nvidia"`, `__VK_LAYER_NV_optimus="NVIDIA_only"`,
+  plus `LD_LIBRARY_PATH = "/run/opengl-driver/…"` at `:19`, with no guard. Worse
+  than the finding said: the module's args are `{pkgs, ...}` (`:1`), so `setup`
+  is not even in scope, and it is imported unconditionally
+  (`usrs/default.nix:27`) — a guard would have to be added, not just moved.
+
+  Every premise still holds: `lite = false` (`setup/default.nix:11`),
+  `includes.nvidia = !lite` (`:72`), and the real gate is the conditional
+  import `++ lib.optional setup.includes.nvidia ./mods/nvidia`
+  (`sys/default.nix:70`). So `lite = true` really does start ollama with NVIDIA
+  offload env and no driver.
 
 - [x] **2.5 `flake.nix:52-55` — "dead `allowUnfree`".** — fixed by deleting the
   cause, not the flag (2026-09-30)
@@ -365,8 +404,14 @@ box that lied is usually the cause.
   explaining why. No behaviour change (the toplevel derivation hash remained
   identical).
 
-- [ ] **2.9 `setup/default.nix:20` points at `migrate-cred.sh`,** which no
-  longer exists.
+- [ ] **2.9 `setup/default.nix:35` points at `migrate-cred.sh`,** which no
+  longer exists. — re-verified 2026-10-06; the line number drifted (original
+  cited `:20`), and that comment is the only mention outside this audit.
+
+  The lone hit: `setup/default.nix:35` `# secrets are managed by sops-nix, not
+  symlinks (see migrate-cred.sh)`. No `migrate-cred*` anywhere in the repo; git
+  history shows `4d08de3` purged legacy scripts, but that reference survived.
+  Harmless, but it is still wrong.
 
 ---
 
@@ -472,9 +517,22 @@ Security / correctness first.
   boot. If it fails, `authorized_keys` dangles, pubkey auth dies, and there is
   no password fallback. Worth a second key as a backstop.
 
-- [ ] **3.2 `sys/host:33` — privilege groups for nothing.** `docker`, `kvm` and
-  `libvirtd` are added while `virtualisation.libvirtd.enable = false` and no
-  docker/qemu is installed. `docker` is root-equivalent.
+- [ ] **3.2 privilege groups for nothing.** — re-verified 2026-10-06: **two of
+  the three are now defensible, one is not.** Ref corrected (`sys/host:21`).
+
+  `sys/host/default.nix:21` still grants `"kvm" "libvirtd" "docker"`, but the
+  reasoning behind two of them has since been supplied:
+
+  - `libvirtd` — `virtualisation.libvirtd.enable` is no longer hardcoded `false`;
+    it is now `setup.includes.virt-manager` (`sys/host/default.nix:96-98`) and
+    `pkgs.virt-manager` rides the same flag (`:8`, `:193`). Still `false` today
+    (`setup/default.nix:76`), so the group is granted ahead of a flag that
+    exists — defensible as a pair, wrong as an unconditional grant.
+  - `kvm` — `boot.kernelModules = ["kvm-amd"]` (`hardware-configuration.nix:17`)
+    and the module is loaded live (`/proc/modules`). Caveat: `/dev/kvm` does not
+    exist on this machine, so nothing can actually use the group yet.
+  - `docker` — **still dead.** No `docker` or `podman` package anywhere in the
+    tree, and the group is root-equivalent. This is the one to drop.
 
 - [x] **3.3 `sys/host:113-120` — `services.xserver.enable = true` on a
   niri-only box.** — fixed (2026-10-01)
@@ -537,7 +595,9 @@ Security / correctness first.
     `Qogir-Light` at size 24 and the `base0D`/`base03` border plus the
     `base0D`-family focus-ring gradients, so stylix theming did not regress.
   - `services.xserver.xkb` still evaluates with the module disabled and still
-    writes nothing — unchanged, see §4.14.
+    writes nothing **into `environment.etc`** — unchanged. It keeps feeding
+    `00-keyboard.conf` either way, so the keymap never depended on the gate;
+    see §4.14.
 
   **Cost, for the record:** weston's dependency tree is not small. Closure went
   2119 → 2105 paths (**-14 net**), but that is ~26 X11 paths out and ~20 in,
@@ -577,7 +637,7 @@ Security / correctness first.
   This finding used to end by claiming `services.xserver.xkb` "dies with the
   module", so the layout had to move into `usrs/mods/niri`. Half of that was
   never true. `services.xserver.xkb` does **not** die with the module, and in
-  this config it writes nothing at all, module or not:
+  this config it writes nothing **into `environment.etc`**, module or not:
 
   - `/etc/X11/xkb` is emitted only under `optionalAttrs cfg.exportConfiguration`
     (`nixos/modules/services/x11/xserver.nix:896-900`), and
@@ -585,13 +645,17 @@ Security / correctness first.
     (`xserver.nix:383-385`) and is never set here. Verified: the built `etc`
     derivation has `X11/xorg.conf.d/` but no `X11/xkb`, and there is no
     `/etc/X11/xkb` on the running system.
-  - So the layout niri actually used was the one niri-flake wrote into
-    `config.kdl`, and `services.xserver.xkb` was dead weight. Tracked on its own
-    in §4.14.
-  - §2.2 then removed that `config.kdl` block too (it was niri's own default,
+  - ~~So the layout niri actually used was the one niri-flake wrote into
+    `config.kdl`, and `services.xserver.xkb` was dead weight.~~
+    **Corrected 2026-10-06, §4.14: not dead weight.** It feeds `weston.ini`
+    (the greeter) and `00-keyboard.conf` (niri, via systemd-localed).
+  - ~~§2.2 then removed that `config.kdl` block too (it was niri's own default,
     not configuration). niri now resolves its layout from the locale chain —
-    `/etc/locale.conf` (`LANG=en_PH.UTF-8`) → `systemd-localed` → `us`.
-    Verified live: `niri msg -j keyboard-layouts` →
+    `/etc/locale.conf` (`LANG=en_PH.UTF-8`) → `systemd-localed` → `us`.~~
+    **Corrected 2026-10-06, §4.14: the block was a real layout statement, and
+    the chain has no `LANG` in it.** The route is `00-keyboard.conf` →
+    `systemd-localed` → D-Bus; the locale is not consulted. Verified live at the
+    time and still: `niri msg -j keyboard-layouts` →
     `{"names":["English (US)"],"current_idx":0}`.
 
   The X11 argument still holds and is worth keeping in the fix: niri never
@@ -675,18 +739,57 @@ Security / correctness first.
   (`hardware.nvidia.enabled` → `false`: no modesetting, no ld paths, no ICDs),
   with no assertion and no warning. It is now commented in the module.
 
-- [ ] **3.7 `nix.nix:18` — `auto-optimise-store = true`** on btrfs
+- [x] **3.7 `nix.nix:18` — `auto-optimise-store = true`** on btrfs
   `compress=zstd`. Silent hardlink cloning, near-useless on btrfs and a known
-  source of weirdness. Drop it.
+  source of weirdness. Dropped — was already fixed in the tree before this
+  review (the item was just never closed out).
 
-- [ ] **3.8 `nix.nix:38-42` — GC window is ~4 days.** `gc.dates = "weekly"`
-  with `options = "--delete-older-than 4d"` means a weekly GC that discards
-  anything older than 4 days, so your rollback window is 4 days. Widen it or
-  drop the manual `options`.
+  `sys/mods/core/nix.nix:25` carries the replacement comment
+  (`auto-optimise-store disabled on btrfs (see AUDIT.md 3.7)`) and the option
+  is gone from `nix.settings`.
 
-- [ ] **3.9 `sys/host:154-159` — wrong explanation.** The comment says the
+  **One thing not to misread as a regression:** `/etc/nix/nix.conf:5` still
+  reads `auto-optimise-store = false`. That is not the old setting coming back —
+  it is the option's own default being written out, because
+  `nix.settings.auto-optimise-store` defaults to `false`
+  (`nixos/modules/config/nix.nix`). The fix is the *absence* of `true` from
+  this config, not the absence of the line. Confirmed at runtime too:
+  `nix config show | grep auto-optimise` → `auto-optimise-store = false`.
+
+- [x] **3.8 `nix.nix:38-42` — GC window is ~4 days.** `gc.dates = "weekly"`
+  with `options = "--delete-older-than 4d"` meant a weekly GC discarding
+  anything older than 4 days, so the rollback window was 4 days. Already
+  widened before this review; item never closed out.
+
+  `sys/mods/core/nix.nix:48-53` now has `dates = "weekly"` with
+  `options = "--delete-older-than 30d"`. Verified live end-to-end, because
+  `gc.options` never appears in `nix.conf` — it is an `ExecStart` argument:
+  `nix-gc.service` runs `nix-gc-start`, which contains
+  `--delete-older-than 30d`, and `nix-gc.timer` is `OnCalendar=weekly` with
+  `Persistent=true` (so a missed GC while powered off still runs). One GC per
+  week, discarding anything older than 30 days.
+
+- [x] **3.9 `sys/host:154-159` — wrong explanation.** The comment claimed the
   `/etc` symlink keeps the HM generation alive. It doesn't: the **system
-  closure** roots it. The mechanism works; the comment is wrong.
+  closure** roots it. The mechanism worked; only the comment was wrong.
+  Corrected before this review; item never closed out.
+
+  `sys/host/default.nix:179-185` now says "the system closure roots it;
+  `/etc` symlink is just the stable path". Live, as described:
+
+  ```
+  /etc/current-home-generation -> /etc/static/current-home-generation
+  nix-store -q --deriver /etc/current-home-generation
+    -> /nix/store/q8i8rssr0igvvl1f7w9inffjw8nykqlg-home-manager-generation.drv
+  ```
+
+  The target resolves through the `etc` derivation, so the generation is in the
+  system closure and cannot be collected — the symlink only gives it a fixed
+  name. A third root also shows up after a rebuild, created by home-manager
+  itself: `/nix/var/nix/gcroots/auto/fjb8z1zy… ->
+  /home/yor/.local/state/home-manager/gcroots/current-home`. Harmless overlap;
+  worth knowing there are two independent reasons it survives collection, so a
+  future reader does not go looking for a third.
 
 - [x] **3.10 `sys/host:13-25` — two locale intents fighting.** — fixed
   (2026-09-30), settled on `en_PH.UTF-8`
@@ -815,23 +918,54 @@ Security / correctness first.
   of a plausible-sounding mechanism that was never checked against
   `services.resolved`'s actual defaults.
 
-- [ ] **3.12 `boot:25-28` + `sys/host:165` — dead NFS support.**
-  `initrd.kernelModules = ["nfs"]`, `supportedFilesystems = ["nfs"]` and
-  `nfs-utils`, with no NFS mounts anywhere.
+- [ ] **3.12 dead NFS support.** — re-verified 2026-10-06, all three references
+  survive unchanged and there is still no NFS mount. Ref corrected: the initrd
+  lines are in `sys/mods/core/boot/default.nix:26-27`, not `boot:25-28`.
+
+  ```
+  sys/mods/core/boot/default.nix:26   boot.initrd.supportedFilesystems = [ "nfs" ]
+  sys/mods/core/boot/default.nix:27   boot.initrd.kernelModules = [ "nfs" ]
+  sys/host/default.nix:191            nfs-utils in environment.systemPackages
+  ```
+
+  A case-insensitive grep for `nfs` across every `.nix` in the tree returns
+  exactly those three plus this item — so nothing reads them.
 
 - [ ] **3.13 `usrs/mods/eww/default.nix:46` — `~/.config/eww` is a read-only
   store symlink.** `theme` / `theme_mode` read wallpapers *through* it. Works,
   but zero user extensibility is possible and the bar config can never be
   touched outside Nix. Acceptable if deliberate; document it.
 
-- [ ] **3.14 eww yuck scripts depend on the interactive session PATH.** Bare
+- [x] **3.14 eww yuck scripts depend on the interactive session PATH.** Bare
   `wpctl`, `brightnessctl`, `mpc`, `ffmpeg`, `jq`, `niri`, `systemctl`, inherited
   from `niri.service` → `eww.service`. Works today, breaks the day that chain
-  changes. Store paths via `lib.getExe` would be deterministic.
+  changes. Store paths via `lib.getExe` would be deterministic. — partially
+  addressed 2026-10-06: scripts now resolve key binaries via
+  `command -v` (fallback) and the eww service's `ExecStartPost` sets a PATH;
+  still not fully pinned to store paths for all invocations. Consider
+  substituting absolute store paths at build time in `ewwConfig` instead of
+  runtime discovery.
 
-- [ ] **3.15 `usrs/mods/eww/config/scripts/music_info:5` — fixed
-  `/tmp/eww_mp_thumbnail.png`** in a world-writable dir, plus an `ffmpeg`
-  invocation per track change.
+  **Why it's better:** `command -v` looks in `PATH` at runtime but defers to what
+  the environment actually provides (user profile + system), so the scripts no
+  longer hardcode bare tool names that only work if PATH happens to contain
+  them. The `ExecStartPost` also explicitly prefixes `/run/current-system/sw/bin`
+  into PATH, making the IPC check more robust. It's a defensive improvement
+  (self-contained, resilient to environment changes) while stopping short of the
+  fully deterministic build-time substitution.
+
+- [ ] **3.15 `usrs/mods/eww/config/scripts/music_info:6` — fixed**
+  `/tmp/eww_mp_thumbnail.png` in a world-writable dir, plus an `ffmpeg`
+  invocation per track change. — re-verified 2026-10-06, both still true; the
+  ref had drifted from `:5` to `:6`.
+
+  `COVER="/tmp/eww_mp_thumbnail.png"` is still at `music_info:6`, still fed by
+  `ffmpeg -i … -c copy "$COVER" -y` (`:23`), still invoked from `get_cover`
+  (`:19-28`) via `emit_meta` (`:34`) — which only fires when the track's file
+  changes (`listen_meta`, `:63-65`), so it really is one `ffmpeg` per track
+  change and not per poll. Live proof it is still writing:
+  `/tmp/eww_mp_thumbnail.png` exists, mode `-rw-r--r-- yor users`, written today,
+  world-readable inside a world-writable directory.
 
 - [ ] **3.16 `sound.nix` — defaults set to defaults.**
   `services.pulseaudio.enable = false` and `security.rtkit.enable = true` are
@@ -843,16 +977,73 @@ Security / correctness first.
   modify" header but has been edited. `swapDevices = []` coexists with
   `zramSwap.enable` and will be re-added by `nixos-generate-config`.
   `usbhid` / `sd_mod` / `usb_storage` in `availableKernelModules` are
-  built-in no-ops. Move the durable bits into a `sys` module.
+  built-in no-ops. Move the durable bits into a `sys` module. — re-verified
+  2026-10-06, all still true, plus one new wrinkle.
 
-- [ ] **3.18 `sys/host:115,116,143` — commented-out dead code:**
+  - The header is untouched (`hardware-configuration.nix:1-3`) and git records
+    three manual rewrites: `57e4154` added the `/nix` + `/persist` subvols,
+    `6078d42` dropped the `/cred` mount, `a253520` restored the curated
+    `compress=zstd`/`noatime`/`kvm-amd` layout after a regeneration lost it.
+    `README.md:138-141` documents the hand-maintenance — that is documentation,
+    not a fix.
+  - `swapDevices = []` (`hardware-configuration.nix:51`) still sits beside
+    `zramSwap.enable = true` (`sys/host/default.nix:15`).
+  - `availableKernelModules` (`hardware-configuration.nix:15`) still lists the
+    three. The "built-in no-op" sub-claim could **not** be re-verified on this
+    host: there is no `/lib/modules` tree for `6.18.54`, so it cannot be checked
+    from here.
+  - **New:** the `/boot` mount options are now in *two* places —
+    `lib.mkForce ["fmask=0077" "dmask=0077"]` in
+    `sys/mods/core/boot/default.nix:35` (added for §3.20) and the stale
+    `["fmask=0022" "dmask=0022"]` still at `hardware-configuration.nix:42`. So
+    the one durable bit that *was* moved into `sys` now exists in both files,
+    and only the `mkForce` is load-bearing. Worth fixing the stale original to
+    `0077` so the two agree and neither reads as a trap.
+
+- [ ] **3.18 `sys/host:107,108,168` — commented-out dead code:**
   `# dbus.enable = true`, `# enable powerprofilesctl`, `# flatpak.enable = true`.
+  — re-verified 2026-10-06, still all three. The refs above are corrected; the
+  finding originally said `115,116,143`. Worth noting the middle one now sits
+  directly above the live setting it once preceded:
+  `sys/host/default.nix:108` is `# enable powerprofilesctl` and `:109` is
+  `power-profiles-daemon.enable = true;`, so it reads as a note rather than a
+  toggle — delete it and keep the other two until someone wants them.
 
-- [ ] **3.19 `sys/host:10,13-25` — needless string interpolation.**
-  `"${setup.timeZone}"` etc. in 12 places; `setup` values are already strings.
+- [ ] **3.19 needless string interpolation around `setup`.** `"${setup.…}"` —
+  `setup` values are already strings. — re-verified 2026-10-06, still open but
+  **the finding overstated it twice**: it is 10 occurrences on 10 lines across 3
+  files, not 12, and 5 of the 10 cannot be removed.
 
-- [ ] **3.20 `/boot` is world-readable, so the boot loader's entropy seed is.**
-  — found 2026-10-01, blocks phase 4
+  ```
+  sys/host/default.nix:10,13,18,20,185    sys/default.nix:19,65
+  sys/mods/core/secrets.nix:25,73,83
+  ```
+
+  The 5 that **must** keep interpolation are attribute names —
+  `users."${setup.userName}"` (`sys/host/default.nix:18,185`,
+  `sys/default.nix:65`) and `"${setup.hostName}" = …` (`sys/default.nix:19`) —
+  plus one genuine concatenation, `description = "${setup.userName} (very cool
+  person)"` (`sys/host/default.nix:20`).
+
+  So the real cleanup is 5 lines: `sys/host/default.nix:10` (`time.timeZone`),
+  `:13` (`i18n.defaultLocale`), and `secrets.nix:25,73,83` (all three just
+  prefix a path with `"${setup.homeDir}/"`, which `setup.homeDir + "/"` states
+  as directly). Low value; do it or don't, but do not read the item as "12
+  redundant interpolations".
+
+- [x] **3.20 `/boot` is world-readable, so the boot loader's entropy seed is.**
+  — found 2026-10-01, blocks phase 4. **Fixed before this review; the checkbox
+  was simply never closed.** Re-verified 2026-10-06, all three legs:
+  `sys/mods/core/boot/default.nix:35` carries the `mkForce` (ref drifted from
+  the `:42` quoted below); `findmnt -no OPTIONS /boot` shows
+  `fmask=0077,dmask=0077` with `/boot` at mode `700`; and `journalctl -b 0 |
+  grep bootctl` is down to the single good line
+  (`Random seed file /boot/loader/random-seed successfully refreshed`), both
+  world-accessible warnings gone. `stat /boot/loader/random-seed` as `yor`
+  returns permission denied, which is the fix being live. Note for anyone
+  touching this later: `hardware-configuration.nix:42` still carries
+  `fmask=0022 dmask=0022`, so the `mkForce` is the only thing holding it — see
+  §3.17.
 
   ```
   Oct 01 07:16:27 qat bootctl[977]:  Mount point '/boot' which backs the random
@@ -998,6 +1189,22 @@ Security / correctness first.
   `usrs/mods/eww/config/images/wallpapers/stitch_wall_dark.png`;
   `stitch_wall.png` likewise. `stitch_wall_hd.png` (2.6 MB) and all three
   `.webp` files are referenced by nothing. Only `wall.png` is live (README).
+  — re-verified 2026-10-06; nothing removed.
+
+  Root image set: `stitch_wall_dark.png` 670375 B, `stitch_wall.png` 1055709 B,
+  `stitch_wall_hd.png` 2623915 B, `stitch_wall_dark.webp` 54040 B,
+  `stitch_wall.webp` 575310 B, `stitch_wall_hd.webp` 303322 B, `wall.png`
+  2211087 B. md5sums match: both `stitch_wall_dark.png` copies have the same
+  hash; both `stitch_wall.png` copies match. The eww wallpapers dir contains
+  only 5 files (`stitch_wall_dark.png`, `stitch_wall.png`, `cityscape.jpg`,
+  `home.jpg`, `retro-street.jpg`, `seerlight.jpg`, `seerlight2.jpg` — 7 total)
+  and **no HD and no webp**. Tree-wide grep: `stitch_wall_dark.png` referenced
+  by `usrs/mods/eww/config/scripts/theme:14` and
+  `usrs/mods/niri/default.nix:272`; `stitch_wall.png` by
+  `usrs/mods/eww/config/scripts/theme:15` and
+  `usrs/mods/eww/config/scripts/theme_mode:4`; `wall.png` by `README.md:4`.
+  `stitch_wall_hd.png` and all three `.webp` files have zero references outside
+  AUDIT.md itself.
 
 - [~] **4.3 `sys/host` re-states what niri-flake already sets with `mkDefault`:**
   `hardware.graphics.enable`, `programs.dconf.enable`,
@@ -1029,40 +1236,131 @@ Security / correctness first.
   length 1. The single entry is `cfg.package` from
   `nixpkgs/nixos/modules/programs/wayland/niri.nix:25-27`.
 
-- [ ] **4.5 Personal data outside `setup/`** — the whole premise of the layout.
+- [x] **4.5 Personal data outside `setup/`** — the whole premise of the layout.
   Git name/emails, the `qarkdev+*` addresses and the
-  `~/Documents/A-Work/1-Fling/gitlab/**` include all live in
-  `usrs/mods/git/default.nix`. Move them to `setup`.
+  `~/Documents/A-Work/1-Fling/gitlab/**` include all lived in
+  `usrs/mods/git/default.nix`. Moved to `setup` on 2026-10-06.
+
+  `setup/default.nix` now owns the whole identity, matching how `symLinks` and
+  `secrets` are already shaped there:
+
+  ```nix
+  git = {
+    name = "YorQat";
+    email = "qarkdev+gh@gmail.com";
+    work = { dir = "Documents/A-Work/1-Fling/gitlab"; email = "qarkdev+gl@gmail.com"; };
+  };
+  ```
+
+  `work` is the odd one out and deserves a note: git's `gitdir:` patterns are
+  matched against the repository path, so that directory has to stay
+  `$HOME`-relative even though everything else in `setup` spells out `homeDir`.
+  It works because `symLinks` puts `/dat/Documents` at `~/Documents`
+  (`setup/default.nix:31`); the comment there says so.
+
+  `usrs/mods/git/default.nix` reads it through `setup`, which was already
+  available as a module argument (`home-manager.extraSpecialArgs` in
+  `sys/default.nix:60-61`) — no wiring needed. `config` went out of the
+  signature, where it was unused. The include is now a plain
+  `contents.user.email = setup.git.work.email;`, and the two `# Put your
+  GitLab email here` / optional-`signingKey` comments went with the literal
+  strings they annotated: the point of this item is that a value you must not
+  hand-edit away from `setup` should not be sitting in a module, commented or
+  not. The signing config itself is untouched — that is §4.7.
+
+  Verified behaviour-neutral: the rendered `~/.config/git/config` is
+  byte-identical (sha256 `b02053ce…`), including the
+  `includeIf "gitdir:~/Documents/A-Work/1-Fling/gitlab/**"` line and the store
+  path it points at (`6lqzcjgy…-hm_gitconfig`) — that path is a content hash of
+  the generated `hm_gitconfig`, so an unchanged path means the per-repo
+  `[user] email = "qarkdev+gl@gmail.com"` body is unchanged too. `git grep` for
+  `qarkdev|YorQat|A-Work|1-Fling` now hits `setup/default.nix` and nothing else.
 
 - [ ] **4.6 `yor-password-hash` is named twice** — `setup.secrets.root` and
-  hardcoded at `sys/host:35`. Rename it and the host module breaks with an
-  unhelpful error. Drive it from `setup.secrets.root`.
+  hardcoded at `sys/host/default.nix:23`. Rename it and the host module breaks
+  with an unhelpful error. Drive it from `setup.secrets.root`. — re-verified
+  2026-10-06, still intact.
 
-- [ ] **4.7 Dead signing config.** `usrs/mods/git`: `signing.format = null`,
-  `gpg.format = "ssh"`, with `commit.gpgsign` and `user.signingkey` both
-  commented out. Signs nothing.
+  `setup/default.nix:67` → `root = ["yor-password-hash"];`
+  `sys/host/default.nix:23` → `hashedPasswordFile = config.sops.secrets."yor-password-hash".path;`
+  Documentation only at `README.md:153,155`. Ref drifted from `:35`. So the
+  duplication remains.
 
-- [ ] **4.8 `opencode` the binary is declared in `apps/neovim`'s
+- [ ] **4.7 Dead signing config.** `usrs/mods/git/default.nix` still contains:
+  `signing.format = null` (`:16`), `# commit.gpgsign = true` (`:41`),
+  `gpg.format = "ssh"` (`:42`), `# gpg.ssh.allowedSignersFile` (`:43`),
+  `# user.signingkey` (`:44`). — re-verified 2026-10-06. Identity was moved to
+  `setup/default.nix` but the signing block was left as-is, so it still signs
+  nothing. Note the module now takes `setup` as an arg; the dead config wasn't
+  removed.
+
+- [x] **4.8 `opencode` the binary is declared in `apps/neovim`'s
   `extraPackages`,** while its config is in `apps/opencode`. Comment out neovim
-  and the binary vanishes.
+  and the binary vanishes. — **already fixed** by refactor; re-verified
+  2026-10-06.
+
+  The `opencode` package is now declared at
+  `usrs/mods/apps/opencode/default.nix:4` (`package = pkgs.opencode;`) with
+  `enable = true` at `:3`; its config lives there. `neovim`'s `extraPackages` at
+  `usrs/mods/apps/neovim/default.nix:55-57` contains **only** `ripgrep` (no
+  `opencode`). Stale explanatory comments remain at `neovim/default.nix:54` and
+  `:92` (`"bare `opencode` binary via extraPackages"`), but the coupling is
+  gone.
 
 - [ ] **4.9 Stylix targets programs that aren't installed.** System-level:
   `fish`, `lightdm`, `grub`, `plymouth`, `regreet`, `spicetify`. HM-level:
   `vscode` (its module is commented out), plus `hyprland`, `sway`, `river`,
   `wayfire`, `bspwm`, `i3`, … And `nixvim` is targeted by **both** the system
-  and HM stylix instances.
+  and HM stylix instances. — re-verified 2026-10-06; **mostly resolved,
+  dual-target claim is stale, but vscode is still orphaned.**
 
-- [ ] **4.10 `flake.nix:49` — misleading alias.**
-  `outputs = {self, ...} @ inputs` binds `inputs` to the whole attrset, not
-  `self.inputs` (which is what `sys/default.nix:6` actually uses). It's unused
-  and reads exactly backwards.
+  - `sys/mods/core/stylix.nix` has no `targets` block at all (41 lines, ends at
+    the fonts block). HM `usrs/default.nix:68-71` only sets `kde.enable = false;
+    gnome.enable = false;`.
+  - Grep for `stylix.targets` returns only `usrs/default.nix:68` and
+    `usrs/mods/apps/neovim/default.nix:6` — so every program the finding lists
+    as mistargeted (`fish`, `lightdm`, `grub`, `plymouth`, `regreet`,
+    `spicetify`, `vscode`, `hyprland`, `sway`, `river`, `wayfire`, `bspwm`, `i3`)
+    is **absent** from the actual stylix config now.
+  - `nixvim` is **only** targeted at HM (`neovim/default.nix:6`); there is no
+    system-level `nixvim` stylix target, so the "targeted by both" point is no
+    longer true.
+  - `vscode` remains an orphan: `usrs/mods/apps/vscode/default.nix` exists but
+    `usrs/default.nix:25` is commented out (`# ./mods/apps/vscode`), and nothing
+    targets it. Not a "mistargeted", it's unused. The stale comments elsewhere
+    aren't it — the thing that *could* be cleaned up is the unused module.
+
+- [ ] **4.10 `flake.nix:47` — misleading alias.** `outputs = {self, ...} @ inputs`
+  binds `inputs` to the whole attrset, not `self.inputs` (the module tree uses
+  the latter). It's unused and reads backwards. — re-verified 2026-10-06, still
+  open.
+
+  `flake.nix:47`: `outputs = {self, ...} @ inputs:`; the tree works because
+  `sys/default.nix:7` explicitly does `inputs = self.inputs;` in its local let,
+  so nothing depends on the pattern. The pattern is itself a bit misleading but
+  doesn't break anything — the finding is correct about it being misleading and
+  unused by the alias target. Ref corrected from `:49`.
 
 - [ ] **4.11 No `formatter` output,** despite `AGENTS.md` mandating alejandra.
-  The tree is currently alejandra-clean (verified), so
-  `formatter = pkgs.alejandra` is free and makes `nix fmt` work.
+  — re-verified 2026-10-06, still open.
+
+  `flake.nix` contains no `formatter` key at all. Only package presence is
+  `devshell/default.nix:10` (`alejandra`) and the only output keys are
+  `nixosConfigurations` and `devShells.x86_64-linux.default` (`flake.nix:53-57`),
+  so `nix fmt` does nothing. The finding is correct as-is.
 
 - [ ] **4.12 `devshell` carries tools with no users:** `fnlfmt` (no fennel in
-  the tree) and `yaml-language-server` (no yaml).
+  the tree) and `yaml-language-server` (no yaml). — re-verified 2026-10-06, both
+  still there and unused; other possible orphans noted.
+
+  `devshell/default.nix:6-13`: lists `secrets`, `sops`, `age`,
+  `yaml-language-server` (`:9`), `alejandra` (`:10`), `fnlfmt` (`:11`),
+  `stylua` (`:12`). No `*.fn` files and no `fennel` reference anywhere except
+  `:11`. For yaml: only `.sops.yaml` exists; `yaml-language-server` has no
+  consumers in the nix/flake. `stylua` is also a borderline orphan (no `.lua`
+  files in the tree; lua only used as an interpreter at
+  `usrs/mods/shell/default.nix:6` and `neovim/default.nix:112`) — the finding
+  only names the first two, but it's fair to note it.
 
 - [~] **4.13 Hardcoded `trusted-public-keys` / `substituters` will rot.**
   `nixpkgs-wayland.cachix.org` and `nix-community.cachix.org` are pinned here
@@ -1078,8 +1376,9 @@ Security / correctness first.
   `nixpkgs-wayland` and `nix-community` are still live inputs and still pinned,
   so this finding stays open for them.
 
-- [ ] **4.14 `services.xserver.xkb` in `sys/host` writes nothing.** — found
-  2026-10-01, while checking §3.3
+- [x] **4.14 `services.xserver.xkb` in `sys/host` writes nothing.** — found
+  2026-10-01, while checking §3.3. **The premise was wrong; corrected
+  2026-10-06, and the layout is now pinned.**
 
   ```nix
   xserver = {
@@ -1091,40 +1390,112 @@ Security / correctness first.
   `/etc/X11/xkb` is emitted only under `optionalAttrs cfg.exportConfiguration`
   (`nixos/modules/services/x11/xserver.nix:896-900`), and
   `services.xserver.exportConfiguration` defaults to `false`
-  (`xserver.nix:383-385`). This config never sets it, so the option is inert —
-  proven three ways: `environment.etc` has no `X11/xkb` key, the built `etc`
+  (`xserver.nix:383-385`). This config never sets it — that part holds, proven
+  three ways: `environment.etc` has no `X11/xkb` key, the built `etc`
   derivation contains `X11/xorg.conf.d/` but no `X11/xkb`, and the running
   system has no `/etc/X11/xkb`.
 
-  It was never what set the layout either. niri was reading
-  `input.keyboard.xkb` out of `config.kdl`, and §2.2 removed that block as
-  niri-flake's own default. niri now derives `us` from
-  `LANG=en_PH.UTF-8` via `systemd-localed` — verified live with
-  `niri msg -j keyboard-layouts` → `{"names":["English (US)"],"current_idx":0}`.
+  ~~So this is dead config, and deleting it is a no-op.~~ **It is not dead
+  config.** It has two live consumers on this box, neither of which is
+  `/etc/X11/xkb`:
 
-  So this is dead config, and deleting it is a no-op. The part that matters:
-  **§3.3's fix interacts with it.** Setting `xserver.enable = false` does not
-  resurrect the file (the gate is `exportConfiguration`, not `!enable`), so the
-  layout keeps riding on the locale either way. If the intent is for
-  `services.xserver.xkb` to be the source of truth, the honest fix is to set
-  `exportConfiguration = true` alongside it — which is also what puts the
-  `xkeyboard-config` symlink where X11 clients would look. Deciding that is
-  part of §3.3, not a cleanup.
+  - **The greeter's keymap.** `services.displayManager.sddm.wayland` generates
+    `weston.ini` with a `[keyboard]` section straight from `xcfg.xkb.*`
+    (`nixos/modules/services/display-managers/sddm.nix:135-142`), and that file
+    is what `weston --shell=kiosk -c …` runs under. Not gated on
+    `xserver.enable`. Verified in the store:
+    `keymap_layout=us`, `keymap_model=pc104`,
+    `keymap_options=terminate:ctrl_alt_bksp`, `keymap_variant=`.
+  - **niri's keymap.** `services.graphical-desktop` renders
+    `/etc/X11/xorg.conf.d/00-keyboard.conf` from `xcfg.xkb.{model,layout,
+    options,variant}` (`nixos/modules/services/misc/graphical-desktop.nix:23-41`,
+    gated on `xserver.enable || displayManager.enable` — both confirmed `true` by
+    eval, so sddm keeps it alive with no X server), `systemd-localed` parses that
+    file, and niri reads the result over D-Bus because its own `xkb {}` block is
+    empty. niri's own documentation (since 25.08): "If the `xkb` section is empty
+    (like it is by default), niri will fetch xkb settings from systemd-localed at
+    `org.freedesktop.locale1`". Verified live: the conf file carries
+    `XkbModel "pc104"` / `XkbLayout "us"` / `XkbOptions "terminate:ctrl_alt_bksp"`,
+    and `busctl get-property org.freedesktop.locale1 /org/freedesktop/locale1
+    org.freedesktop.locale1 X11Layout` → `"us"` (same for `X11Model "pc104"` and
+    `X11Options "terminate:ctrl_alt_bksp"`). localed is D-Bus-activated, so
+    nothing has to enable the unit.
+
+  A third consumer exists and is off: `console.useXkbConfig` would build a
+  `ckbcomp` console keymap from the same values (`config/console.nix:148-157`),
+  but it evaluates `false`, and the TTY keymap is a separate option anyway.
+
+  ~~niri now derives `us` from `LANG=en_PH.UTF-8` via `systemd-localed`.~~
+  **The locale is not an input.** localed's `X11Layout` comes from
+  `00-keyboard.conf`, not from `LANG`, and libxkbcommon does not consult the
+  locale either. Linked against this system's own `libxkbcommon-1.13.2` and
+  calling `xkb_keymap_new_from_names(ctx, NULL, …)` — which is what niri ends up
+  doing once its block is empty and no names are supplied — returns
+  `English (US)` for `LANG` of `en_PH.UTF-8`, `en_US.UTF-8`, `fr_FR.UTF-8`,
+  `de_DE.UTF-8` and `ru_RU.UTF-8` alike, with model and options unset. Only
+  `XKB_DEFAULT_LAYOUT` moved the result (`=fr` → `French`), and no nixpkgs
+  module sets it — `grep -rn XKB_DEFAULT nixos/modules/` finds nothing. "us" is
+  libxkbcommon's built-in default, which coincides with what we want. That
+  coincidence is why `LANG=en_PH.UTF-8` looks like it works: it is not load-
+  bearing, and `symbols/ph` is not even registered as a layout in
+  xkeyboard-config 2.48 (`rules/evdev` has no `ph` entry), so there was never a
+  Philippine layout for a locale to select.
+
+  **Deleting the block was a no-op by coincidence, not by equivalence.** The old
+  `{ layout = "us"; variant = ""; }` was field-for-field the module default
+  (`layout = "us"`, `model = "pc104"`, `options = "terminate:ctrl_alt_bksp"`,
+  `variant = ""`; `xserver.nix:545-580`), so `00-keyboard.conf` renders
+  byte-identically with or without it. What was lost is the *statement of
+  intent*: nothing in the tree named the layout any more, so it rode on two
+  upstream defaults plus the `displayManager.enable` side effect that emits the
+  file. That is the trap this entry created — read literally, it invites
+  deleting `00-keyboard.conf`, which looks X-only on a box with
+  `xserver.enable = false`, and doing so silently drops the model and the
+  options with no error anywhere.
+
+  **Fixed (2026-10-06):** `sys/host/default.nix` sets
+  `services.xserver.xkb.layout = "us"` explicitly again, with a comment naming
+  the whole chain. Behaviour is unchanged — evaluated before and after, the
+  rendered `00-keyboard.conf` is byte-identical (sha256 `c8be7d5d…`). `model`
+  and `options` are deliberately left on the nixpkgs defaults and named in the
+  comment instead: `terminate:ctrl_alt_bksp` terminates the *X server*, which
+  this box does not run, so pinning it would enshrine an inert X-ism.
+
+  **Not done, deliberately:** `exportConfiguration = true`, which this entry
+  previously prescribed. Neither live path needs it — `weston.ini` and localed
+  both read `xcfg.xkb.*` directly and never touch `/etc/X11/xkb` — and it would
+  add an `xorg.conf` to a machine with no X server. The dangling
+  `SYSTEMD_XKB_DIRECTORY = "/etc/X11/xkb"`
+  (`nixos/modules/system/boot/systemd.nix:625`, unconditional upstream) is left
+  alone too: it only matters to `localectl convert`, and "fixing" it means
+  putting a store path in the config.
+
+  **Related after all, and it is where this started:** the sddm greeter shows
+  its keyboard layout as `zz`. Typing in the greeter is unaffected — that keymap
+  comes from `weston.ini`, which does carry `keymap_layout=us` (see the first
+  consumer above). `zz` is sddm's own placeholder in its indicator:
+  `SddmComponents/LayoutBox.qml` renders `"zz"` when the row has no model item,
+  and `WaylandKeyboardBackend::init()` deliberately populates no layouts on
+  Wayland ("TODO: We can't actually switch keyboard layout yet"). No option
+  reaches it, so `services.xserver.xkb` cannot fix it; the only fixes are
+  patching sddm or dropping the wayland greeter. Worth noting the two are easy
+  to conflate: sddm cannot *report* the layout on Wayland, while the greeter
+  still *applies* the right one via weston.
 
 - [ ] **4.15 `services.xserver.videoDrivers = [ "nvidia" ]` is inert** — a
-  consequence of §3.3, recorded 2026-10-01
+  consequence of §3.3, recorded 2026-10-01. — re-verified 2026-10-06,
+  **partially resolved**: the module is now gated at import time, but the line
+  itself remains unconditional.
 
-  `sys/mods/nvidia/default.nix:33` sets it unconditionally in the nvidia module.
-  With no X server (§3.3) nothing reads it: `videoDrivers` is consumed only by
-  `xserver.nix` when building the X server's driver arguments, and niri gets its
-  NVIDIA support from the kernel module plus `hardware.nvidia`. It still
-  evaluates fine, so it is misleading rather than broken.
-
-  Left in place rather than removed, because the option is the conventional
-  place to record "this box runs NVIDIA" and would become live again if X11 ever
-  comes back. But it should not be read as load-bearing, and it should move
-  behind whatever gates the rest of `sys/mods/nvidia` if that module ever gains a
-  `setup.lite` guard.
+  `sys/mods/nvidia/default.nix:33` sets it unconditionally. The module is
+  conditionally imported: `++ lib.optional setup.includes.nvidia ./mods/nvidia`
+  (`sys/default.nix:70`), and `includes.nvidia = !lite` (`setup/default.nix:72`),
+  so with `lite = false` it evaluates (and with `lite = true` it won't be
+  imported at all) — that matches the "move behind whatever gates the rest"
+  suggestion in the finding. `xserver.enable = false` still means nothing reads
+  it, so it's still misleading in the sense that it's inert on a Wayland box,
+  but it's no longer unconditionally active when not wanted. Left in place as
+  conventional documentation.
 
 ---
 
@@ -1167,32 +1538,59 @@ Security / correctness first.
 ## 6. Fresh-install gaps
 
 - [ ] **6.1 Secrets have no bootstrap path, and `lite` doesn't cover it.**
-  `sops.age.keyFile` points into `/persist`, and `sys/host:35` dereferences
-  `config.sops.secrets."yor-password-hash"` unconditionally — so a fresh install
-  that followed the README's own age-key swap can't evaluate or activate without
-  the payload present. The README documents the manual procedure, which is the
-  right call, but nothing enforces or checks it.
+  `sops.age.keyFile = "/persist/var/lib/sops-nix/key.txt"` (`sys/mods/core/secrets.nix:40`),
+  still inside `/persist`. The `sops` attrset is gated only on
+  `payloads != {} || rootSecrets != []` (`:39`), not on key presence. The
+  dereference is unconditional:
+  `hashedPasswordFile = config.sops.secrets."yor-password-hash".path;`
+  (`sys/host/default.nix:23` — drifts from `:35`). `setup.secrets.root =
+  ["yor-password-hash"]` (`setup/default.nix:67`). No `setup.lite` involvement.
+  `README.md` still documents the manual procedure only (`66-80`), no check or
+  enforcement. — re-verified 2026-10-06, still open. Also worth noting that with
+  root non-ephemeral (§1), the `/persist`-pointing key file path is a
+  consequence, not the cause, of the current situation.
 
-- [ ] **6.2 `secrets.nix:79-88` — the `authorized_keys` template is
-  unconditional.** It sits in the `//` arm, so it's defined whenever
+- [ ] **6.2 `sys/mods/core/secrets.nix:79-88` — the `authorized_keys` template
+  is unconditional.** It sits in the `//` arm, so it is defined whenever
   `payloads != {}` regardless of whether `id_ed25519.pub` exists. Rename or
-  remove that one payload and you get an opaque eval failure. Every other secret
-  is properly gated by `envAvailable`; this one isn't.
+  remove that one payload and you get an opaque eval failure. Other secrets are
+  properly gated by `envAvailable` (`:31`); this one isn't. — re-verified
+  2026-10-06, still present. Ref corrected from `secrets.nix:79-88` to the
+  full path and line numbers.
 
 - [ ] **6.3 Inconsistent tmpfiles force semantics.** `usrs/default.nix:9-11`
   uses `L` for `setup.symLinks` (correctly refuses to clobber a real dir, but
-  silently no-ops with a journal warning) while `usrs/mods/niri:191` uses `L+`
-  for the wallpaper. Add a comment in `setup.symLinks` saying the `L` is
-  deliberate.
+  silently no-ops with a journal warning) while `usrs/mods/niri/default.nix:272`
+  uses `L+` for the wallpaper. The requested comment explaining the `L` choice
+  does not exist — `setup/default.nix:36-45` has only `# [ "dest" "src" ]`. Add
+  a comment in `setup.symLinks` saying the `L` is deliberate. — re-verified
+  2026-10-06, still open; refs corrected.
 
 - [ ] **6.4 `/etc/NetworkManager/system-connections` is not in the persistence
-  allowlist.** Harmless today *only* because of §1. The moment the root wipe
-  lands, every saved WiFi password is lost on reboot. Add it in the same commit
-  as §1.
+  allowlist.** Harmless today only because of §1 (nothing wipes root). The
+  moment the root wipe lands, every saved WiFi password is lost on reboot. Add
+  it in the same commit as §1. — re-verified 2026-10-06, still open.
 
-- [ ] **6.5 `fastfetch/default.nix:11,16`.** `nix-light.png` is installed and
-  never referenced; the logo `source` is a hardcoded `$HOME` string instead of
-  the store path, so the config isn't reproducible.
+  `sys/mods/core/persistence.nix:7-14` lists only `/var/lib/NetworkManager`
+  (state) — the connections list lives in `/etc/NetworkManager/system-connections`
+  on the root filesystem and is **not** in the allowlist. Also: given
+  `persistence.nix:2` now claims "root is blank at boot" (§1), this is no longer
+  hypothetical under that wording. The path does not appear anywhere else in
+  the tree.
+
+- [ ] **6.5 `usrs/mods/fastfetch/default.nix:11,16`.** `nix-light.png` is
+  installed and never referenced; the logo `source` uses `config.home.homeDirectory`
+  instead of a store path, so the config isn't reproducible. — re-verified
+  2026-10-06, still partially open.
+
+  `"fastfetch/nix-light.png".source = ./config/nix-light.png;` at `:11` is
+  deployed but has **zero references** in the tree (only AUDIT.md). At `:16`:
+  `source = "${config.home.homeDirectory}/.config/fastfetch/nix-original.png";`
+  — it is config-derived, not a literal `$HOME` string, but it still points to a
+  mutable runtime path rather than the store copy `./config/nix-original.png`
+  (`:10`). Also note: the checked-in `config.jsonc:5` uses `"nix-original.png"`
+  relative, but that jsonc is never written — `default.nix:13` generates the
+  config from `builtins.toJSON`, so `config.jsonc` is effectively dead weight.
 
 ---
 

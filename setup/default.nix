@@ -18,8 +18,21 @@ in {
   # for AM/PM.
   defaultLocale = "en_PH.UTF-8";
 
+  # git identity. work.* overrides the email per-repo (git includeIf) so work
+  # commits stay separable from the github address. dir is $HOME-relative,
+  # which is where /dat/Documents is symlinked (see symLinks).
+  git = {
+    name = "YorQat";
+    email = "qarkdev+gh@gmail.com";
+
+    work = {
+      dir = "Documents/A-Work/1-Fling/gitlab";
+      email = "qarkdev+gl@gmail.com";
+    };
+  };
+
   # /dat is a mountpoint for media and documents.
-  # secrets are managed by sops-nix, not symlinks (see migrate-cred.sh)
+  # secrets are managed by sops-nix, not symlinks
   symLinks = [
     # [ "dest" "src" ]
     ["${homeDir}/Documents" "/dat/Documents"]
