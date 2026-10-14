@@ -97,6 +97,9 @@ in {
     virt-manager = false;
     libreoffice = false;
     minecraftPrismLauncher = false;
+
+    # optional user apps: on for the real profile, kept off lite
+    audacity = !lite;
   };
 
   # enable only after enrolling your own keys into /etc/secureboot

@@ -12,6 +12,7 @@
 
   includeLibreOffice = lib.optional setup.includes.libreoffice pkgs.libreoffice-fresh;
   includePrismMinecraft = lib.optional setup.includes.minecraftPrismLauncher pkgs.prismlauncher;
+  includeAudacity = lib.optional setup.includes.audacity pkgs.audacity_3;
 in {
   imports = [
     # niri works alongside the nixos module
@@ -52,7 +53,7 @@ in {
         crosspipe
         sonixd # music player
       ]
-      ++ includeLibreOffice ++ includePrismMinecraft;
+      ++ includeLibreOffice ++ includePrismMinecraft ++ includeAudacity;
   };
 
   # NOTE: deliberately no `programs.home-manager.enable` here. This file is HM's
