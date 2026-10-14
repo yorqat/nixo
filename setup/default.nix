@@ -70,6 +70,7 @@ in {
   includes = {
     # heavyweight / machine-specific — these are what lite mode gates
     nvidia = !lite;
+    hibernate = !lite;
 
     # opt-in extras, off on any profile
     steam = false;

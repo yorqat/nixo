@@ -67,6 +67,8 @@ in {
         }
       ]
       # gpu: only with a matching card, so fresh installs stay bootable
-      ++ lib.optional setup.includes.nvidia ./mods/nvidia;
+      ++ lib.optional setup.includes.nvidia ./mods/nvidia
+      # swap/hibernate needs the machine-specific @swap subvolume to exist
+      ++ lib.optional setup.includes.hibernate ./mods/hibernate;
   };
 }
