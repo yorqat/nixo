@@ -12,22 +12,11 @@
       allowedTCPPorts = [22]; # ssh
       allowedUDPPorts = [5353]; # mDNS
     };
-    # LAN-scoped: mpd for phone streaming, and the vite/svelte dev servers.
-    # Scoped rather than global because a vite dev server has a history of
-    # arbitrary-file-read CVEs, and iifname keeps it off wifi/USB-tether even
-    # while the port is open.
-    firewall.interfaces.eno1 = {
-      allowedTCPPorts = [6600]; # mpd
-      allowedTCPPortRanges = [
-        {
-          from = 4173;
-          to = 4180;
-        }
-        {
-          from = 5173;
-          to = 5180;
-        }
-      ];
+    # 6600 is mpd (usrs/mods/mpd); the rest are personal extras from setup, the
+    # wired interface included.
+    firewall.interfaces."${setup.firewall.lanInterface}" = {
+      allowedTCPPorts = [6600] ++ setup.firewall.extraTCPPorts;
+      allowedTCPPortRanges = setup.firewall.extraTCPPortRanges;
     };
     hostName = setup.hostName;
 
@@ -49,9 +38,9 @@
 
   # `networking.nameservers` above only sets systemd-resolved's *global* scope,
   # and the router hands out 192.168.254.254 over DHCP, which resolved treats as
-  # link-scoped DNS for eno1. Left alone it may answer from the router's
-  # resolver and defeat the point. Negative DNSPriority makes the global
-  # Cloudflare pair win while keeping the router as a fallback, so losing
+  # link-scoped DNS for the wired interface. Left alone it may answer from the
+  # router's resolver and defeat the point. Negative DNSPriority makes the
+  # global Cloudflare pair win while keeping the router as a fallback, so losing
   # Cloudflare degrades to ISP DNS rather than to no DNS at all.
   services.resolved.settings.Resolve.DNSPriority = -50;
 }

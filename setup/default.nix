@@ -44,6 +44,26 @@ in {
     ["${homeDir}/.system-config" "/dat/Documents/nixo"]
   ];
 
+  # Personal LAN-scoped firewall openings on the wired interface: ps5upload and
+  # the vite/svelte dev server ranges. LAN-scoped rather than global because a
+  # vite dev server has a history of arbitrary-file-read CVEs, and iifname keeps
+  # it off wifi/USB-tether even while the port is open. Standard service ports
+  # (ssh, mDNS, mpd) are hardcoded in sys/mods/core/network.nix.
+  firewall = {
+    lanInterface = "eno1";
+    extraTCPPorts = [19113];
+    extraTCPPortRanges = [
+      {
+        from = 4173;
+        to = 4180;
+      }
+      {
+        from = 5173;
+        to = 5180;
+      }
+    ];
+  };
+
   # every git-tracked file in secrets/ deploys to ~/.config/secrets/<name>.
   # the personal bits:
   #   deployPaths  payload -> home-relative path, for keys/dotfiles that
