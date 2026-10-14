@@ -42,11 +42,11 @@
 ;; window/column rearranging + layout, driven straight from niri actions
 (defwidget win_controls []
   (box :class "win-controls" :orientation "h" :halign "start" :spacing 0
-    (button :class "win-btn" :tooltip "Move column left (Mod+Shift+H)" :onclick "niri msg action move-column-left" "󰅁")
-    (button :class "win-btn" :tooltip "Move column right (Mod+Shift+L)" :onclick "niri msg action move-column-right" "󰅂")
-    (button :class "win-btn" :tooltip "Move window up (Mod+Shift+K)" :onclick "niri msg action move-window-up" "󰅃")
-    (button :class "win-btn" :tooltip "Move window down (Mod+Shift+J)" :onclick "niri msg action move-window-down" "󰅄")
-    (button :class "win-btn" :tooltip "Toggle tabs in column (Mod+T)" :onclick "niri msg action toggle-column-tabbed-display" "󰓩")))
+    (button :class "win-btn" :tooltip "Move column left (Mod+Ctrl+H)" :onclick "niri msg action move-column-left" "󰅁")
+    (button :class "win-btn" :tooltip "Move column right (Mod+Ctrl+L)" :onclick "niri msg action move-column-right" "󰅂")
+    (button :class "win-btn" :tooltip "Move window up (Mod+Ctrl+K)" :onclick "niri msg action move-window-up" "󰅃")
+    (button :class "win-btn" :tooltip "Move window down (Mod+Ctrl+J)" :onclick "niri msg action move-window-down" "󰅄")
+    (button :class "win-btn" :tooltip "Toggle tabs in column (Mod+W)" :onclick "niri msg action toggle-column-tabbed-display" "󰓩")))
 
 (defpoll clock :interval "1s" "date +\%H:%M:%S")
 (defpoll date :interval "30m" "date +\%D")

@@ -16,6 +16,19 @@
     _children = [children];
   };
 
+  # Like `act`, but also emits bind-level KDL properties: `hotkey-overlay-title`,
+  # `allow-when-locked`, `allow-inhibiting`, `repeat`, `cooldown-ms`, ...
+  bind = props: children: {
+    _props = props;
+    _children = [children];
+  };
+
+  # Every bind carries a hotkey-overlay-title so Mod+Shift+Slash (and the
+  # startup pop-up) list *our* scheme. Without it the overlay only shows niri's
+  # built-in defaults — which this config overrides — plus untitled spawn binds,
+  # i.e. it would actively teach the wrong keys. `title` is the common case.
+  title = t: children: bind {"hotkey-overlay-title" = t;} children;
+
   # niri has no `enable` knob: `border { off }` / `focus-ring { off }` turn the
   # decoration off and their absence turns it on, so "enabled" means "no `off`".
   # `on` is written explicitly because the border's own default is *off* — the
@@ -87,6 +100,11 @@ in {
 
       prefer-no-csd = true;
 
+      # The overlay's built-in list includes niri defaults this config
+      # overrides, so hide anything we haven't bound; what's left (the titled
+      # binds below) is a true cheat-sheet.
+      hotkey-overlay.hide-not-bound = {};
+
       screenshot-path = "~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png";
 
       layout.focus-ring = {
@@ -120,112 +138,244 @@ in {
 
       binds = {
         # screenshots
-        "Print" = act {screenshot = {};};
-        "Ctrl+Print" = act {screenshot-screen = {};};
-        "Alt+Print" = act {screenshot-window = {};};
+        "Print" = title "Screenshot: choose a region" {screenshot = {};};
+        "Ctrl+Print" = title "Screenshot: whole screen" {screenshot-screen = {};};
+        "Alt+Print" = title "Screenshot: focused window" {screenshot-window = {};};
 
-        # spawn now expects a list for multiple arguments
-        "XF86AudioRaiseVolume" = act {
-          spawn = [
-            "sh"
-            "-c"
-            "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ && eww open osc-volume --duration 2s"
-          ];
-        };
-        "XF86AudioLowerVolume" = act {
-          spawn = [
-            "sh"
-            "-c"
-            "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1- && eww open osc-volume --duration 2s"
-          ];
-        };
-        "XF86MonBrightnessUp" = act {
-          spawn = [
-            "sh"
-            "-c"
-            "brightnessctl set +5% && eww open osc-brightness --duration 2s"
-          ];
-        };
-        "XF86MonBrightnessDown" = act {
-          spawn = [
-            "sh"
-            "-c"
-            "brightnessctl set 5%- && eww open osc-brightness --duration 2s"
-          ];
-        };
+        # media keys — allow-when-locked so they keep working on the lockscreen
+        "XF86AudioRaiseVolume" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Volume up";
+          } {
+            spawn-sh = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0 && eww open osc-volume --duration 2s";
+          };
+        "XF86AudioLowerVolume" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Volume down";
+          } {
+            spawn-sh = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1- && eww open osc-volume --duration 2s";
+          };
+        "XF86AudioMute" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Mute";
+          } {
+            spawn-sh = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && eww open osc-volume --duration 2s";
+          };
+        "XF86AudioMicMute" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Mute microphone";
+          } {
+            spawn-sh = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+          };
 
-        "Mod+Escape" = act {
-          spawn = [
-            "eww"
-            "open"
-            "--toggle"
-            "powermenu"
-          ];
+        # transport, driven by mpd like the eww music widget
+        "XF86AudioPlay" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Play / pause";
+          } {
+            spawn-sh = "mpc toggle";
+          };
+        "XF86AudioStop" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Stop";
+          } {
+            spawn-sh = "mpc stop";
+          };
+        "XF86AudioPrev" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Previous track";
+          } {
+            spawn-sh = "mpc prev";
+          };
+        "XF86AudioNext" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Next track";
+          } {
+            spawn-sh = "mpc next";
+          };
+
+        "XF86MonBrightnessUp" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Brightness up";
+          } {
+            spawn-sh = "brightnessctl set +5% && eww open osc-brightness --duration 2s";
+          };
+        "XF86MonBrightnessDown" =
+          bind {
+            "allow-when-locked" = true;
+            "hotkey-overlay-title" = "Brightness down";
+          } {
+            spawn-sh = "brightnessctl set 5%- && eww open osc-brightness --duration 2s";
+          };
+
+        # session
+        "Super+Alt+L" =
+          bind {
+            "allow-inhibiting" = false;
+            "hotkey-overlay-title" = "Lock the screen";
+          } {
+            spawn = [(lib.getExe pkgs.swaylock)];
+          };
+        "Mod+Shift+Escape" = title "Power menu" {
+          spawn = ["eww" "open" "--toggle" "powermenu"];
         };
+        "Mod+Shift+P" = title "Turn off monitors" {power-off-monitors = {};};
 
-        "Mod+M" = act {power-off-monitors = {};};
-
-        "Mod+D" = act {spawn-sh = "pkill -x fuzzel || fuzzel";};
+        # launcher / terminal
+        "Mod+D" = title "App launcher: fuzzel" {
+          spawn-sh = "pkill -x fuzzel || fuzzel";
+        };
+        "Mod+T" = title "Terminal: kitty" {spawn = ["kitty"];};
+        "Mod+Return" = title "Terminal: kitty" {spawn = ["kitty"];};
         "Mod+0" = act {spawn = ["kitty"];};
 
-        "Mod+Up" = act {focus-window-up = {};};
-        "Mod+Down" = act {focus-window-down = {};};
-        "Mod+Left" = act {focus-column-left = {};};
-        "Mod+Right" = act {focus-column-right = {};};
+        "Mod+O" =
+          bind {
+            repeat = false;
+            "hotkey-overlay-title" = "Overview";
+          } {
+            toggle-overview = {};
+          };
 
-        "Mod+K" = act {focus-window-up = {};};
-        "Mod+J" = act {focus-window-down = {};};
-        "Mod+H" = act {focus-column-left = {};};
-        "Mod+L" = act {focus-column-right = {};};
+        # focus
+        "Mod+Up" = title "Focus window up" {focus-window-up = {};};
+        "Mod+Down" = title "Focus window down" {focus-window-down = {};};
+        "Mod+Left" = title "Focus column left" {focus-column-left = {};};
+        "Mod+Right" = title "Focus column right" {focus-column-right = {};};
+        "Mod+K" = title "Focus window up" {focus-window-up = {};};
+        "Mod+J" = title "Focus window down" {focus-window-down = {};};
+        "Mod+H" = title "Focus column left" {focus-column-left = {};};
+        "Mod+L" = title "Focus column right" {focus-column-right = {};};
+        "Mod+Home" = title "Focus first column" {focus-column-first = {};};
+        "Mod+End" = title "Focus last column" {focus-column-last = {};};
 
-        "Mod+BracketLeft" = act {consume-or-expel-window-left = {};};
-        "Mod+BracketRight" = act {consume-or-expel-window-right = {};};
+        # move the focused window / column
+        "Mod+Ctrl+Up" = title "Move window up" {move-window-up = {};};
+        "Mod+Ctrl+Down" = title "Move window down" {move-window-down = {};};
+        "Mod+Ctrl+Left" = title "Move column left" {move-column-left = {};};
+        "Mod+Ctrl+Right" = title "Move column right" {move-column-right = {};};
+        "Mod+Ctrl+K" = title "Move window up" {move-window-up = {};};
+        "Mod+Ctrl+J" = title "Move window down" {move-window-down = {};};
+        "Mod+Ctrl+H" = title "Move column left" {move-column-left = {};};
+        "Mod+Ctrl+L" = title "Move column right" {move-column-right = {};};
+        "Mod+Ctrl+Home" = title "Move column to first" {move-column-to-first = {};};
+        "Mod+Ctrl+End" = title "Move column to last" {move-column-to-last = {};};
 
-        "Mod+1" = act {focus-workspace = 1;};
-        "Mod+2" = act {focus-workspace = 2;};
-        "Mod+3" = act {focus-workspace = 3;};
-        "Mod+4" = act {focus-workspace = 4;};
-        "Mod+5" = act {focus-workspace = 5;};
-        "Mod+6" = act {focus-workspace = 6;};
-        "Mod+7" = act {focus-workspace = 7;};
-        "Mod+8" = act {focus-workspace = 8;};
-        "Mod+9" = act {focus-workspace = 9;};
+        # monitors
+        "Mod+Shift+Up" = title "Focus monitor up" {focus-monitor-up = {};};
+        "Mod+Shift+Down" = title "Focus monitor down" {focus-monitor-down = {};};
+        "Mod+Shift+Left" = title "Focus monitor left" {focus-monitor-left = {};};
+        "Mod+Shift+Right" = title "Focus monitor right" {focus-monitor-right = {};};
+        "Mod+Shift+K" = title "Focus monitor up" {focus-monitor-up = {};};
+        "Mod+Shift+J" = title "Focus monitor down" {focus-monitor-down = {};};
+        "Mod+Shift+H" = title "Focus monitor left" {focus-monitor-left = {};};
+        "Mod+Shift+L" = title "Focus monitor right" {focus-monitor-right = {};};
+        "Mod+Shift+Ctrl+Up" = title "Move column to monitor up" {move-column-to-monitor-up = {};};
+        "Mod+Shift+Ctrl+Down" = title "Move column to monitor down" {move-column-to-monitor-down = {};};
+        "Mod+Shift+Ctrl+Left" = title "Move column to monitor left" {move-column-to-monitor-left = {};};
+        "Mod+Shift+Ctrl+Right" = title "Move column to monitor right" {move-column-to-monitor-right = {};};
+        "Mod+Shift+Ctrl+K" = title "Move column to monitor up" {move-column-to-monitor-up = {};};
+        "Mod+Shift+Ctrl+J" = title "Move column to monitor down" {move-column-to-monitor-down = {};};
+        "Mod+Shift+Ctrl+H" = title "Move column to monitor left" {move-column-to-monitor-left = {};};
+        "Mod+Shift+Ctrl+L" = title "Move column to monitor right" {move-column-to-monitor-right = {};};
 
-        # Move the focused window to a named workspace (focus follows it).
-        "Mod+Shift+1" = act {move-window-to-workspace = "chat";};
-        "Mod+Shift+2" = act {move-window-to-workspace = "browse";};
-        "Mod+Shift+3" = act {move-window-to-workspace = "editor";};
-        "Mod+Shift+4" = act {move-window-to-workspace = "music";};
-        "Mod+Shift+5" = act {move-window-to-workspace = "video";};
-        "Mod+Shift+6" = act {move-window-to-workspace = "home";};
+        # workspaces: jump by name (numeric indices clamp against a fixed set)
+        "Mod+1" = title "Workspace: chat" {focus-workspace = "chat";};
+        "Mod+2" = title "Workspace: browse" {focus-workspace = "browse";};
+        "Mod+3" = title "Workspace: editor" {focus-workspace = "editor";};
+        "Mod+4" = title "Workspace: music" {focus-workspace = "music";};
+        "Mod+5" = title "Workspace: video" {focus-workspace = "video";};
+        "Mod+6" = title "Workspace: home" {focus-workspace = "home";};
 
-        # Rearrange windows inside the workspace.
-        "Mod+Shift+H" = act {move-column-left = {};};
-        "Mod+Shift+L" = act {move-column-right = {};};
-        "Mod+Shift+J" = act {move-window-down = {};};
-        "Mod+Shift+K" = act {move-window-up = {};};
+        # move a window to a named workspace (focus follows it)
+        "Mod+Shift+1" = title "Send window to: chat" {move-window-to-workspace = "chat";};
+        "Mod+Shift+2" = title "Send window to: browse" {move-window-to-workspace = "browse";};
+        "Mod+Shift+3" = title "Send window to: editor" {move-window-to-workspace = "editor";};
+        "Mod+Shift+4" = title "Send window to: music" {move-window-to-workspace = "music";};
+        "Mod+Shift+5" = title "Send window to: video" {move-window-to-workspace = "video";};
+        "Mod+Shift+6" = title "Send window to: home" {move-window-to-workspace = "home";};
 
-        # Move the whole column to the previous/next workspace.
-        "Mod+Shift+BracketLeft" = act {move-column-to-workspace-up = {};};
-        "Mod+Shift+BracketRight" = act {move-column-to-workspace-down = {};};
+        # move a whole column to a named workspace
+        "Mod+Ctrl+1" = title "Send column to: chat" {move-column-to-workspace = "chat";};
+        "Mod+Ctrl+2" = title "Send column to: browse" {move-column-to-workspace = "browse";};
+        "Mod+Ctrl+3" = title "Send column to: editor" {move-column-to-workspace = "editor";};
+        "Mod+Ctrl+4" = title "Send column to: music" {move-column-to-workspace = "music";};
+        "Mod+Ctrl+5" = title "Send column to: video" {move-column-to-workspace = "video";};
+        "Mod+Ctrl+6" = title "Send column to: home" {move-column-to-workspace = "home";};
 
-        # Column layout: stacked <-> tabs.
-        "Mod+T" = act {toggle-column-tabbed-display = {};};
+        # step through workspaces without knowing their number
+        "Mod+Page_Down" = title "Workspace down" {focus-workspace-down = {};};
+        "Mod+Page_Up" = title "Workspace up" {focus-workspace-up = {};};
+        "Mod+U" = title "Workspace down" {focus-workspace-down = {};};
+        "Mod+I" = title "Workspace up" {focus-workspace-up = {};};
+        "Mod+Tab" = title "Previous workspace" {focus-workspace-previous = {};};
+        "Mod+Ctrl+Page_Down" = title "Move column down a workspace" {move-column-to-workspace-down = {};};
+        "Mod+Ctrl+Page_Up" = title "Move column up a workspace" {move-column-to-workspace-up = {};};
+        "Mod+Ctrl+U" = title "Move column down a workspace" {move-column-to-workspace-down = {};};
+        "Mod+Ctrl+I" = title "Move column up a workspace" {move-column-to-workspace-up = {};};
+        "Mod+Shift+Page_Down" = title "Move workspace down" {move-workspace-down = {};};
+        "Mod+Shift+Page_Up" = title "Move workspace up" {move-workspace-up = {};};
+        "Mod+Shift+U" = title "Move workspace down" {move-workspace-down = {};};
+        "Mod+Shift+I" = title "Move workspace up" {move-workspace-up = {};};
 
-        "Mod+F" = act {fullscreen-window = {};};
-        "Mod+Q" = act {close-window = {};};
+        # consume/expel windows and columns
+        "Mod+BracketLeft" = title "Consume/expel window left" {consume-or-expel-window-left = {};};
+        "Mod+BracketRight" = title "Consume/expel window right" {consume-or-expel-window-right = {};};
+        "Mod+Comma" = title "Consume window into column" {consume-window-into-column = {};};
+        "Mod+Period" = title "Expel window from column" {expel-window-from-column = {};};
 
-        "Mod+Shift+E" = act {quit = {};};
+        # column geometry
+        "Mod+R" = title "Cycle column width" {switch-preset-column-width = {};};
+        "Mod+Shift+R" = title "Cycle column width (reverse)" {switch-preset-column-width-back = {};};
+        "Mod+Ctrl+Shift+R" = title "Cycle window height" {switch-preset-window-height = {};};
+        "Mod+Ctrl+R" = title "Reset window height" {reset-window-height = {};};
+        "Mod+F" = title "Maximize column" {maximize-column = {};};
+        "Mod+Shift+F" = title "Fullscreen window" {fullscreen-window = {};};
+        "Mod+M" = title "Maximize window to edges" {maximize-window-to-edges = {};};
+        "Mod+Ctrl+F" = title "Expand column to fill" {expand-column-to-available-width = {};};
+        "Mod+C" = title "Center column" {center-column = {};};
+        "Mod+Ctrl+C" = title "Center visible columns" {center-visible-columns = {};};
+        "Mod+Minus" = title "Narrow column" {set-column-width = "-10%";};
+        "Mod+Equal" = title "Widen column" {set-column-width = "+10%";};
+        "Mod+Shift+Minus" = title "Shorten window" {set-window-height = "-10%";};
+        "Mod+Shift+Equal" = title "Enlarge window" {set-window-height = "+10%";};
 
-        # Nested flags for actions
+        # layout
+        "Mod+W" = title "Toggle tabbed column" {toggle-column-tabbed-display = {};};
+        "Mod+V" = title "Toggle floating" {toggle-window-floating = {};};
+        "Mod+Shift+V" = title "Swap floating/tiling focus" {switch-focus-between-floating-and-tiling = {};};
+
+        # windows and session
+        "Mod+Q" = title "Close window" {close-window = {};};
+        "Mod+Shift+E" = title "Quit niri" {quit = {};};
         "Mod+Ctrl+Shift+E" = act {quit._props."skip-confirmation" = true;};
+        "Mod+Escape" =
+          bind {
+            "allow-inhibiting" = false;
+            "hotkey-overlay-title" = "Toggle keyboard-shortcuts inhibit";
+          } {
+            toggle-keyboard-shortcuts-inhibit = {};
+          };
+        "Mod+Shift+Slash" = title "This help" {show-hotkey-overlay = {};};
 
-        "Mod+Shift+Slash" = act {show-hotkey-overlay = {};};
-
-        "Mod+Plus" = act {set-column-width = "+10%";};
-        "Mod+Minus" = act {set-column-width = "-10%";};
-        "Mod+V" = act {toggle-window-floating = {};};
-        "Mod+Shift+V" = act {switch-focus-between-floating-and-tiling = {};};
+        # mouse wheel
+        "Mod+WheelScrollDown" = bind {"cooldown-ms" = 150;} {focus-workspace-down = {};};
+        "Mod+WheelScrollUp" = bind {"cooldown-ms" = 150;} {focus-workspace-up = {};};
+        "Mod+Ctrl+WheelScrollDown" = bind {"cooldown-ms" = 150;} {move-column-to-workspace-down = {};};
+        "Mod+Ctrl+WheelScrollUp" = bind {"cooldown-ms" = 150;} {move-column-to-workspace-up = {};};
+        "Mod+WheelScrollRight" = act {focus-column-right = {};};
+        "Mod+WheelScrollLeft" = act {focus-column-left = {};};
+        "Mod+Ctrl+WheelScrollRight" = act {move-column-right = {};};
+        "Mod+Ctrl+WheelScrollLeft" = act {move-column-left = {};};
       };
     };
   };
