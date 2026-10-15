@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Live workspace strip for the eww bar, as a JSON array, event-driven.
+#
+# Emits every workspace niri knows about, in on-screen order: named ones by
+# name, dynamic (unnamed) ones by their position index. Each entry is
+# pre-resolved into exactly what the bar needs -- icon, css class, tooltip and
+# the three niri commands -- so eww.yuck stays a dumb renderer. This is what
+# lets the strip follow workspaces the old hardcoded 6-button version silently
+# dropped: any unnamed workspace niri creates past the last named one.
+#
+# Addressing: a name is the stable handle for named workspaces; niri also
+# takes an index, which is the only handle an unnamed workspace has.
+
+NIRI="${NIRI:-$(command -v niri)}"
+JQ="${JQ:-$(command -v jq)}"
+if [ -z "$NIRI" ] || [ -z "$JQ" ]; then
+  echo '[]'
+  exit 0
+fi
+
+emit() {
+  "$NIRI" msg --json workspaces | "$JQ" -c '
+    def icon:
+      if . == "chat" then "󰻞"
+      elif . == "browse" then "󰇧"
+      elif . == "editor" then "󰨞"
+      elif . == "music" then "󰂰"
+      elif . == "video" then "󰯜"
+      elif . == "home" then "󱄅"
+      else . end;
+
+    sort_by(.idx)
+    | map(
+        (.name // (.idx | tostring)) as $target
+        | {
+            target: $target,
+            icon: ($target | icon),
+            tip: (if .name then .name else ("workspace " + $target) end),
+            class: (if .is_focused then "active-workspace"
+                    elif .is_urgent then "urgent-workspace"
+                    else "inactive-workspace" end),
+            focus: ("niri msg action focus-workspace " + $target),
+            send: ("niri msg action move-window-to-workspace --focus=false " + $target),
+            move: ("niri msg action move-window-to-workspace --focus=true " + $target)
+          }
+      )
+  '
+}
+
+emit
+
+# One JSON array per line; react to every event that can change the list, its
+# order, or the focused/urgent highlights. Reconnect if the stream breaks: eww
+# never respawns a dead deflisten, so without this the strip would go stale
+# silently. (A full niri restart kills eww via PartOf=niri.service, so this
+# only covers stream hiccups.)
+while true; do
+  "$NIRI" msg --json event-stream | while IFS= read -r ev; do
+    case "$ev" in
+      *WorkspaceActivated* | *WorkspacesChanged* | *WorkspaceUrgencyChanged*) emit ;;
+    esac
+  done
+  # Stream broke: focus may have changed while disconnected, so refresh.
+  emit
+  sleep 1
+done

@@ -47,6 +47,10 @@ tooltip {
       background-color: $bg;
       color: $accent-alt;
     }
+
+    &.urgent-workspace {
+      color: $warn;
+    }
   }
 }
 

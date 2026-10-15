@@ -18,6 +18,7 @@ in {
     # niri works alongside the nixos module
     ./mods/niri
     ./mods/eww
+    ./mods/bluetooth
     ./mods/fastfetch
     ./mods/git
     ./mods/shell

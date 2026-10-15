@@ -42,6 +42,70 @@
     "video"
     "home"
   ];
+
+  # One entry per window-rule node. They are processed in order, so the generic
+  # rounding rule stays first. A rule's matchers go through `match._props` so
+  # they render as `match app-id="..."` properties (the KDL generator would
+  # otherwise make them child nodes); every other key becomes a child node,
+  # which niri accepts. app-id is niri's Wayland app_id (`niri msg pick-window`
+  # prints it); niri regexes are unanchored, so ^...$ keeps a match exact.
+  windowRules = [
+    # generic: round every window's corners
+    [
+      {clip-to-geometry = true;}
+      # top-left, top-right, bottom-right, bottom-left
+      {geometry-corner-radius = [4.0 2.0 4.0 2.0];}
+    ]
+
+    # browsers -> browse
+    [
+      {match._props."app-id" = "^(brave|brave-browser|chromium|chromium-browser|firefox|firefox-devedition)$";}
+      {open-on-workspace = "browse";}
+    ]
+
+    # messengers -> chat
+    [
+      {match._props."app-id" = "^(discord(-canary)?|signal(-desktop)?)$";}
+      {open-on-workspace = "chat";}
+    ]
+
+    # capture / media playback -> video
+    [
+      {match._props."app-id" = "^(com\\.obsproject\\.Studio|obs|mpv)$";}
+      {open-on-workspace = "video";}
+    ]
+
+    # audio editing / playback -> music
+    [
+      {match._props."app-id" = "(?i)^(audacity|sonixd)$";}
+      {open-on-workspace = "music";}
+    ]
+
+    # file manager -> home
+    [
+      {match._props."app-id" = "^org\\.gnome\\.Nautilus$";}
+      {open-on-workspace = "home";}
+    ]
+
+    # pairing/volume utilities float instead of stealing a tile
+    [
+      {match._props."app-id" = "^(blueman-manager|pavucontrol|org\\.pulseaudio\\.pavucontrol)$";}
+      {open-floating = true;}
+    ]
+
+    # Firefox picture-in-picture: float, default to a fixed 480x270
+    [
+      {
+        match._props = {
+          "app-id" = "^(firefox|firefox-devedition)$";
+          title = "^Picture-in-Picture$";
+        };
+      }
+      {open-floating = true;}
+      {"default-column-width"._children = [{fixed = 480;}];}
+      {"default-window-height"._children = [{fixed = 270;}];}
+    ]
+  ];
 in {
   home.packages = with pkgs; [
     libnotify
@@ -96,7 +160,14 @@ in {
       # the last existing workspace, which is why the bar's index buttons 3-6
       # could never switch anywhere. Address them by name instead.
       # Keys are sorted to fix on-screen order; `name` is what niri/bar/keybinds use.
-      _children = map (name: {workspace._args = [name];}) workspaces;
+      #
+      # Repeated top-level nodes (workspaces and window-rules) must be emitted
+      # through this root `_children` to become *sibling* nodes; a
+      # `window-rule._children` key would instead nest every rule inside a
+      # single `window-rule`, and niri rejects the duplicate properties.
+      _children =
+        map (name: {workspace._args = [name];}) workspaces
+        ++ map (rule: {window-rule._children = rule;}) windowRules;
 
       prefer-no-csd = true;
 
@@ -122,19 +193,6 @@ in {
           relative-to = "window";
         };
       };
-
-      window-rule._children = [
-        {
-          clip-to-geometry = true;
-          # top-left, top-right, bottom-right, bottom-left
-          geometry-corner-radius = [
-            4.0
-            2.0
-            4.0
-            2.0
-          ];
-        }
-      ];
 
       binds = {
         # screenshots

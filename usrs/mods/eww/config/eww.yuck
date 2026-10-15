@@ -7,7 +7,10 @@
 ;; volume/brightness OSD + powermenu
 (include "osc.yuck")
 
-(deflisten active_ws :initial "chat" "scripts/workspace")
+;; every workspace niri has, pre-resolved to icons/classes/niri commands (see
+;; scripts/workspaces); the bar renders whatever is in the list instead of a
+;; fixed set, so unnamed workspaces show up and stay clickable too
+(deflisten ws_list :initial "[]" "scripts/workspaces")
 
 ;; theme reflects the wallpaper symlink; the in-band toggle restarts eww, so
 ;; this poll only covers out-of-band changes (terminal toggle, reboot reset)
@@ -29,15 +32,19 @@
     (time)
     (system)))
 
+;; one button per workspace, straight from scripts/workspaces: click to focus,
+;; right-click sends the focused window without following, middle sends and
+;; follows. Class/tooltip/commands all come from the JSON, nothing hardcoded.
 (defwidget workspaces []
   (eventbox :onscroll "scripts/switch_workspace --{}"
     (box :class "workspaces" :orientation "h" :halign "start" :spacing 0
-      (button :class {active_ws == "chat" ? "active-workspace" : "inactive-workspace"} :tooltip "Chat (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace chat" :onrightclick "niri msg action move-window-to-workspace --focus=false chat" :onmiddleclick "niri msg action move-window-to-workspace --focus=true chat" "󰻞")
-      (button :class {active_ws == "browse" ? "active-workspace" : "inactive-workspace"} :tooltip "Browse (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace browse" :onrightclick "niri msg action move-window-to-workspace --focus=false browse" :onmiddleclick "niri msg action move-window-to-workspace --focus=true browse" "󰇧")
-      (button :class {active_ws == "editor" ? "active-workspace" : "inactive-workspace"} :tooltip "Editor (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace editor" :onrightclick "niri msg action move-window-to-workspace --focus=false editor" :onmiddleclick "niri msg action move-window-to-workspace --focus=true editor" "󰨞")
-      (button :class {active_ws == "music" ? "active-workspace" : "inactive-workspace"} :tooltip "Music (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace music" :onrightclick "niri msg action move-window-to-workspace --focus=false music" :onmiddleclick "niri msg action move-window-to-workspace --focus=true music" "󰂰")
-      (button :class {active_ws == "video" ? "active-workspace" : "inactive-workspace"} :tooltip "Video (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace video" :onrightclick "niri msg action move-window-to-workspace --focus=false video" :onmiddleclick "niri msg action move-window-to-workspace --focus=true video" "󰯜")
-      (button :class {active_ws == "home" ? "active-workspace" : "inactive-workspace"} :tooltip "Home (click: focus · right: send, stay · middle: move & follow)" :onclick "niri msg action focus-workspace home" :onrightclick "niri msg action move-window-to-workspace --focus=false home" :onmiddleclick "niri msg action move-window-to-workspace --focus=true home" "󱄅"))))
+      (for w in ws_list
+        (button :class {w.class}
+                :tooltip {w.tip}
+                :onclick {w.focus}
+                :onrightclick {w.send}
+                :onmiddleclick {w.move}
+          {w.icon})))))
 
 ;; window/column rearranging + layout, driven straight from niri actions
 (defwidget win_controls []

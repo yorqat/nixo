@@ -3,6 +3,7 @@
     ./boot
     ./nix.nix
     ./network.nix
+    ./bluetooth.nix
     ./sound.nix
     ./fonts.nix
     ./stylix.nix
