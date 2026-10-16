@@ -27,6 +27,10 @@ in {
       kernelModules = ["nfs"];
     };
 
+    kernelParams = [
+      "nvidia-drm.modeset=1"
+    ];
+
     # TEMP: so i can build for these targets
     binfmt.emulatedSystems = ["aarch64-linux"];
   };
